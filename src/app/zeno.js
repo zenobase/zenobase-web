@@ -7809,8 +7809,22 @@
 	}]);
 
 	app.config(['$httpProvider', function($httpProvider) {
+		$httpProvider.interceptors.push('apiBaseUrlInterceptor');
 		$httpProvider.interceptors.push('unauthorizedInterceptor');
 	}]);
+
+	app.factory('apiBaseUrlInterceptor', function() {
+		var baseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) || '';
+		return {
+			'request': function(config) {
+				if (baseUrl && config.url && config.url.charAt(0) === '/') {
+					config.url = baseUrl + config.url;
+					config.withCredentials = true;
+				}
+				return config;
+			}
+		};
+	});
 
 	app.directive('uiQuota', ['$interpolate', '$filter', function($interpolate, $filter) {
 		return {

@@ -10,6 +10,7 @@
 	}]);
 
 	app.config(['$httpProvider', function($httpProvider) {
+		$httpProvider.interceptors.push('apiBaseUrlInterceptor');
 		$httpProvider.interceptors.push('progressInterceptor');
 	}]);
 
