@@ -25,18 +25,13 @@ npm run dev
 
 This serves the app at http://localhost:5173. API requests are proxied to the Play backend at http://localhost:9000, which must be running separately.
 
-
-## Production Build
-
-```sh
-npm run build
-```
-
-Output goes to `dist/`. To preview the production build locally:
+To instead build and run the app locally in a production-like environment using Docker:
 
 ```sh
-npm run preview
+./run.sh
 ```
+
+Then visit http://localhost:8080. API calls are directed to the Play backend at http://localhost:9000, which must be running separately.
 
 
 ## Deployment
