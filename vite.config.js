@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
+    cssMinify: false,
     rollupOptions: {
       input: {
         main: 'index.html',
@@ -31,9 +32,6 @@ export default defineConfig({
     },
   },
   css: {
-    lightningcss: {
-      errorRecovery: true,
-    },
     preprocessorOptions: {
       less: {
         math: 'always',
