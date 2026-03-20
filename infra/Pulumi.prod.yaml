@@ -1,0 +1,4 @@
+config:
+  aws:region: us-east-1
+  zenobase-web:certificateArn: arn:aws:acm:us-east-1:694665597187:certificate/aa7538d0-05ca-4459-9fc2-ad2301efa13d
+  zenobase-web:webOriginPath: ""

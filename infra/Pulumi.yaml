@@ -1,0 +1,3 @@
+name: zenobase-web
+runtime: nodejs
+description: Zenobase web app hosting - S3 + CloudFront

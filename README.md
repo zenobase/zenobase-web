@@ -1,16 +1,19 @@
 # Zenobase Web
 
-AngularJS SPA built with Vite, frontend for Zenobase.
+Web app frontend for Zenobase.
+
 
 ## Requirements
 
 - [Node.js](https://nodejs.org/) (v18+)
+
 
 ## Setup
 
 ```sh
 npm install
 ```
+
 
 ## Development
 
@@ -21,6 +24,7 @@ npm run dev
 ```
 
 This serves the app at http://localhost:5173. API requests are proxied to the Play backend at http://localhost:9000, which must be running separately.
+
 
 ## Production Build
 
@@ -34,24 +38,23 @@ Output goes to `dist/`. To preview the production build locally:
 npm run preview
 ```
 
-## Project Structure
 
+## Deployment
+
+Pushing to `main` triggers a [GitHub Actions workflow](.github/workflows/build.yml) that builds the app and uploads `dist/` to S3 under `/<git-sha>/`.
+
+To deploy a specific build, set `webOriginPath` to the SHA and run `pulumi up`:
+
+```sh
+cd infra
+pulumi config set webOriginPath /<git-sha>
+pulumi up
 ```
-index.html              Main SPA entry point
-admin/index.html        Admin SPA entry point
-src/
-  main.js               Vite entry (imports CSS + app JS, bootstraps Angular)
-  admin.js              Vite entry for admin app
-  app/
-    zeno.js              Application code
-    admin.js             Admin application code
-  css/
-    zeno.less            Styles (Bootstrap 2, Font Awesome 4.3, app styles)
-    bootstrap/           Bootstrap 2 LESS source
-public/                  Static assets (served as-is, not processed by Vite)
-  js/                    Vendored JS libraries
-  partials/              AngularJS templates
-  dashboard/             Dashboard widget templates
-  fonts/                 Font Awesome webfonts
-  img/                   Images
+
+This points the CloudFront distribution at the new build. Then invalidate the CloudFront cache:
+
+```sh
+aws cloudfront create-invalidation --distribution-id $(pulumi stack output distributionId) --paths "/*"
 ```
+
+To roll back, set `webOriginPath` to a previous SHA, `pulumi up`, and invalidate again.
