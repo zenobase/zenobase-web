@@ -6,7 +6,7 @@ const certificateArn = config.require("certificateArn");
 const webOriginPath = config.get("webOriginPath") || "";
 
 // S3 bucket
-const bucket = new aws.s3.BucketV2("zenobase-web", {
+const bucket = new aws.s3.Bucket("zenobase-web", {
     bucket: "zenobase-web",
 });
 
@@ -28,7 +28,7 @@ const oac = new aws.cloudfront.OriginAccessControl("zenobase-web", {
 
 // Look up the managed SecurityHeadersPolicy
 const securityHeadersPolicy = aws.cloudfront.getResponseHeadersPolicy({
-    name: "SecurityHeadersPolicy",
+    name: "Managed-SecurityHeadersPolicy",
 });
 
 // CloudFront distribution
@@ -59,6 +59,8 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
         },
         responseHeadersPolicyId: securityHeadersPolicy.then(p => p.id),
     },
+    httpVersion: "http2and3",
+    priceClass: "PriceClass_100",
     restrictions: {
         geoRestriction: {
             restrictionType: "none",
