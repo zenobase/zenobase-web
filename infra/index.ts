@@ -90,6 +90,60 @@ new aws.s3.BucketPolicy("zenobase-web", {
     ),
 });
 
+// GitHub Actions IAM role
+const oidcProvider = aws.iam.getOpenIdConnectProvider({
+    url: "https://token.actions.githubusercontent.com",
+});
+
+const githubActionsRole = new aws.iam.Role("GitHubActionsZenobaseWeb", {
+    name: "GitHubActionsZenobaseWeb",
+    assumeRolePolicy: oidcProvider.then(provider =>
+        JSON.stringify({
+            Version: "2012-10-17",
+            Statement: [{
+                Effect: "Allow",
+                Principal: { Federated: provider.arn },
+                Action: "sts:AssumeRoleWithWebIdentity",
+                Condition: {
+                    StringEquals: {
+                        "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                    },
+                    StringLike: {
+                        "token.actions.githubusercontent.com:sub": "repo:zenobase/zenobase-web:*",
+                    },
+                },
+            }],
+        }),
+    ),
+});
+
+new aws.iam.RolePolicy("GitHubActionsZenobaseWeb", {
+    role: githubActionsRole.id,
+    policy: pulumi.all([bucket.arn, distribution.arn]).apply(([bucketArn, distArn]) =>
+        JSON.stringify({
+            Version: "2012-10-17",
+            Statement: [
+                {
+                    Effect: "Allow",
+                    Action: ["s3:PutObject", "s3:DeleteObject"],
+                    Resource: `${bucketArn}/*`,
+                },
+                {
+                    Effect: "Allow",
+                    Action: "s3:ListBucket",
+                    Resource: bucketArn,
+                },
+                {
+                    Effect: "Allow",
+                    Action: "cloudfront:CreateInvalidation",
+                    Resource: distArn,
+                },
+            ],
+        }),
+    ),
+});
+
 export const bucketName = bucket.bucket;
 export const distributionId = distribution.id;
 export const domainName = distribution.domainName;
+export const githubActionsRoleArn = githubActionsRole.arn;
