@@ -7816,9 +7816,18 @@
 
 	app.factory('apiBaseUrlInterceptor', function() {
 		var baseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) || '';
+
+		function hasFileExtension(url) {
+			return /\.\w+$/.test(url.split('?')[0]);
+		}
+
+		function isApiRequest(url) {
+			return url.charAt(0) === '/' && !hasFileExtension(url);
+		}
+
 		return {
 			'request': function(config) {
-				if (baseUrl && config.url && config.url.charAt(0) === '/') {
+				if (baseUrl && config.url && isApiRequest(config.url)) {
 					config.url = baseUrl + config.url;
 					config.withCredentials = true;
 				}
