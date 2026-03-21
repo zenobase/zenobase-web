@@ -4,6 +4,7 @@ import * as aws from "@pulumi/aws";
 const config = new pulumi.Config();
 const certificateArn = config.require("certificateArn");
 const webOriginPath = config.get("webOriginPath") || "";
+const apiHostname = config.get("apiHostname") || "";
 
 // S3 bucket
 const bucket = new aws.s3.Bucket("zenobase-web", {
@@ -52,12 +53,24 @@ const securityHeadersPolicy = aws.cloudfront.getResponseHeadersPolicy({
 
 // CloudFront distribution
 const distribution = new aws.cloudfront.Distribution("zenobase-web", {
-    origins: [{
-        domainName: bucket.bucketRegionalDomainName,
-        originId: "s3",
-        originPath: webOriginPath,
-        originAccessControlId: oac.id,
-    }],
+    origins: [
+        {
+            domainName: bucket.bucketRegionalDomainName,
+            originId: "s3",
+            originPath: webOriginPath,
+            originAccessControlId: oac.id,
+        },
+        ...(apiHostname ? [{
+            domainName: apiHostname,
+            originId: "api",
+            customOriginConfig: {
+                httpPort: 80,
+                httpsPort: 443,
+                originProtocolPolicy: "https-only",
+                originSslProtocols: ["TLSv1.2"],
+            },
+        }] : []),
+    ],
     enabled: true,
     defaultRootObject: "index.html",
     aliases: ["zenobase.com"],
@@ -66,6 +79,40 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
         sslSupportMethod: "sni-only",
         minimumProtocolVersion: "TLSv1.2_2021",
     },
+    // Proxy backend routes that are accessed via browser navigation
+    // (not $http), so they bypass the apiBaseUrlInterceptor:
+    // - /oauth/callback/* — third-party OAuth providers redirect here
+    // - /to — outbound redirect links in the frontend (<a href="/to?url=...">)
+    orderedCacheBehaviors: apiHostname ? [
+        {
+            pathPattern: "/oauth/callback/*",
+            allowedMethods: ["GET", "HEAD", "OPTIONS"],
+            cachedMethods: ["GET", "HEAD"],
+            targetOriginId: "api",
+            viewerProtocolPolicy: "redirect-to-https",
+            forwardedValues: {
+                queryString: true,
+                cookies: { forward: "none" },
+            },
+            defaultTtl: 0,
+            minTtl: 0,
+            maxTtl: 0,
+        },
+        {
+            pathPattern: "/to",
+            allowedMethods: ["GET", "HEAD", "OPTIONS"],
+            cachedMethods: ["GET", "HEAD"],
+            targetOriginId: "api",
+            viewerProtocolPolicy: "redirect-to-https",
+            forwardedValues: {
+                queryString: true,
+                cookies: { forward: "none" },
+            },
+            defaultTtl: 0,
+            minTtl: 0,
+            maxTtl: 0,
+        },
+    ] : [],
     defaultCacheBehavior: {
         allowedMethods: ["GET", "HEAD", "OPTIONS"],
         cachedMethods: ["GET", "HEAD"],
