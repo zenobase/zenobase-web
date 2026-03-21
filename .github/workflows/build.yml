@@ -8,7 +8,6 @@ on:
       - "docker/**"
       - "README.md"
       - ".dockerignore"
-      - ".env.production"
       - ".nvmrc"
       - "run.sh"
       - "docker-compose.yml"
