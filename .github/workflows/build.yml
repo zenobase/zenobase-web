@@ -3,6 +3,15 @@ name: Build
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "infra/**"
+      - "docker/**"
+      - "README.md"
+      - ".dockerignore"
+      - ".env.production"
+      - ".nvmrc"
+      - "run.sh"
+      - "docker-compose.yml"
 
 permissions:
   id-token: write
