@@ -285,6 +285,7 @@
 	app.factory('User', [ '$http', '$cacheFactory', function($http, $cacheFactory) {
 
 		var cache = $cacheFactory('User', { capacity : 100 });
+		var apiBaseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) || '';
 
 		var User = function(data) {
 			$.extend(this, data);
@@ -303,7 +304,7 @@
 			console.assert(id, "Can't find a user without an id");
 			var user = cache.get(id);
 			if (!user) {
-				$.ajax('/users/' + id, { async : false, success : function(response) {
+				$.ajax(apiBaseUrl + '/users/' + id, { async : false, xhrFields : { withCredentials : !!apiBaseUrl }, success : function(response) {
 					user = new User(response);
 					cache.put(user['@id'], user);
 				}});
