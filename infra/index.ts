@@ -26,6 +26,25 @@ const oac = new aws.cloudfront.OriginAccessControl("zenobase-web", {
     signingProtocol: "sigv4",
 });
 
+// CloudFront function to rewrite subdirectory URLs to index.html
+// (defaultRootObject only applies to the root URL, not subdirectories)
+const rewriteFunction = new aws.cloudfront.Function("rewrite-uri", {
+    name: "zenobase-web-rewrite-uri",
+    runtime: "cloudfront-js-2.0",
+    code: `
+function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+    if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+    } else if (!uri.includes('.')) {
+        request.uri += '/index.html';
+    }
+    return request;
+}
+`,
+});
+
 // Look up the managed SecurityHeadersPolicy
 const securityHeadersPolicy = aws.cloudfront.getResponseHeadersPolicy({
     name: "Managed-SecurityHeadersPolicy",
@@ -58,6 +77,10 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
             cookies: { forward: "none" },
         },
         responseHeadersPolicyId: securityHeadersPolicy.then(p => p.id),
+        functionAssociations: [{
+            eventType: "viewer-request",
+            functionArn: rewriteFunction.arn,
+        }],
     },
     httpVersion: "http2and3",
     priceClass: "PriceClass_100",
