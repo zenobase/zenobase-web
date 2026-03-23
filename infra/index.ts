@@ -27,7 +27,7 @@ const oac = new aws.cloudfront.OriginAccessControl("zenobase-web", {
     signingProtocol: "sigv4",
 });
 
-// CloudFront function to rewrite subdirectory URLs to index.html
+// CloudFront function to redirect www → apex and rewrite subdirectory URLs to index.html
 // (defaultRootObject only applies to the root URL, not subdirectories)
 const rewriteFunction = new aws.cloudfront.Function("rewrite-uri", {
     name: "zenobase-web-rewrite-uri",
@@ -35,6 +35,13 @@ const rewriteFunction = new aws.cloudfront.Function("rewrite-uri", {
     code: `
 function handler(event) {
     var request = event.request;
+    if (request.headers.host.value === 'www.zenobase.com') {
+        return {
+            statusCode: 301,
+            statusDescription: 'Moved Permanently',
+            headers: { location: { value: 'https://zenobase.com' + request.uri } },
+        };
+    }
     var uri = request.uri;
     if (uri.endsWith('/')) {
         request.uri += 'index.html';
@@ -42,6 +49,24 @@ function handler(event) {
         request.uri += '/index.html';
     }
     return request;
+}
+`,
+});
+
+// Standalone www → apex redirect for cache behaviors that don't use the rewrite function
+const wwwRedirect = new aws.cloudfront.Function("www-redirect", {
+    name: "www-redirect",
+    runtime: "cloudfront-js-2.0",
+    code: `
+function handler(event) {
+    if (event.request.headers.host.value === 'www.zenobase.com') {
+        return {
+            statusCode: 301,
+            statusDescription: 'Moved Permanently',
+            headers: { location: { value: 'https://zenobase.com' + event.request.uri } },
+        };
+    }
+    return event.request;
 }
 `,
 });
@@ -73,7 +98,7 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
     ],
     enabled: true,
     defaultRootObject: "index.html",
-    aliases: ["zenobase.com"],
+    aliases: ["zenobase.com", "www.zenobase.com"],
     viewerCertificate: {
         acmCertificateArn: certificateArn,
         sslSupportMethod: "sni-only",
@@ -94,6 +119,10 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
                 queryString: true,
                 cookies: { forward: "none" },
             },
+            functionAssociations: [{
+                eventType: "viewer-request",
+                functionArn: wwwRedirect.arn,
+            }],
             defaultTtl: 0,
             minTtl: 0,
             maxTtl: 0,
@@ -108,6 +137,10 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
                 queryString: true,
                 cookies: { forward: "none" },
             },
+            functionAssociations: [{
+                eventType: "viewer-request",
+                functionArn: wwwRedirect.arn,
+            }],
             defaultTtl: 0,
             minTtl: 0,
             maxTtl: 0,
