@@ -4,13 +4,14 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - "infra/**"
+      - ".github/**"
       - "docker/**"
-      - "README.md"
+      - "infra/**"
       - ".dockerignore"
-      - ".nvmrc"
-      - "run.sh"
       - "docker-compose.yml"
+      - "README.md"
+      - "run.sh"
+  workflow_dispatch:
 
 permissions:
   id-token: write
