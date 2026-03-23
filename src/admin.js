@@ -1,4 +1,4 @@
 import './css/zeno.less';
-import './app/zeno.js';
-import './app/admin.js';
+import './app/index.js';
+import './app/admin/index.js';
 angular.bootstrap(document.documentElement, ['adminModule']);

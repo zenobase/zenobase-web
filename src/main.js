@@ -1,3 +1,3 @@
 import './css/zeno.less';
-import './app/zeno.js';
+import './app/index.js';
 angular.bootstrap(document.documentElement, ['appModule']);
