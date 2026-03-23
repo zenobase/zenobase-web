@@ -36,20 +36,7 @@ Then visit http://localhost:8080. API calls are directed to the Play backend at 
 
 ## Deployment
 
-Pushing to `main` triggers a [GitHub Actions workflow](.github/workflows/build.yml) that builds the app and uploads `dist/` to S3 under `/<git-sha>/`.
+Pushing to `main` triggers GitHub Action workflows that build the app, upload the assets to S3,
+update the CloudFront distribution, and invalidate the CloudFront cache.
 
-To deploy a specific build, set `webOriginPath` to the SHA and run `pulumi up`:
-
-```sh
-cd infra
-pulumi config set webOriginPath /<git-sha>
-pulumi up
-```
-
-This points the CloudFront distribution at the new build. Then invalidate the CloudFront cache:
-
-```sh
-aws cloudfront create-invalidation --distribution-id $(pulumi stack output distributionId) --paths "/*"
-```
-
-To roll back, set `webOriginPath` to a previous SHA, `pulumi up`, and invalidate again.
+Infrastructure changes must be deployed first by running `pulumi up` locally (`webOriginPath` can be left blank).
