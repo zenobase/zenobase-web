@@ -169,7 +169,7 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
             restrictionType: "none",
         },
     },
-});
+}, webOriginPath ? {} : { ignoreChanges: ["origins"] });
 
 // S3 bucket policy — allow CloudFront OAC access
 new aws.s3.BucketPolicy("zenobase-web", {
