@@ -1,0 +1,41 @@
+name: Cleanup
+
+on:
+#  workflow_run:
+#    workflows: [Deploy]
+#    types: [completed]
+#    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Delete old versions
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+        run: |
+          KEEP=3
+          PREFIXES=$(aws s3 ls "s3://$S3_BUCKET/" | awk '{print $2}' | sed 's/\/$//')
+          COUNT=$(echo "$PREFIXES" | wc -l | tr -d ' ')
+          if [ "$COUNT" -le "$KEEP" ]; then
+            echo "Only $COUNT versions found, nothing to delete"
+            exit 0
+          fi
+          DELETE=$(echo "$PREFIXES" | head -n -"$KEEP")
+          for FOLDER in $DELETE; do
+            echo "Deleting $FOLDER"
+            aws s3 rm "s3://$S3_BUCKET/$FOLDER" --recursive
+          done
