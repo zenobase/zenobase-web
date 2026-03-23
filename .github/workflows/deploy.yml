@@ -39,10 +39,11 @@ jobs:
       - uses: pulumi/actions@v6
         with:
           command: up
+          suppress-progress: true
+          comment-on-summary: true
           stack-name: prod
           work-dir: infra
           config-map: '{"webOriginPath": {"value": "/${{ github.event.workflow_run.head_sha || github.sha }}"}}'
-          comment-on-summary: true
       - name: Invalidate CloudFront cache
         run: |
           DIST_ID=$(pulumi stack output distributionId --stack prod --cwd infra)
