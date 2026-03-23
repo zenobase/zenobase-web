@@ -238,7 +238,12 @@ new aws.iam.RolePolicy("GitHubActionsZenobaseWeb", {
                 },
                 {
                     Effect: "Allow",
-                    Action: "cloudfront:CreateInvalidation",
+                    Action: [
+                        "cloudfront:CreateInvalidation",
+                        "cloudfront:GetDistribution",
+                        "cloudfront:GetDistributionConfig",
+                        "cloudfront:UpdateDistribution",
+                    ],
                     Resource: distArn,
                 },
             ],
