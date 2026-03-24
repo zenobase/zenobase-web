@@ -1,6 +1,7 @@
 name: zenobase-web
 services:
-  web:
+  nginx:
+    container_name: nginx
     build:
       context: .
       dockerfile: docker/Dockerfile
