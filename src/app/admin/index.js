@@ -1,612 +1,605 @@
-(function() {
+(() => {
+	var app = angular.module('adminModule', ['appModule']);
 
-	'use strict';
+	app.config([
+		'$routeProvider',
+		($routeProvider) => {
+			$routeProvider.when('/', { templateUrl: '/admin/partials/dashboard.html' });
+			$routeProvider.otherwise({ templateUrl: '/partials/404.html' });
+		},
+	]);
 
-	var app = angular.module('adminModule', [ 'appModule' ]);
+	app.config([
+		'$httpProvider',
+		($httpProvider) => {
+			$httpProvider.interceptors.push('apiBaseUrlInterceptor');
+			$httpProvider.interceptors.push('progressInterceptor');
+		},
+	]);
 
-	app.config(['$routeProvider', function($routeProvider) {
-		$routeProvider.when('/', { templateUrl: '/admin/partials/dashboard.html' });
-		$routeProvider.otherwise({ templateUrl: '/partials/404.html' });
-	}]);
-
-	app.config(['$httpProvider', function($httpProvider) {
-		$httpProvider.interceptors.push('apiBaseUrlInterceptor');
-		$httpProvider.interceptors.push('progressInterceptor');
-	}]);
-
-	app.factory('progress', function() {
+	app.factory('progress', () => {
 		var outstanding = 0;
 		return {
-			begin : function(count) {
+			begin: (count) => {
 				outstanding += count;
 			},
-			end : function(count) {
+			end: (count) => {
 				outstanding -= count;
 			},
-			isIncomplete : function() {
-				return outstanding > 0;
-			},
+			isIncomplete: () => outstanding > 0,
 		};
 	});
 
-	app.factory('progressInterceptor', ['$q', 'progress', function($q, progress) {
-		return {
-			'request' : function(config) {
+	app.factory('progressInterceptor', [
+		'$q',
+		'progress',
+		($q, progress) => ({
+			request: (config) => {
 				progress.begin(1);
 				return config;
 			},
-			'requestError' : function(rejection) {
+			requestError: (rejection) => {
 				progress.end(1);
 				return $q.reject(rejection);
 			},
-			'response' : function(response) {
+			response: (response) => {
 				progress.end(1);
 				return response;
 			},
-			'responseError' : function(rejection) {
+			responseError: (rejection) => {
 				progress.end(1);
 				return $q.reject(rejection);
-			}
-		};
-	}]);
+			},
+		}),
+	]);
 
-	app.controller('admin.DashboardController', ['$scope', '$location', '$http', 'progress', function($scope, $location, $http, progress) {
-		$scope.progress = progress;
-		$scope.constraint = $location.search()['q'];
-		$scope.setConstraint = function(constraint) {
-			$scope.constraint = constraint;
-			$location.search('q', $scope.constraint);
-		};
-		$scope.refreshAll = function() {
-			$scope.$broadcast('refreshAll');
-		};
-		$scope.refresh = function() {
-			$http.get('/status')
-				.success(function(response) {
-					$scope.status = response;
-				})
-				.error(function(response) {
-					$scope.status = { nodes : '?', health : 'UNKNOWN' };
-				});
-		};
-		$scope.setReadOnly = function(readOnly) {
-			$http.post('/status', { read_only : readOnly })
-				.then(function() {
+	app.controller('admin.DashboardController', [
+		'$scope',
+		'$location',
+		'$http',
+		'progress',
+		($scope, $location, $http, progress) => {
+			$scope.progress = progress;
+			$scope.constraint = $location.search()['q'];
+			$scope.setConstraint = (constraint) => {
+				$scope.constraint = constraint;
+				$location.search('q', $scope.constraint);
+			};
+			$scope.refreshAll = () => {
+				$scope.$broadcast('refreshAll');
+			};
+			$scope.refresh = () => {
+				$http
+					.get('/status')
+					.success((response) => {
+						$scope.status = response;
+					})
+					.error((response) => {
+						$scope.status = { nodes: '?', health: 'UNKNOWN' };
+					});
+			};
+			$scope.setReadOnly = (readOnly) => {
+				$http.post('/status', { read_only: readOnly }).then(() => {
 					$scope.refresh();
 				});
-		};
-		$scope.$on('refreshAll', function() {
-			$scope.refresh();
-		});
-		$scope.refresh();
-	}]);
-
-	app.controller('admin.JournalController', ['$scope', '$http', 'delay', function($scope, $http, delay) {
-	
-		$scope.offset = 0;
-		$scope.limit = 10;
-		$scope.total = 0;
-		$scope.commands = null;
-		$scope.filter = null;
-
-		$scope.hasPrev = function() {
-			return $scope.offset > 0;
-		};
-		$scope.hasNext = function() {
-			return $scope.offset + $scope.limit < $scope.total;
-		};
-		$scope.prev = function() {
-			$scope.refresh({ offset : $scope.offset - $scope.limit });
-		};
-		$scope.next = function() {
-			$scope.refresh({ offset : $scope.offset + $scope.limit });
-		};
-		$scope.params = function() {
-			var params = {
-				offset : $scope.offset,
-				limit : $scope.limit
 			};
-			if ($scope.filter) {
-				params.q = $scope.filter;
-			}
-			return params;
-		};
-		$scope.refresh = function(params) {
-			var path = $scope.constraint ? '/users/' + $scope.constraint + '/journal/' : '/journal/';
-			$http.get(path + '?' + $.param($.extend($scope.params(), params)))
-				.success(function(response) {
+			$scope.$on('refreshAll', () => {
+				$scope.refresh();
+			});
+			$scope.refresh();
+		},
+	]);
+
+	app.controller('admin.JournalController', [
+		'$scope',
+		'$http',
+		'delay',
+		($scope, $http, delay) => {
+			$scope.offset = 0;
+			$scope.limit = 10;
+			$scope.total = 0;
+			$scope.commands = null;
+			$scope.filter = null;
+
+			$scope.hasPrev = () => $scope.offset > 0;
+			$scope.hasNext = () => $scope.offset + $scope.limit < $scope.total;
+			$scope.prev = () => {
+				$scope.refresh({ offset: $scope.offset - $scope.limit });
+			};
+			$scope.next = () => {
+				$scope.refresh({ offset: $scope.offset + $scope.limit });
+			};
+			$scope.params = () => {
+				var params = {
+					offset: $scope.offset,
+					limit: $scope.limit,
+				};
+				if ($scope.filter) {
+					params.q = $scope.filter;
+				}
+				return params;
+			};
+			$scope.refresh = (params) => {
+				var path = $scope.constraint ? '/users/' + $scope.constraint + '/journal/' : '/journal/';
+				$http.get(path + '?' + $.param($.extend($scope.params(), params))).success((response) => {
 					$.extend($scope, params);
 					$scope.total = response.total;
 					$scope.commands = response.commands;
 				});
-		};
-		$scope.undo = function(commandId) {
-			$scope.$parent.undo(commandId);
-			delay($scope.refreshAll);
-		};
-
-		$scope.$on('refreshAll', function() {
-			$scope.refresh({ offset : 0 });
-		});
-		$scope.$watch('filter', function(to, from) {
-			if (from !== to) {
-				$scope.refresh({ offset : 0 });
-			}
-		});
-		$scope.refresh({});
-	}]);
-
-	app.controller('admin.BucketListController', ['$scope', '$http', 'Bucket', 'delay', 'token', function($scope, $http, Bucket, delay, token) {
-
-		$scope.offset = 0;
-		$scope.limit = 10;
-		$scope.total = 0;
-		$scope.buckets = null;
-		$scope.filter = null;
-		$scope.events = 0;
-
-		$scope.hasPrev = function() {
-			return $scope.offset > 0;
-		};
-		$scope.hasNext = function() {
-			return $scope.offset + $scope.limit < $scope.total;
-		};
-		$scope.prev = function() {
-			$scope.refresh({ offset : $scope.offset - $scope.limit });
-		};
-		$scope.next = function() {
-			$scope.refresh({ offset : $scope.offset + $scope.limit });
-		};
-		$scope.params = function() {
-			var params = {
-				offset : $scope.offset,
-				limit : $scope.limit
 			};
-			if ($scope.filter) {
-				params.q = $scope.filter;
-			}
-			return params;
-		};
-		var path = function(resource) {
-			return $scope.constraint ? '/users/' + $scope.constraint + resource : resource;
-		};
-		$scope.refresh = function(params) {
-			$scope.token = token.get();
-			$http.get(path('/buckets/') + '?' + $.param($.extend($scope.params(), params)))
-				.success(function(response) {
+			$scope.undo = (commandId) => {
+				$scope.$parent.undo(commandId);
+				delay($scope.refreshAll);
+			};
+
+			$scope.$on('refreshAll', () => {
+				$scope.refresh({ offset: 0 });
+			});
+			$scope.$watch('filter', (to, from) => {
+				if (from !== to) {
+					$scope.refresh({ offset: 0 });
+				}
+			});
+			$scope.refresh({});
+		},
+	]);
+
+	app.controller('admin.BucketListController', [
+		'$scope',
+		'$http',
+		'Bucket',
+		'delay',
+		'token',
+		($scope, $http, Bucket, delay, token) => {
+			$scope.offset = 0;
+			$scope.limit = 10;
+			$scope.total = 0;
+			$scope.buckets = null;
+			$scope.filter = null;
+			$scope.events = 0;
+
+			$scope.hasPrev = () => $scope.offset > 0;
+			$scope.hasNext = () => $scope.offset + $scope.limit < $scope.total;
+			$scope.prev = () => {
+				$scope.refresh({ offset: $scope.offset - $scope.limit });
+			};
+			$scope.next = () => {
+				$scope.refresh({ offset: $scope.offset + $scope.limit });
+			};
+			$scope.params = () => {
+				var params = {
+					offset: $scope.offset,
+					limit: $scope.limit,
+				};
+				if ($scope.filter) {
+					params.q = $scope.filter;
+				}
+				return params;
+			};
+			var path = (resource) => ($scope.constraint ? '/users/' + $scope.constraint + resource : resource);
+			$scope.refresh = (params) => {
+				$scope.token = token.get();
+				$http.get(path('/buckets/') + '?' + $.param($.extend($scope.params(), params))).success((response) => {
 					$.extend($scope, params);
 					$scope.total = response.total;
 					$scope.buckets = response.buckets;
 				});
-			$http.get(path('/events/'))
-				.success(function(response) {
+				$http.get(path('/events/')).success((response) => {
 					$scope.events = response.total;
 				});
-		};
-		$scope.remove = function(bucketId) {
-			$http({ method : 'DELETE', url : '/buckets/' + bucketId }).success(function(response, code, headers) {
-				delay($scope.refreshAll);
-			});
-		};
-		$scope.getOwner = function(bucket) {
-			return new Bucket(bucket).getOwner();
-		};
-		$scope.isPublished = function(bucket) {
-			return new Bucket(bucket).isPublished();
-		};
-
-		$scope.$on('refreshAll', function() {
-			$scope.refresh({ offset : 0 });
-		});
-		$scope.$watch('filter', function(to, from) {
-			if (from !== to) {
-				$scope.refresh({ offset : 0 });
-			}
-		});
-		$scope.refresh({});
-	}]);
-
-	app.controller('admin.UserListController', ['$scope', '$http', '$q', 'delay', 'token', function($scope, $http, $q, delay, token) {
-
-		$scope.offset = 0;
-		$scope.limit = 10;
-		$scope.total = 0;
-		$scope.users = null;
-		$scope.filter = null;
-
-		$scope.hasPrev = function() {
-			return $scope.offset > 0;
-		};
-		$scope.hasNext = function() {
-			return $scope.offset + $scope.limit < $scope.total;
-		};
-		$scope.prev = function() {
-			$scope.refresh({ offset : $scope.offset - $scope.limit });
-		};
-		$scope.next = function() {
-			$scope.refresh({ offset : $scope.offset + $scope.limit });
-		};
-		$scope.params = function() {
-			var params = {
-				offset : $scope.offset,
-				limit : $scope.limit
 			};
-			if ($scope.filter) {
-				params.q = $scope.filter;
-			}
-			return params;
-		};
-		$scope.refresh = function(params) {
-			$scope.token = token.get();
-			if ($scope.constraint) {
-				$http.get('/users/' + $scope.constraint)
-					.success(function(response) {
+			$scope.remove = (bucketId) => {
+				$http({ method: 'DELETE', url: '/buckets/' + bucketId }).success((response, code, headers) => {
+					delay($scope.refreshAll);
+				});
+			};
+			$scope.getOwner = (bucket) => new Bucket(bucket).getOwner();
+			$scope.isPublished = (bucket) => new Bucket(bucket).isPublished();
+
+			$scope.$on('refreshAll', () => {
+				$scope.refresh({ offset: 0 });
+			});
+			$scope.$watch('filter', (to, from) => {
+				if (from !== to) {
+					$scope.refresh({ offset: 0 });
+				}
+			});
+			$scope.refresh({});
+		},
+	]);
+
+	app.controller('admin.UserListController', [
+		'$scope',
+		'$http',
+		'$q',
+		'delay',
+		'token',
+		($scope, $http, $q, delay, token) => {
+			$scope.offset = 0;
+			$scope.limit = 10;
+			$scope.total = 0;
+			$scope.users = null;
+			$scope.filter = null;
+
+			$scope.hasPrev = () => $scope.offset > 0;
+			$scope.hasNext = () => $scope.offset + $scope.limit < $scope.total;
+			$scope.prev = () => {
+				$scope.refresh({ offset: $scope.offset - $scope.limit });
+			};
+			$scope.next = () => {
+				$scope.refresh({ offset: $scope.offset + $scope.limit });
+			};
+			$scope.params = () => {
+				var params = {
+					offset: $scope.offset,
+					limit: $scope.limit,
+				};
+				if ($scope.filter) {
+					params.q = $scope.filter;
+				}
+				return params;
+			};
+			$scope.refresh = (params) => {
+				$scope.token = token.get();
+				if ($scope.constraint) {
+					$http.get('/users/' + $scope.constraint).success((response) => {
 						if (response.name) {
 							$scope.total = 1;
-							$scope.users = [ response ];
+							$scope.users = [response];
 						} else {
 							$scope.total = 0;
 							$scope.users = [];
 						}
 					});
-			} else {
-				$http.get('/users/?' + $.param($.extend($scope.params(), params)))
-					.success(function(response) {
+				} else {
+					$http.get('/users/?' + $.param($.extend($scope.params(), params))).success((response) => {
 						$.extend($scope, params);
 						$scope.total = response.total;
 						$scope.users = response.users;
 					});
-			}
-		};
-		$scope.suspend = function(username) {
-			$http.post('/users/@' + username, { 'suspended' : true })
-				.success(function() {
+				}
+			};
+			$scope.suspend = (username) => {
+				$http.post('/users/@' + username, { suspended: true }).success(() => {
 					delay($scope.refreshAll);
 				});
-		};
-		$scope.reverify = function(user) {
-			$http.post('/users/@' + user.name, { 'email' : user.email })
-				.success(function() {
+			};
+			$scope.reverify = (user) => {
+				$http.post('/users/@' + user.name, { email: user.email }).success(() => {
 					delay($scope.refreshAll);
 				});
-		};
-		$scope.optout = function(user) {
-			$http.post('/users/@' + user.name, { 'optedout' : true })
-				.success(function() {
+			};
+			$scope.optout = (user) => {
+				$http.post('/users/@' + user.name, { optedout: true }).success(() => {
 					delay($scope.refreshAll);
 				});
-		};
-		$scope.optin = function(user) {
-			$http.post('/users/@' + user.name, { 'optedout' : false })
-				.success(function() {
+			};
+			$scope.optin = (user) => {
+				$http.post('/users/@' + user.name, { optedout: false }).success(() => {
 					delay($scope.refreshAll);
 				});
-		};
-		$scope.remove = function(username) {
-			$http({ method : 'DELETE', url : '/users/@' + username })
-				.success(function() {
+			};
+			$scope.remove = (username) => {
+				$http({ method: 'DELETE', url: '/users/@' + username }).success(() => {
 					delay($scope.refreshAll);
 				});
-		};
+			};
 
-		$scope.$on('refreshAll', function() {
-			$scope.refresh({ offset : 0 });
-		});
-		$scope.$watch('filter', function(to, from) {
-			if (from !== to) {
-				$scope.refresh({ offset : 0 });
-			}
-		});
-		$scope.refresh({});
-	}]);
+			$scope.$on('refreshAll', () => {
+				$scope.refresh({ offset: 0 });
+			});
+			$scope.$watch('filter', (to, from) => {
+				if (from !== to) {
+					$scope.refresh({ offset: 0 });
+				}
+			});
+			$scope.refresh({});
+		},
+	]);
 
-	app.controller('admin.EditQuotaDialogController', ['$scope', '$http', '$q', 'delay', function($scope, $http, $q, delay) {
-		$scope.init = function(user) {
-			$scope.user = user;
-			$scope.message = '';
-			$scope.limit = null;
-			$scope.used = null;
-			$scope.usedOld = null;
-			$scope.usedNew = null;
-			$http.get('/users/@' + $scope.user.name + '/quota')
-				.success(function(response) {
+	app.controller('admin.EditQuotaDialogController', [
+		'$scope',
+		'$http',
+		'$q',
+		'delay',
+		($scope, $http, $q, delay) => {
+			$scope.init = (user) => {
+				$scope.user = user;
+				$scope.message = '';
+				$scope.limit = null;
+				$scope.used = null;
+				$scope.usedOld = null;
+				$scope.usedNew = null;
+				$http.get('/users/@' + $scope.user.name + '/quota').success((response) => {
 					$scope.limit = response.limit;
 					$scope.usedOld = response.used;
 					$scope.usedNew = response.used;
 				});
-		};
-		$scope.save = function() {
-			$scope.message = '';
-			var updates = $q.when(null);
-			if ($scope.limit != $scope.user.quota) {
-				updates = updates.then(function() {
-					return $http.post('/users/@' + $scope.user.name, { 'quota' : $.isNumeric($scope.limit) ? $scope.limit : null })
-					}, function() {
-						return $q.reject();
-					});
-			}
-			if ($scope.usedNew != $scope.usedOld) {
-				updates = updates
-					.then(function() {
-						return $http.post('/users/@' + $scope.user.name + '/quota', { 'cost' : $scope.usedNew - $scope.usedOld })
-					}, function() {
-						return $q.reject();
-					});
-			}
-			updates.then(function(response) {
-				$scope.closeDialog();
-				delay($scope.refreshAll);
-			}, function(e) {
-				$scope.message = "Couldn't update quota used/limit.";
-			});
-		};
-	}]);
-
-	app.controller('admin.AuthorizationListController', ['$scope', '$http', 'delay', function($scope, $http, delay) {
-
-		$scope.offset = 0;
-		$scope.limit = 10;
-		$scope.total = 0;
-		$scope.authorizations = null;
-		$scope.filter = null;
-
-		$scope.hasPrev = function() {
-			return $scope.offset > 0;
-		};
-		$scope.hasNext = function() {
-			return $scope.offset + $scope.limit < $scope.total;
-		};
-		$scope.prev = function() {
-			$scope.refresh({ offset : $scope.offset - $scope.limit });
-		};
-		$scope.next = function() {
-			$scope.refresh({ offset : $scope.offset + $scope.limit });
-		};
-		$scope.params = function() {
-			var params = {
-				offset : $scope.offset,
-				limit : $scope.limit
 			};
-			if ($scope.filter) {
-				params.q = $scope.filter;
-			}
-			return params;
-		};
-		$scope.refresh = function(params) {
-			var path = $scope.constraint ? '/users/' + $scope.constraint + '/authorizations/' : '/authorizations/';
-			$http.get(path + '?' + $.param($.extend($scope.params(), params)))
-				.success(function(response) {
+			$scope.save = () => {
+				$scope.message = '';
+				var updates = $q.when(null);
+				if ($scope.limit !== $scope.user.quota) {
+					updates = updates.then(
+						() => $http.post('/users/@' + $scope.user.name, { quota: $.isNumeric($scope.limit) ? $scope.limit : null }),
+						() => $q.reject(),
+					);
+				}
+				if ($scope.usedNew !== $scope.usedOld) {
+					updates = updates.then(
+						() => $http.post('/users/@' + $scope.user.name + '/quota', { cost: $scope.usedNew - $scope.usedOld }),
+						() => $q.reject(),
+					);
+				}
+				updates.then(
+					(response) => {
+						$scope.closeDialog();
+						delay($scope.refreshAll);
+					},
+					(e) => {
+						$scope.message = "Couldn't update quota used/limit.";
+					},
+				);
+			};
+		},
+	]);
+
+	app.controller('admin.AuthorizationListController', [
+		'$scope',
+		'$http',
+		'delay',
+		($scope, $http, delay) => {
+			$scope.offset = 0;
+			$scope.limit = 10;
+			$scope.total = 0;
+			$scope.authorizations = null;
+			$scope.filter = null;
+
+			$scope.hasPrev = () => $scope.offset > 0;
+			$scope.hasNext = () => $scope.offset + $scope.limit < $scope.total;
+			$scope.prev = () => {
+				$scope.refresh({ offset: $scope.offset - $scope.limit });
+			};
+			$scope.next = () => {
+				$scope.refresh({ offset: $scope.offset + $scope.limit });
+			};
+			$scope.params = () => {
+				var params = {
+					offset: $scope.offset,
+					limit: $scope.limit,
+				};
+				if ($scope.filter) {
+					params.q = $scope.filter;
+				}
+				return params;
+			};
+			$scope.refresh = (params) => {
+				var path = $scope.constraint ? '/users/' + $scope.constraint + '/authorizations/' : '/authorizations/';
+				$http.get(path + '?' + $.param($.extend($scope.params(), params))).success((response) => {
 					$.extend($scope, params);
 					$scope.total = response.total;
 					$scope.authorizations = response.authorizations;
 				});
-		};
-		$scope.remove = function(authId) {
-			$http({ method : 'DELETE', url : '/authorizations/' + authId })
-				.success(function(response, code, headers) {
+			};
+			$scope.remove = (authId) => {
+				$http({ method: 'DELETE', url: '/authorizations/' + authId }).success((response, code, headers) => {
 					delay($scope.refreshAll);
 				});
-		};
-
-		$scope.$on('refreshAll', function() {
-			$scope.refresh({ offset : 0 });
-		});
-		$scope.$watch('filter', function(to, from) {
-			if (from !== to) {
-				$scope.refresh({ offset : 0 });
-			}
-		});
-		$scope.refresh({});
-	}]);
-
-	app.controller('admin.CredentialsListController', ['$scope', '$http', 'delay', function($scope, $http, delay) {
-
-		$scope.offset = 0;
-		$scope.limit = 10;
-		$scope.total = 0;
-		$scope.credentials = null;
-		$scope.filter = null;
-
-		$scope.hasPrev = function() {
-			return $scope.offset > 0;
-		};
-		$scope.hasNext = function() {
-			return $scope.offset + $scope.limit < $scope.total;
-		};
-		$scope.prev = function() {
-			$scope.refresh({ offset : $scope.offset - $scope.limit });
-		};
-		$scope.next = function() {
-			$scope.refresh({ offset : $scope.offset + $scope.limit });
-		};
-		$scope.params = function() {
-			var params = {
-				offset : $scope.offset,
-				limit : $scope.limit
 			};
-			if ($scope.filter) {
-				params.q = $scope.filter;
-			}
-			return params;
-		};
-		$scope.refresh = function(params) {
-			var path = $scope.constraint ? '/users/' + $scope.constraint + '/credentials/' : '/credentials/';
-			$http.get(path + '?' + $.param($.extend($scope.params(), params)))
-				.success(function(response) {
+
+			$scope.$on('refreshAll', () => {
+				$scope.refresh({ offset: 0 });
+			});
+			$scope.$watch('filter', (to, from) => {
+				if (from !== to) {
+					$scope.refresh({ offset: 0 });
+				}
+			});
+			$scope.refresh({});
+		},
+	]);
+
+	app.controller('admin.CredentialsListController', [
+		'$scope',
+		'$http',
+		'delay',
+		($scope, $http, delay) => {
+			$scope.offset = 0;
+			$scope.limit = 10;
+			$scope.total = 0;
+			$scope.credentials = null;
+			$scope.filter = null;
+
+			$scope.hasPrev = () => $scope.offset > 0;
+			$scope.hasNext = () => $scope.offset + $scope.limit < $scope.total;
+			$scope.prev = () => {
+				$scope.refresh({ offset: $scope.offset - $scope.limit });
+			};
+			$scope.next = () => {
+				$scope.refresh({ offset: $scope.offset + $scope.limit });
+			};
+			$scope.params = () => {
+				var params = {
+					offset: $scope.offset,
+					limit: $scope.limit,
+				};
+				if ($scope.filter) {
+					params.q = $scope.filter;
+				}
+				return params;
+			};
+			$scope.refresh = (params) => {
+				var path = $scope.constraint ? '/users/' + $scope.constraint + '/credentials/' : '/credentials/';
+				$http.get(path + '?' + $.param($.extend($scope.params(), params))).success((response) => {
 					$.extend($scope, params);
 					$scope.total = response.total;
 					$scope.credentials = response.items;
 				});
-		};
-		$scope.remove = function(credentialsId) {
-			$http({ method : 'DELETE', url : '/credentials/' + credentialsId })
-				.success(function(response, code, headers) {
+			};
+			$scope.remove = (credentialsId) => {
+				$http({ method: 'DELETE', url: '/credentials/' + credentialsId }).success((response, code, headers) => {
 					delay($scope.refreshAll);
 				});
-		};
-
-		$scope.$on('refreshAll', function() {
-			$scope.refresh({ offset : 0 });
-		});
-		$scope.$watch('filter', function(to, from) {
-			if (from !== to) {
-				$scope.refresh({ offset : 0 });
-			}
-		});
-		$scope.refresh({});
-	}]);
-
-	app.controller('admin.TaskListController', ['$scope', '$http', 'delay', 'taskRunner', function($scope, $http, delay, taskRunner) {
-
-		$scope.offset = 0;
-		$scope.limit = 10;
-		$scope.total = 0;
-		$scope.tasks = null;
-		$scope.running = {};
-		$scope.filter = null;
-
-		$scope.hasPrev = function() {
-			return $scope.offset > 0;
-		};
-		$scope.hasNext = function() {
-			return $scope.offset + $scope.limit < $scope.total;
-		};
-		$scope.prev = function() {
-			$scope.refresh({ offset : $scope.offset - $scope.limit });
-		};
-		$scope.next = function() {
-			$scope.refresh({ offset : $scope.offset + $scope.limit });
-		};
-		$scope.params = function() {
-			var params = {
-				offset : $scope.offset,
-				limit : $scope.limit
 			};
-			if ($scope.filter) {
-				params.q = $scope.filter;
-			}
-			return params;
-		};
-		$scope.refresh = function(params) {
-			var path = $scope.constraint ? '/users/' + $scope.constraint + '/tasks/' : '/tasks/';
-			$http.get(path + '?' + $.param($.extend($scope.params(), params)))
-				.success(function(response) {
+
+			$scope.$on('refreshAll', () => {
+				$scope.refresh({ offset: 0 });
+			});
+			$scope.$watch('filter', (to, from) => {
+				if (from !== to) {
+					$scope.refresh({ offset: 0 });
+				}
+			});
+			$scope.refresh({});
+		},
+	]);
+
+	app.controller('admin.TaskListController', [
+		'$scope',
+		'$http',
+		'delay',
+		'taskRunner',
+		($scope, $http, delay, taskRunner) => {
+			$scope.offset = 0;
+			$scope.limit = 10;
+			$scope.total = 0;
+			$scope.tasks = null;
+			$scope.running = {};
+			$scope.filter = null;
+
+			$scope.hasPrev = () => $scope.offset > 0;
+			$scope.hasNext = () => $scope.offset + $scope.limit < $scope.total;
+			$scope.prev = () => {
+				$scope.refresh({ offset: $scope.offset - $scope.limit });
+			};
+			$scope.next = () => {
+				$scope.refresh({ offset: $scope.offset + $scope.limit });
+			};
+			$scope.params = () => {
+				var params = {
+					offset: $scope.offset,
+					limit: $scope.limit,
+				};
+				if ($scope.filter) {
+					params.q = $scope.filter;
+				}
+				return params;
+			};
+			$scope.refresh = (params) => {
+				var path = $scope.constraint ? '/users/' + $scope.constraint + '/tasks/' : '/tasks/';
+				$http.get(path + '?' + $.param($.extend($scope.params(), params))).success((response) => {
 					$.extend($scope, params);
 					$scope.total = response.total;
 					$scope.tasks = response.tasks;
 				});
-		};
-		$scope.run = function(taskId) {
-			$scope.running[taskId] = true;
-			$scope.alert.clear();
-			taskRunner.runOne($scope, taskId)['finally'](function() {
-				delay(function() {
-					$scope.refresh({});
+			};
+			$scope.run = (taskId) => {
+				$scope.running[taskId] = true;
+				$scope.alert.clear();
+				taskRunner.runOne($scope, taskId)['finally'](() => {
+					delay(() => {
+						$scope.refresh({});
+					});
+					delete $scope.running[taskId];
 				});
-				delete $scope.running[taskId];
-			});
-		};
-		$scope.remove = function(taskId) {
-			$http({ method : 'DELETE', url : '/tasks/' + taskId })
-				.success(function(response, code, headers) {
+			};
+			$scope.remove = (taskId) => {
+				$http({ method: 'DELETE', url: '/tasks/' + taskId }).success((response, code, headers) => {
 					delay($scope.refreshAll);
 				});
-		};
-
-		$scope.$on('refreshAll', function() {
-			$scope.refresh({ offset : 0 });
-		});
-		$scope.$watch('filter', function(to, from) {
-			if (from !== to) {
-				$scope.refresh({ offset : 0 });
-			}
-		});
-		$scope.refresh({});
-	}]);
-
-	app.controller('admin.SnapshotController', ['$scope', '$http', 'delay', function($scope, $http, delay) {
-
-		$scope.offset = 0;
-		$scope.limit = 10;
-		$scope.total = 0;
-		$scope.snapshots = null;
-		$scope.snapshotting = false;
-
-		$scope.hasPrev = function() {
-			return $scope.offset > 0;
-		};
-		$scope.hasNext = function() {
-			return $scope.offset + $scope.limit < $scope.total;
-		};
-		$scope.prev = function() {
-			$scope.refresh({ offset : $scope.offset - $scope.limit });
-		};
-		$scope.next = function() {
-			$scope.refresh({ offset : $scope.offset + $scope.limit });
-		};
-		$scope.params = function() {
-			return {
-				offset : $scope.offset,
-				limit : $scope.limit
 			};
-		};
-		$scope.refresh = function(params) {
-			$http.get('/snapshots/?' + $.param($.extend($scope.params(), params)))
-				.success(function(response) {
+
+			$scope.$on('refreshAll', () => {
+				$scope.refresh({ offset: 0 });
+			});
+			$scope.$watch('filter', (to, from) => {
+				if (from !== to) {
+					$scope.refresh({ offset: 0 });
+				}
+			});
+			$scope.refresh({});
+		},
+	]);
+
+	app.controller('admin.SnapshotController', [
+		'$scope',
+		'$http',
+		'delay',
+		($scope, $http, delay) => {
+			$scope.offset = 0;
+			$scope.limit = 10;
+			$scope.total = 0;
+			$scope.snapshots = null;
+			$scope.snapshotting = false;
+
+			$scope.hasPrev = () => $scope.offset > 0;
+			$scope.hasNext = () => $scope.offset + $scope.limit < $scope.total;
+			$scope.prev = () => {
+				$scope.refresh({ offset: $scope.offset - $scope.limit });
+			};
+			$scope.next = () => {
+				$scope.refresh({ offset: $scope.offset + $scope.limit });
+			};
+			$scope.params = () => ({
+				offset: $scope.offset,
+				limit: $scope.limit,
+			});
+			$scope.refresh = (params) => {
+				$http.get('/snapshots/?' + $.param($.extend($scope.params(), params))).success((response) => {
 					$.extend($scope, params);
 					$scope.total = response.total;
 					$scope.snapshots = response.snapshots;
 				});
-		};
-		$scope.remove = function(snapshotId) {
-			$http({ method : 'DELETE', url : '/snapshots/' + snapshotId })
-				.success(function(response, code, headers) {
-					delay(function() {
-						$scope.refresh({ offset : 0 });						
+			};
+			$scope.remove = (snapshotId) => {
+				$http({ method: 'DELETE', url: '/snapshots/' + snapshotId }).success((response, code, headers) => {
+					delay(() => {
+						$scope.refresh({ offset: 0 });
 					});
 				});
-		};
-		$scope.snapshot = function() {
-			$scope.snapshotting = true;
-			$http({ method : 'POST', url : '/snapshots/' })
-				.then(function() {
-					delay(function() {
+			};
+			$scope.snapshot = () => {
+				$scope.snapshotting = true;
+				$http({ method: 'POST', url: '/snapshots/' }).then(() => {
+					delay(() => {
 						$scope.snapshotting = false;
 						$scope.refresh();
 					});
 				});
-		};
+			};
 
-		$scope.$on('refreshAll', function() {
-			$scope.refresh({ offset : 0 });
-		});
-		$scope.refresh({});
-	}]);
+			$scope.$on('refreshAll', () => {
+				$scope.refresh({ offset: 0 });
+			});
+			$scope.refresh({});
+		},
+	]);
 
-	app.controller('admin.SchedulerController', ['$scope', '$http', 'delay', function($scope, $http, delay) {
+	app.controller('admin.SchedulerController', [
+		'$scope',
+		'$http',
+		'delay',
+		($scope, $http, delay) => {
+			$scope.jobs = null;
+			$scope.paused = false;
 
-		$scope.jobs = null;
-		$scope.paused = false;
-
-		$scope.refresh = function() {
-			$http.get('/jobs/')
-				.success(function(response) {
+			$scope.refresh = () => {
+				$http.get('/jobs/').success((response) => {
 					$scope.jobs = response.jobs;
 				});
-		};
-		$scope.disable = function(disabled) {
-			$http.post('/status', { 'scheduler_disabled' : disabled })
-				.success(function(response, code, headers) {
-					delay(function() {
-						$scope.reload();				
+			};
+			$scope.disable = (disabled) => {
+				$http.post('/status', { scheduler_disabled: disabled }).success((response, code, headers) => {
+					delay(() => {
+						$scope.reload();
 					});
 				});
-		};
+			};
 
-		$scope.$on('refreshAll', function() {
+			$scope.$on('refreshAll', () => {
+				$scope.refresh();
+			});
 			$scope.refresh();
-		});
-		$scope.refresh();
-	}]);
-
-}());
+		},
+	]);
+})();

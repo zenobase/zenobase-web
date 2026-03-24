@@ -1,0 +1,42 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+	"files": {
+		"includes": ["src/**/*.{js,ts}", "vite.config.js"]
+	},
+	"formatter": {
+		"indentStyle": "tab",
+		"indentWidth": 4,
+		"lineWidth": 200
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "always"
+		}
+	},
+	"linter": {
+		"rules": {
+			"recommended": true,
+			"correctness": {
+				"noUndeclaredVariables": "off",
+				"noUnusedFunctionParameters": "off",
+				"noInnerDeclarations": "off"
+			},
+			"style": {
+				"useConst": "off",
+				"noParameterAssign": "off",
+				"useTemplate": "off"
+			},
+			"complexity": {
+				"useLiteralKeys": "off",
+				"noArguments": "off"
+			},
+			"suspicious": {
+				"noGlobalAssign": "off",
+				"noAssignInExpressions": "off",
+				"noFallthroughSwitchClause": "off",
+				"noShadowRestrictedNames": "off"
+			}
+		}
+	}
+}
