@@ -115,10 +115,6 @@
 		return moment().format('Z');
 	}]);
 
-	app.factory('braintree', ['$window', function($window) {
-		return $window.braintree;
-	}]);
-
 	app.factory('$exceptionHandler', ['$log', 'tracker', function($log, tracker) {
 		return function(e) {
 			$log.error.apply($log, arguments);

@@ -24,6 +24,4 @@
 
 	var app = angular.module('appModule', [ 'ngRoute', 'ngSanitize' ]);
 
-	app.constant('merchantId', 'tzq6d3tr7npjqzpt');
-
 }());

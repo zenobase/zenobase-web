@@ -130,6 +130,10 @@
 			$scope.message = '';
 			$scope.email = $scope.profile.email;
 			tracker.event('dialog', 'edit user');
+			$http.get('/users/' + $scope.user['@id'] + '/quota')
+				.success(function(response) {
+					$scope.quota = response;
+				});
 		};
 
 		$scope.data = function() {

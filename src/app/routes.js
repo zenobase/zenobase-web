@@ -14,7 +14,6 @@
 			.when('/oauth/authorize', { templateUrl : '/partials/oauth.html' })
 			.when('/legal/:section?', { title : 'Legal', templateUrl : '/partials/legal.html', controller : 'DocumentController' })
 			.when('/api/:section?', { title : 'API', templateUrl : '/partials/api.html', controller : 'DocumentController' })
-			.when('/pricing/', { title : 'Pricing', templateUrl : '/partials/pricing.html' })
 			.otherwise({ templateUrl : '/partials/404.html' });
 	}]);
 
