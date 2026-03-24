@@ -227,7 +227,7 @@
 			};
 			function isUnitValid() {
 				var units = $scope.getUnits();
-				return units.length === 0 ? $scope.settings.unit === null : $.inArray($scope.settings.unit, units) !== -1;
+				return units.length === 0 ? $scope.settings.unit === null : units.includes($scope.settings.unit);
 			}
 			function updateUnitValidity() {
 				$scope.$parent.$parent.form.unit.$setValidity('unit', isUnitValid());
@@ -237,7 +237,7 @@
 				var f = Field.find($scope.settings.field);
 				return f ? f.units : [];
 			};
-			$scope.subfields = $.map(Field.find($scope.keyField).subfields, (subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
+			$scope.subfields = Field.find($scope.keyField).subfields.map((subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
 
 			$scope.$watch('settings.field', () => {
 				if (!isUnitValid()) {

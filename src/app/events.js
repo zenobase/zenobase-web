@@ -3,15 +3,15 @@
 
 	app.factory('Event', () => {
 		var Event = function (data) {
-			$.extend(true, this, data);
+			deepExtend(this, data);
 		};
 
 		Event.prototype.get = function (fields) {
 			var entries = [];
-			$.each(fields, (i, field) => {
+			fields.forEach((field) => {
 				var value = this[field.name];
 				if (value !== undefined) {
-					$.each($.isArray(value) ? value : [value], (i, value) => {
+					(Array.isArray(value) ? value : [value]).forEach((value) => {
 						entries.push({ field: field, value: value });
 					});
 				}
@@ -23,7 +23,7 @@
 			var values = this[field.name];
 			if (values === undefined) {
 				values = this[field.name] = [];
-			} else if (!$.isArray(values)) {
+			} else if (!Array.isArray(values)) {
 				values = this[field.name] = [values];
 				this[field.name] = values;
 			}
@@ -48,7 +48,7 @@
 			$scope.init = (event) => {
 				$scope.event = new Event(event);
 				$scope.entries = $scope.event.get($scope.fields);
-				$scope.isNew = $.isEmptyObject($scope.entries);
+				$scope.isNew = Object.keys($scope.entries).length === 0;
 				$scope.message = '';
 				$scope.field = null;
 				$scope.value = '';
@@ -93,8 +93,8 @@
 			};
 			$scope.remove = (entry) => {
 				var values = $scope.event[entry.field.name];
-				if ($.isArray(values)) {
-					values = $.grep(values, (value) => value !== entry.value);
+				if (Array.isArray(values)) {
+					values = values.filter((value) => value !== entry.value);
 					if (values.length === 1) {
 						$scope.event[entry.field.name] = values[0];
 					} else if (values.length > 0) {
@@ -122,7 +122,7 @@
 				$scope.value = '';
 			};
 			$scope.addField = () => {
-				$scope.value = $.trim(input.val());
+				$scope.value = input.val().trim();
 				$scope.event.add($scope.field, $scope.value);
 				$scope.reset();
 			};
@@ -335,7 +335,7 @@
 				});
 				$scope.reset();
 			};
-			$scope.getUnits = () => $.map($scope.field.units, (unit) => unit.substring(2));
+			$scope.getUnits = () => $scope.field.units.map((unit) => unit.substring(2));
 			$scope.valid = () => $scope.minutes + $scope.seconds > 0 && $scope.unit;
 
 			$scope.init();
@@ -358,7 +358,7 @@
 				if ($scope.value.url) {
 					$scope.loading = true;
 					$http
-						.get('/og?' + $.param({ url: $scope.value.url }))
+						.get('/og?' + param({ url: $scope.value.url }))
 						.success((response) => {
 							$scope.value.title = response.title;
 							$scope.loading = false;
@@ -390,7 +390,7 @@
 				$scope.reset();
 			};
 			$scope.getUnits = () => $scope.field.units;
-			$scope.valid = () => $.isNumeric($scope.value['@value']) && $scope.value.unit;
+			$scope.valid = () => Number.isFinite(Number($scope.value['@value'])) && $scope.value.unit;
 
 			$scope.init();
 		},
@@ -445,7 +445,7 @@
 				$scope.event.add($scope.field, $scope.value);
 				$scope.reset();
 			};
-			$scope.valid = () => $.isNumeric($scope.value);
+			$scope.valid = () => Number.isFinite(Number($scope.value));
 
 			$scope.init();
 		},
@@ -461,7 +461,7 @@
 				$scope.event.add($scope.field, $scope.value);
 				$scope.reset();
 			};
-			$scope.valid = () => $.isNumeric($scope.value);
+			$scope.valid = () => Number.isFinite(Number($scope.value));
 
 			$scope.init();
 		},
@@ -477,7 +477,7 @@
 				$scope.event.add($scope.field, $scope.value);
 				$scope.reset();
 			};
-			$scope.valid = () => $.isNumeric($scope.value);
+			$scope.valid = () => Number.isFinite(Number($scope.value));
 
 			$scope.init();
 		},
@@ -506,7 +506,7 @@
 		 */
 		function buildMappings(headers) {
 			var mappings = {};
-			$.each(headers, (i, header) => {
+			headers.forEach((header, i) => {
 				var path = header.split('.', 2);
 				var mapping;
 				if (path.length === 1) {
@@ -531,11 +531,11 @@
 					throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 				}
 				var mappings = buildMappings(csv.data.shift());
-				$.each(csv.data, (i, row) => {
+				csv.data.forEach((row) => {
 					var event = {};
-					$.each(mappings, (field, mapping) => {
+					Object.entries(mappings).forEach(([field, mapping]) => {
 						var value;
-						if ($.isNumeric(mapping)) {
+						if (typeof mapping === 'number') {
 							value = row[mapping];
 							if (angular.isDefined(value) && value !== '') {
 								event[field] = value.split(';');
@@ -553,14 +553,14 @@
 										objects = values.length;
 									}
 								}
-								if (!$.isEmptyObject(object)) {
+								if (Object.keys(object).length > 0) {
 									event[field] = event[field] || [];
 									event[field].push(object);
 								}
 							}
 						}
 					});
-					if (!$.isEmptyObject(event)) {
+					if (Object.keys(event).length > 0) {
 						events.push(event);
 					}
 				});

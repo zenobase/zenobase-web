@@ -5,7 +5,7 @@
 		'$http',
 		($http) => {
 			var Bucket = function (data) {
-				$.extend(this, data);
+				Object.assign(this, data);
 			};
 
 			Bucket.getLabel = (id, callback) => {
@@ -19,7 +19,7 @@
 			};
 
 			Bucket.prototype.isPublished = function () {
-				return $.grep(this.roles, (role) => role.principal === '*').length > 0;
+				return this.roles.some((role) => role.principal === '*');
 			};
 
 			Bucket.prototype.publish = function () {
@@ -29,7 +29,7 @@
 			};
 
 			Bucket.prototype.unpublish = function () {
-				this.roles = $.grep(this.roles, (role) => role.principal !== '*');
+				this.roles = this.roles.filter((role) => role.principal !== '*');
 			};
 
 			Bucket.prototype.getOwner = function () {
@@ -99,7 +99,7 @@
 			$scope.$watch('bucket.widgets', () => {
 				var l = {};
 				if ($scope.bucket) {
-					$.each($scope.bucket.widgets, (i, widget) => {
+					$scope.bucket.widgets.forEach((widget) => {
 						l[widget.placement] = true;
 					});
 				}
@@ -107,13 +107,13 @@
 			});
 			$scope.hasWidgets = (placement) => layout[placement];
 
-			$scope.getWidgetSettings = (placement) => $scope.bucket && $.grep($scope.bucket.widgets, (widget) => widget.placement === placement);
+			$scope.getWidgetSettings = (placement) => $scope.bucket?.widgets.filter((widget) => widget.placement === placement);
 			$scope.removeWidget = (settings) => {
 				if ($scope.bucket.widgets.length > 1) {
 					delay(() => {
 						// dialog won't close properly if we don't delay
-						$scope.bucket.widgets = $.grep($scope.bucket.widgets, (widget) => widget.id !== settings.id);
-						$scope.widgets = $.grep($scope.widgets, (widget) => widget.settings.id !== settings.id);
+						$scope.bucket.widgets = $scope.bucket.widgets.filter((widget) => widget.id !== settings.id);
+						$scope.widgets = $scope.widgets.filter((widget) => widget.settings.id !== settings.id);
 						var remaining = $scope.getWidgetSettings(settings.placement);
 						if (remaining.length > 0) {
 							$('#' + remaining[0].id + '-tab').tab('show');
@@ -128,26 +128,27 @@
 			};
 			$scope.moveWidget = (sourceId, targetId) => {
 				var sourceWidget, sourceIndex;
-				$.each($scope.bucket.widgets, (i, widget) => {
-					if (widget.id === sourceId) {
+				for (var i = 0; i < $scope.bucket.widgets.length; i++) {
+					if ($scope.bucket.widgets[i].id === sourceId) {
 						sourceIndex = i;
-						sourceWidget = widget;
-						return false;
+						sourceWidget = $scope.bucket.widgets[i];
+						break;
 					}
-				});
+				}
 				console.assert(sourceWidget, 'missing source widget', sourceId);
 				$scope.bucket.widgets.splice(sourceIndex, 1);
 				if (targetId.charAt(0) === '+') {
 					sourceWidget.placement = targetId.substring(1);
 					$scope.bucket.widgets.push(sourceWidget);
 				} else {
-					$.each($scope.bucket.widgets, (i, widget) => {
+					for (var j = 0; j < $scope.bucket.widgets.length; j++) {
+						var widget = $scope.bucket.widgets[j];
 						if (widget.id === targetId) {
 							sourceWidget.placement = widget.placement;
-							$scope.bucket.widgets.splice(i, 0, sourceWidget);
-							return false;
+							$scope.bucket.widgets.splice(j, 0, sourceWidget);
+							break;
 						}
-					});
+					}
 				}
 				$scope.refresh();
 			};
@@ -168,7 +169,7 @@
 			};
 
 			function search(q, facets) {
-				return $http.get('/buckets/' + $scope.bucketId + '/?' + $.param({ q: q, facet: facets }, true));
+				return $http.get('/buckets/' + $scope.bucketId + '/?' + param({ q: q, facet: facets }, true));
 			}
 			/**
 			 * Escape commas.
@@ -177,7 +178,14 @@
 				return typeof s === 'string' ? s.replace(/,/g, '\\,') : s;
 			}
 			$scope.search = (params, callback) => {
-				var facets = $.map(params, (param) => $.map(param, (value, key) => (angular.isDefined(value) && value !== null && value !== '' ? key + ':' + escape(value) : null)).join(','));
+				var facets = params
+					.filter((p) => p != null)
+					.map((p) =>
+						Object.entries(p)
+							.map(([key, value]) => (angular.isDefined(value) && value !== null && value !== '' ? key + ':' + escape(value) : null))
+							.filter((v) => v != null)
+							.join(','),
+					);
 				var t0 = Date.now();
 				var requests = [search($scope.constraints, facets)];
 				if ($scope.constraintsB.length > 0) {
@@ -196,7 +204,7 @@
 			};
 			$scope.refresh = () => {
 				$scope.updateConstraints();
-				var params = $.map($scope.widgets, (widget) => widget.params());
+				var params = $scope.widgets.map((widget) => widget.params());
 				$scope.$broadcast('refresh');
 				$scope.search(params, (response, responseB) => {
 					$scope.total = response.total;
@@ -241,26 +249,26 @@
 			});
 
 			function parseConstraints(value) {
-				if (value && !$.isArray(value)) {
+				if (value && !Array.isArray(value)) {
 					value = value.split('|');
 				}
-				return value ? $.map(value, (s) => Constraint.parse(s)) : [];
+				return value ? value.map((s) => Constraint.parse(s)) : [];
 			}
 			$scope.updateConstraints = () => {
 				$scope.constraints = parseConstraints($location.search()['q']);
 				$scope.constraintsB = parseConstraints($location.search()['r']);
 			};
-			$scope.getConstraints = (field) => $.grep($scope.constraints, (constraint) => constraint.field === field);
-			$scope.getConstraintsB = (field) => $.grep($scope.constraintsB, (constraint) => constraint.field === field);
+			$scope.getConstraints = (field) => $scope.constraints.filter((constraint) => constraint.field === field);
+			$scope.getConstraintsB = (field) => $scope.constraintsB.filter((constraint) => constraint.field === field);
 			$scope.getConstraintsString = () => {
 				var items = mapToString($scope.constraints);
 				return items !== null ? items.join('|') : null;
 			};
 			function containsConstraint(constraint) {
-				return $.grep($scope.constraints, (c) => angular.equals(c, constraint)).length > 0;
+				return $scope.constraints.some((c) => angular.equals(c, constraint));
 			}
 			function mapToString(values) {
-				return values.length > 0 ? $.map(values, (value) => value.toString()) : null;
+				return values.length > 0 ? values.map((value) => value.toString()) : null;
 			}
 			function params() {
 				var value = {};
@@ -284,7 +292,7 @@
 					return;
 				}
 				if (replace) {
-					$scope.constraints = $.grep($scope.constraints, (c) => c.field !== constraint.field);
+					$scope.constraints = $scope.constraints.filter((c) => c.field !== constraint.field);
 				}
 				$scope.constraints.push(constraint);
 				$location.search(params());
@@ -294,19 +302,19 @@
 				$location.search(params());
 			};
 			$scope.removeConstraint = (constraint) => {
-				$scope.constraints = $.grep($scope.constraints, (c) => !angular.equals(c, constraint));
+				$scope.constraints = $scope.constraints.filter((c) => !angular.equals(c, constraint));
 				$location.search(params());
 			};
 			$scope.removeConstraintB = (constraint) => {
-				$scope.constraintsB = $.grep($scope.constraintsB, (c) => !angular.equals(c, constraint));
+				$scope.constraintsB = $scope.constraintsB.filter((c) => !angular.equals(c, constraint));
 				$location.search(params());
 			};
 			$scope.invertConstraint = (constraint) => {
-				$scope.constraints = $.map($scope.constraints, (c) => (angular.equals(c, constraint) ? c.invert() : c));
+				$scope.constraints = $scope.constraints.map((c) => (angular.equals(c, constraint) ? c.invert() : c));
 				$location.search(params());
 			};
 			$scope.invertConstraintB = (constraint) => {
-				$scope.constraintsB = $.map($scope.constraintsB, (c) => (angular.equals(c, constraint) ? c.invert() : c));
+				$scope.constraintsB = $scope.constraintsB.map((c) => (angular.equals(c, constraint) ? c.invert() : c));
 				$location.search(params());
 			};
 			$scope.getConstraintIcon = (constraint) => {
@@ -430,14 +438,14 @@
 				$scope.isView = $scope.newBucket.aliases && $scope.newBucket.aliases.length > 0;
 				$scope.selected = null;
 				$scope.filter = null;
-				$http.get('/users/' + $scope.user['@id'] + '/buckets/?' + $.param({ order: 'label', offset: 0, limit: 100, labels_only: true })).success((response) => {
+				$http.get('/users/' + $scope.user['@id'] + '/buckets/?' + param({ order: 'label', offset: 0, limit: 100, labels_only: true })).success((response) => {
 					$scope.buckets = response.buckets;
 				});
 				tracker.event('dialog', 'edit bucket');
 			};
 			$scope.listBuckets = () => {
 				if ($scope.buckets) {
-					return $.grep($scope.buckets, (bucket) => !bucket.aliases && $.grep($scope.newBucket.aliases, (alias) => alias['@id'] === bucket['@id']).length === 0);
+					return $scope.buckets.filter((bucket) => !bucket.aliases && !$scope.newBucket.aliases.some((alias) => alias['@id'] === bucket['@id']));
 				}
 			};
 			$scope.addBucket = () => {
@@ -446,7 +454,7 @@
 				$scope.filter = null;
 			};
 			$scope.removeBucket = (bucketId) => {
-				$scope.newBucket.aliases = $.grep($scope.newBucket.aliases, (bucket) => bucket['@id'] !== bucketId);
+				$scope.newBucket.aliases = $scope.newBucket.aliases.filter((bucket) => bucket['@id'] !== bucketId);
 			};
 			$scope.valid = () => !$scope.isView || $scope.newBucket.aliases.length > 0;
 			$scope.save = () => {

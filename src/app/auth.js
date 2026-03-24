@@ -155,7 +155,7 @@
 			$scope.save = () => {
 				$scope.alert.clear();
 				var data = $scope.data();
-				if (!$.isEmptyObject(data)) {
+				if (Object.keys(data).length !== 0) {
 					$http
 						.post('/users/@' + $scope.username, data)
 						.success((response, status, headers) => {
@@ -242,7 +242,7 @@
 				$http({
 					method: 'POST',
 					url: '/oauth/token',
-					data: $.param({ grant_type: 'password', username: $scope.username, password: $scope.password }),
+					data: param({ grant_type: 'password', username: $scope.username, password: $scope.password }),
 					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 				})
 					.success((response) => {
@@ -423,7 +423,7 @@
 		'$window',
 		'token',
 		($scope, $http, $location, $window, token) => {
-			var getRedirectUri = (params) => [$scope.redirectUri, $.param(params)].join(/[?#]$/.test($scope.redirectUri) ? '' : '#');
+			var getRedirectUri = (params) => [$scope.redirectUri, param(params)].join(/[?#]$/.test($scope.redirectUri) ? '' : '#');
 
 			$scope.valid = () => $scope.client && $scope.redirectUri && $scope.bucket;
 			$scope.allow = () => {
@@ -468,7 +468,7 @@
 			$scope.$watch('user', (user) => {
 				if (user) {
 					$http
-						.get('/users/' + $scope.user['@id'] + '/buckets/?' + $.param({ order: 'label', offset: 0, limit: 100, label_only: true }))
+						.get('/users/' + $scope.user['@id'] + '/buckets/?' + param({ order: 'label', offset: 0, limit: 100, label_only: true }))
 						.success((response) => {
 							$scope.buckets = response.buckets;
 						})

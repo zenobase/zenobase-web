@@ -1,3 +1,36 @@
+window.deepExtend = function deepExtend(target, ...sources) {
+	for (const source of sources) {
+		if (source) {
+			for (const key of Object.keys(source)) {
+				if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key]) && Object.getPrototypeOf(source[key]) === Object.prototype) {
+					target[key] = deepExtend(target[key] || {}, source[key]);
+				} else {
+					target[key] = source[key];
+				}
+			}
+		}
+	}
+	return target;
+};
+
+window.param = function param(obj, traditional) {
+	var params = new URLSearchParams();
+	for (var key of Object.keys(obj)) {
+		var value = obj[key];
+		if (value === null || value === undefined) {
+			continue;
+		}
+		if (Array.isArray(value)) {
+			for (var item of value) {
+				params.append(traditional ? key : key + '[]', item);
+			}
+		} else {
+			params.append(key, value);
+		}
+	}
+	return params.toString();
+};
+
 (() => {
 	var app = angular.module('appModule');
 
@@ -159,7 +192,7 @@
 			var apiBaseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) || '';
 
 			var User = function (data) {
-				$.extend(this, data);
+				Object.assign(this, data);
 				cache.put(this['@id'], this);
 			};
 
@@ -270,7 +303,7 @@
 
 		Spreadsheet.prototype.toBlob = function () {
 			var data = this.headers.join('\t') + '\n';
-			$.each(this.records, (i, record) => {
+			this.records.forEach((record) => {
 				data += record.join('\t') + '\n';
 			});
 			return new Blob([data], { type: 'text/plain' });

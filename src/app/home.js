@@ -32,8 +32,8 @@
 				include_archived: $scope.include_archived,
 			});
 			$scope.refresh = (params) => {
-				$http.get('/users/' + $scope.profile['@id'] + '/buckets/?' + $.param($.extend($scope.params(), params))).success((response) => {
-					$.extend($scope, params);
+				$http.get('/users/' + $scope.profile['@id'] + '/buckets/?' + param(Object.assign($scope.params(), params))).success((response) => {
+					Object.assign($scope, params);
 					if (response.total === 0 && !$scope.include_archived) {
 						$scope.refresh({ include_archived: true });
 					} else {
@@ -91,9 +91,9 @@
 			});
 			$scope.refresh = (params) => {
 				$http
-					.get('/users/' + $scope.profile['@id'] + '/credentials/?' + $.param($.extend($scope.params(), params)))
+					.get('/users/' + $scope.profile['@id'] + '/credentials/?' + param(Object.assign($scope.params(), params)))
 					.success((response) => {
-						$.extend($scope, params);
+						Object.assign($scope, params);
 						$scope.total = response.total;
 						$scope.credentials = response.items;
 					})
@@ -156,8 +156,8 @@
 				limit: $scope.limit,
 			});
 			$scope.refresh = (params) => {
-				$http.get('/users/' + $scope.profile['@id'] + '/authorizations/?' + $.param($.extend($scope.params(), params))).success((response) => {
-					$.extend($scope, params);
+				$http.get('/users/' + $scope.profile['@id'] + '/authorizations/?' + param(Object.assign($scope.params(), params))).success((response) => {
+					Object.assign($scope, params);
 					$scope.total = response.total;
 					$scope.authorizations = response.authorizations;
 				});
@@ -241,7 +241,7 @@
 			$scope.sources = () => {
 				var sources = [];
 				if ($scope.templates) {
-					$.each($scope.templates, (i, template) => {
+					$scope.templates.forEach((template) => {
 						if (!$scope.category || $scope.category === template.category) {
 							if (sources.indexOf(template.source) === -1) {
 								console.assert(template.source, template);
@@ -255,7 +255,7 @@
 			$scope.categories = () => {
 				var categories = [];
 				if ($scope.templates) {
-					$.each($scope.templates, (i, template) => {
+					$scope.templates.forEach((template) => {
 						if (!$scope.source || $scope.source === template.source) {
 							if (categories.indexOf(template.category) === -1) {
 								console.assert(template.category, template);
@@ -303,12 +303,7 @@
 			var setTemplate = () => {
 				if ($scope.templates) {
 					if ($scope.source && $scope.category) {
-						$.each($scope.templates, (i, template) => {
-							if (template.source === $scope.source && template.category === $scope.category) {
-								$scope.template = template;
-								return false;
-							}
-						});
+						$scope.template = $scope.templates.find((template) => template.source === $scope.source && template.category === $scope.category) || null;
 					} else {
 						$scope.template = null;
 					}
@@ -333,7 +328,7 @@
 				$scope.aliases = [];
 				$scope.selected = null;
 				$scope.filter = null;
-				$http.get('/users/' + $scope.profile['@id'] + '/buckets/?' + $.param({ order: 'label', offset: 0, limit: 100, labels_only: true })).success((response) => {
+				$http.get('/users/' + $scope.profile['@id'] + '/buckets/?' + param({ order: 'label', offset: 0, limit: 100, labels_only: true })).success((response) => {
 					$scope.buckets = response.buckets;
 				});
 				tracker.event('dialog', 'create view');
@@ -341,7 +336,7 @@
 			$scope.valid = () => $scope.aliases.length > 0;
 			$scope.create = () => {
 				$scope.alert.clear();
-				var aliases = $.map($scope.aliases, (alias) => ({ '@id': alias['@id'], filter: alias.filter }));
+				var aliases = $scope.aliases.map((alias) => ({ '@id': alias['@id'], filter: alias.filter }));
 				$http
 					.post('/buckets/', { label: $scope.label, aliases: aliases })
 					.success((response, status, headers) => {
@@ -362,7 +357,7 @@
 			};
 			$scope.listBuckets = () => {
 				if ($scope.buckets) {
-					return $.grep($scope.buckets, (bucket) => !bucket.aliases && $.grep($scope.aliases, (alias) => alias['@id'] === bucket['@id']).length === 0);
+					return $scope.buckets.filter((bucket) => !bucket.aliases && !$scope.aliases.some((alias) => alias['@id'] === bucket['@id']));
 				}
 			};
 			$scope.addBucket = () => {
@@ -375,7 +370,7 @@
 				$scope.filter = null;
 			};
 			$scope.removeBucket = (bucket) => {
-				$scope.aliases = $.grep($scope.aliases, (alias) => alias['@id'] !== bucket['@id']);
+				$scope.aliases = $scope.aliases.filter((alias) => alias['@id'] !== bucket['@id']);
 			};
 		},
 	]);
@@ -488,7 +483,7 @@
 					label: template.label,
 					placement: $scope.placement,
 				};
-				$.extend(true, settings, template.settings);
+				deepExtend(settings, template.settings);
 				$scope.addWidget(settings);
 				$timeout(() => {
 					$('#' + settings.id + '-tab').tab('show');
@@ -496,8 +491,8 @@
 					$scope.setDirty(true);
 				}, 500);
 			};
-			$scope.findTemplates = () => $.grep($scope.templates, (template) => !template.singleton || !$scope.exists(template));
-			$scope.exists = (template) => $scope.bucket && $.grep($scope.bucket.widgets, (widget) => widget.type === template.type).length > 0;
+			$scope.findTemplates = () => $scope.templates.filter((template) => !template.singleton || !$scope.exists(template));
+			$scope.exists = (template) => $scope.bucket?.widgets.some((widget) => widget.type === template.type);
 		},
 	]);
 })();

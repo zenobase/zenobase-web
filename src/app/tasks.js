@@ -10,7 +10,7 @@
 			var runAll = ($scope, bucketId) =>
 				$http.get('/buckets/' + bucketId + '/tasks/').then((response) => {
 					var previous = $q.when(null); // run tasks sequentially
-					$.each(response.data.tasks, (i, task) => {
+					response.data.tasks.forEach((task) => {
 						previous = previous.then(
 							() => runOne($scope, task['@id']),
 							() => $q.reject(),
@@ -108,9 +108,9 @@
 			});
 			$scope.refresh = (params) => {
 				$http
-					.get('/buckets/' + $scope.$parent.bucketId + '/tasks/?' + $.param($.extend($scope.params(), params)))
+					.get('/buckets/' + $scope.$parent.bucketId + '/tasks/?' + param(Object.assign($scope.params(), params)))
 					.success((response) => {
-						$.extend($scope, params);
+						Object.assign($scope, params);
 						$scope.total = response.total;
 						$scope.tasks = response.tasks;
 					})
@@ -140,7 +140,7 @@
 			$scope.formatTooltip = (task) => {
 				if (task.settings) {
 					var tooltip = '';
-					$.each(task.settings, (field, value) => {
+					Object.entries(task.settings).forEach(([field, value]) => {
 						if (tooltip) {
 							tooltip += '\n';
 						}
@@ -211,12 +211,10 @@
 
 			function selectType(id) {
 				if (id) {
-					$.each($scope.types, (i, type) => {
-						if (type.id === id) {
-							$scope.type = type;
-							return false;
-						}
-					});
+					var found = $scope.types.find((type) => type.id === id);
+					if (found) {
+						$scope.type = found;
+					}
 				} else {
 					$scope.type = $scope.types[0];
 				}

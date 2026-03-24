@@ -121,8 +121,8 @@
 			};
 			$scope.refresh = (params) => {
 				var path = $scope.constraint ? '/users/' + $scope.constraint + '/journal/' : '/journal/';
-				$http.get(path + '?' + $.param($.extend($scope.params(), params))).success((response) => {
-					$.extend($scope, params);
+				$http.get(path + '?' + param(Object.assign($scope.params(), params))).success((response) => {
+					Object.assign($scope, params);
 					$scope.total = response.total;
 					$scope.commands = response.commands;
 				});
@@ -179,8 +179,8 @@
 			var path = (resource) => ($scope.constraint ? '/users/' + $scope.constraint + resource : resource);
 			$scope.refresh = (params) => {
 				$scope.token = token.get();
-				$http.get(path('/buckets/') + '?' + $.param($.extend($scope.params(), params))).success((response) => {
-					$.extend($scope, params);
+				$http.get(path('/buckets/') + '?' + param(Object.assign($scope.params(), params))).success((response) => {
+					Object.assign($scope, params);
 					$scope.total = response.total;
 					$scope.buckets = response.buckets;
 				});
@@ -252,8 +252,8 @@
 						}
 					});
 				} else {
-					$http.get('/users/?' + $.param($.extend($scope.params(), params))).success((response) => {
-						$.extend($scope, params);
+					$http.get('/users/?' + param(Object.assign($scope.params(), params))).success((response) => {
+						Object.assign($scope, params);
 						$scope.total = response.total;
 						$scope.users = response.users;
 					});
@@ -321,7 +321,7 @@
 				var updates = $q.when(null);
 				if ($scope.limit !== $scope.user.quota) {
 					updates = updates.then(
-						() => $http.post('/users/@' + $scope.user.name, { quota: $.isNumeric($scope.limit) ? $scope.limit : null }),
+						() => $http.post('/users/@' + $scope.user.name, { quota: Number.isFinite(Number($scope.limit)) ? $scope.limit : null }),
 						() => $q.reject(),
 					);
 				}
@@ -375,8 +375,8 @@
 			};
 			$scope.refresh = (params) => {
 				var path = $scope.constraint ? '/users/' + $scope.constraint + '/authorizations/' : '/authorizations/';
-				$http.get(path + '?' + $.param($.extend($scope.params(), params))).success((response) => {
-					$.extend($scope, params);
+				$http.get(path + '?' + param(Object.assign($scope.params(), params))).success((response) => {
+					Object.assign($scope, params);
 					$scope.total = response.total;
 					$scope.authorizations = response.authorizations;
 				});
@@ -430,8 +430,8 @@
 			};
 			$scope.refresh = (params) => {
 				var path = $scope.constraint ? '/users/' + $scope.constraint + '/credentials/' : '/credentials/';
-				$http.get(path + '?' + $.param($.extend($scope.params(), params))).success((response) => {
-					$.extend($scope, params);
+				$http.get(path + '?' + param(Object.assign($scope.params(), params))).success((response) => {
+					Object.assign($scope, params);
 					$scope.total = response.total;
 					$scope.credentials = response.items;
 				});
@@ -487,8 +487,8 @@
 			};
 			$scope.refresh = (params) => {
 				var path = $scope.constraint ? '/users/' + $scope.constraint + '/tasks/' : '/tasks/';
-				$http.get(path + '?' + $.param($.extend($scope.params(), params))).success((response) => {
-					$.extend($scope, params);
+				$http.get(path + '?' + param(Object.assign($scope.params(), params))).success((response) => {
+					Object.assign($scope, params);
 					$scope.total = response.total;
 					$scope.tasks = response.tasks;
 				});
@@ -545,8 +545,8 @@
 				limit: $scope.limit,
 			});
 			$scope.refresh = (params) => {
-				$http.get('/snapshots/?' + $.param($.extend($scope.params(), params))).success((response) => {
-					$.extend($scope, params);
+				$http.get('/snapshots/?' + param(Object.assign($scope.params(), params))).success((response) => {
+					Object.assign($scope, params);
 					$scope.total = response.total;
 					$scope.snapshots = response.snapshots;
 				});

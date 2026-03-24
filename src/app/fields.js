@@ -43,9 +43,9 @@
 
 			Field.findAll = () => fields;
 
-			Field.findEditable = () => $.grep(fields, (field) => !field.readOnly);
+			Field.findEditable = () => fields.filter((field) => !field.readOnly);
 
-			Field.findByType = (type) => $.grep(fields, (field) => field.type === type).sort((a, b) => (a.name > b.name ? 1 : -1));
+			Field.findByType = (type) => fields.filter((field) => field.type === type).sort((a, b) => (a.name > b.name ? 1 : -1));
 
 			function encode(value) {
 				return $('<div />').text(value).html();
@@ -310,7 +310,7 @@
 				toNumber: (value) => {
 					var n = toNumber(value);
 					if (value && Number.isNaN(n)) {
-						$.each(value.split(' '), (i, token) => {
+						for (var token of value.split(' ')) {
 							var m = /^(-?\d+)(d|h|min|s)?$/.exec(token);
 							if (m) {
 								var ms = Number(m[1]);
@@ -331,9 +331,9 @@
 								n = Number.isNaN(n) ? ms : n + ms;
 							} else {
 								n = Number.NaN;
-								return false;
+								break;
 							}
-						});
+						}
 					}
 					return n;
 				},

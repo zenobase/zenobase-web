@@ -10,7 +10,7 @@
 				if (csv.errors.length) {
 					throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 				}
-				$.each(csv.data, (rowNum, row) => {
+				csv.data.forEach((row) => {
 					var f = 'DD/MMM/YYYY H:mm:ss';
 					var t0 = moment(row['Start'], f);
 					var t1 = moment(row['Finish'], f);
@@ -150,7 +150,7 @@
 			function parseSleepNotes(values) {
 				var tags = ['sleep'];
 				if (values) {
-					$.each(values.split(':'), (i, value) => {
+					values.split(':').forEach((value) => {
 						tags.push(value.toLowerCase());
 					});
 				}
@@ -166,7 +166,7 @@
 					if (!angular.equals(headers, expected)) {
 						throw new Error('Expected headers: ' + expected.join(', '));
 					}
-					$.each(lines, (i, line) => {
+					lines.forEach((line) => {
 						var fields = line.split(';');
 						if (line.trim()) {
 							if (fields.length < expected.length) {
@@ -201,7 +201,7 @@
 			if (csv.errors.length) {
 				throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 			}
-			$.each(csv.data, (rowNum, row) => {
+			csv.data.forEach((row) => {
 				var event = {
 					timestamp: row['timestamp'],
 					tag: [],
@@ -247,7 +247,7 @@
 				var events = [];
 				var data = JSON.parse(s);
 				var tags = {};
-				var add = (i, item) => {
+				var add = (item) => {
 					var event = {
 						timestamp: moment(item.time).utcOffset(-item.offset).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
 						tag: tags[item.parent],
@@ -268,18 +268,18 @@
 					}
 					events.push(event);
 				};
-				$.each(data.trackers, (i, tracker) => {
+				data.trackers.forEach((tracker) => {
 					tags[tracker._id] = [tracker.label];
 					if (tracker.groups) {
-						$.each(tracker.groups, (i, group) => {
+						tracker.groups.forEach((group) => {
 							if (group) {
 								tags[tracker._id].push(group);
 							}
 						});
 					}
 				});
-				$.each(data.ticks, add);
-				$.each(data.notes, add);
+				data.ticks.forEach(add);
+				data.notes.forEach(add);
 				return events;
 			}
 
@@ -289,7 +289,7 @@
 				if (csv.errors.length) {
 					throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 				}
-				$.each(csv.data, (rowNum, row) => {
+				csv.data.forEach((row) => {
 					var t = moment(row['iso_date']);
 					var offset = Number(row['offset']);
 					if (Number.isFinite(offset)) {
@@ -344,7 +344,7 @@
 				if (csv.errors.length) {
 					throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 				}
-				$.each(csv.data, (rowNum, row) => {
+				csv.data.forEach((row) => {
 					var t0 = moment(row['start']);
 					var t1 = moment(row['end']);
 					var offset = Number(row['offset']);
@@ -453,7 +453,7 @@
 						frequencies = [];
 						temperatures = [];
 					}
-					$.each(csv.data, (rowNum, row) => {
+					csv.data.forEach((row) => {
 						var t = moment(row['date']);
 						var h = t.format('YYYY-MM-DDTHH:00:00.000Z');
 						if (hour && hour !== h) {
@@ -530,7 +530,7 @@
 						luxes = [];
 						uvs = [];
 					}
-					$.each(csv.data, (rowNum, row) => {
+					csv.data.forEach((row) => {
 						var t = moment.tz(row['date'], settings.timezone);
 						var h = t.format('YYYY-MM-DDTHH:00:00.000Z');
 						if (hour && hour !== h) {
@@ -559,7 +559,7 @@
 				if (csv.errors.length) {
 					throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 				}
-				$.each(csv.data, (rowNum, row) => {
+				csv.data.forEach((row) => {
 					var event = {
 						timestamp: moment(row['CalendarDate']).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
 						tag: [row['HabitName']],
@@ -584,7 +584,7 @@
 				if (csv.errors.length) {
 					throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 				}
-				$.each(csv.data, (rowNum, row) => {
+				csv.data.forEach((row) => {
 					var t0 = moment.tz(row['Start'], settings.timezone);
 					var t1 = moment.tz(row['End'], settings.timezone);
 					var event = {
@@ -613,7 +613,7 @@
 				if (csv.errors.length) {
 					throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 				}
-				$.each(csv.data, (rowNum, row) => {
+				csv.data.forEach((row) => {
 					var event = {
 						timestamp: moment.tz(row['Date'], 'DD/MM/YYYY HH:mm:ss', settings.timezone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
 						tag: [settings.tag],
@@ -646,7 +646,7 @@
 				if (csv.errors.length) {
 					throw new Error(csv.errors[0].message + ' in row ' + csv.errors[0].row);
 				}
-				$.each(csv.data, (rowNum, row) => {
+				csv.data.forEach((row) => {
 					var t = moment.tz(row[2], 'MM-DD-YYYY LT', settings.timezone);
 					var event = {
 						timestamp: t.format('YYYY-MM-DDTHH:mm:00.000Z'),
@@ -723,7 +723,7 @@
 							if (events?.events) {
 								events = events.events;
 							}
-							return $.isArray(events) ? events : [];
+							return Array.isArray(events) ? events : [];
 						} else {
 							return EventSpreadsheet.parse(data);
 						}
@@ -813,12 +813,10 @@
 				$scope.clearFiles();
 				$scope.format = $scope.formats[0];
 				if (formatId) {
-					$.each($scope.formats, (i, format) => {
-						if (format.id === formatId) {
-							$scope.format = format;
-							return false;
-						}
-					});
+					var found = $scope.formats.find((format) => format.id === formatId);
+					if (found) {
+						$scope.format = found;
+					}
 				}
 				tracker.event('dialog', 'import events');
 			};
@@ -995,8 +993,8 @@
 				if ($scope.media === 'csv') {
 					params.accept = 'text/plain';
 				}
-				if (!$.isEmptyObject(params)) {
-					url += '?' + $.param(params, true);
+				if (Object.keys(params).length > 0) {
+					url += '?' + param(params, true);
 				}
 				return url;
 			};

@@ -77,7 +77,7 @@
 						values = [this.value];
 					}
 				}
-				return $.map(values, (value) => new Constraint(field, value));
+				return values.map((value) => new Constraint(field, value));
 			};
 
 			return WidgetFilter;
@@ -140,10 +140,10 @@
 				filter: $scope.filter.build().join('|'),
 			});
 			$scope.refresh = (options, settings) => {
-				$scope.search([$.extend($scope.params(), options, settings)], (result) => {
+				$scope.search([Object.assign($scope.params(), options, settings)], (result) => {
 					$scope.init();
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result);
 				});
 			};
@@ -174,7 +174,7 @@
 		'Field',
 		($scope, WidgetDialogControllerSupport, Field) => {
 			var fields = ['timestamp'];
-			$.each(Field.findByType('numeric'), (i, field) => {
+			Field.findByType('numeric').forEach((field) => {
 				fields.push(field.name);
 			});
 
@@ -212,9 +212,9 @@
 			});
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend($scope.params(), options, settings)], (result) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign($scope.params(), options, settings)], (result) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result);
 				});
 			};
@@ -271,16 +271,16 @@
 			});
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend($scope.params(), options, settings)], (result) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign($scope.params(), options, settings)], (result) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result);
 				});
 			};
 			$scope.update = (event, result) => {
 				$scope.terms = result[$scope.settings.id] || [];
 				if ($scope.terms) {
-					$.each($scope.terms, (i, term) => {
+					$scope.terms.forEach((term) => {
 						term.freq = Math.round((new Date(term.last).getTime() - new Date(term.first).getTime()) / (term.count - 1));
 					});
 				}
@@ -304,7 +304,7 @@
 			WidgetDialogControllerSupport($scope, ['term', 'max']);
 
 			$scope.fields = Field.findByType('text');
-			$scope.subfields = $.map(Field.find($scope.keyField).subfields, (subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
+			$scope.subfields = Field.find($scope.keyField).subfields.map((subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
 		},
 	]);
 
@@ -326,9 +326,9 @@
 			};
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend($scope.params(), options, settings)], (result) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign($scope.params(), options, settings)], (result) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result);
 				});
 			};
@@ -374,9 +374,9 @@
 			});
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend($scope.params(), options, settings)], (result, resultB) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign($scope.params(), options, settings)], (result, resultB) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result, resultB);
 				});
 			};
@@ -390,7 +390,7 @@
 			$scope.toSpreadsheet = () => {
 				var spreadsheet = new Spreadsheet([$scope.settings.field, 'count']);
 				var field = Field.find($scope.settings.field);
-				$.each($scope.intervals, (i, interval) => {
+				$scope.intervals.forEach((interval) => {
 					var value = '[' + field.toText(interval.from) + '..' + field.toText(interval.to) + ')';
 					spreadsheet.addRecord([value, interval.count]);
 				});
@@ -480,7 +480,7 @@
 							enabled: false,
 						},
 					};
-					$.each($scope.intervals, (i, interval) => {
+					$scope.intervals.forEach((interval) => {
 						options.xAxis.categories.push(field.toText(interval.from) + '..' + field.toText(interval.to));
 						options.series[0].data.push(interval.count);
 					});
@@ -504,7 +504,7 @@
 
 			function isUnitValid() {
 				var units = $scope.getUnits();
-				return units.length === 0 ? $scope.settings.unit === null : $.inArray($scope.settings.unit, units) !== -1;
+				return units.length === 0 ? $scope.settings.unit === null : units.includes($scope.settings.unit);
 			}
 
 			$scope.getField = () => Field.find($scope.settings.field);
@@ -546,9 +546,9 @@
 			});
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend($scope.params(), options, settings)], (result) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign($scope.params(), options, settings)], (result) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result);
 				});
 			};
@@ -576,7 +576,7 @@
 
 			$scope.isUnitValid = () => {
 				var units = $scope.getUnits();
-				return units.length === 0 ? $scope.settings.unit === null : $.inArray($scope.settings.unit, units) !== -1;
+				return units.length === 0 ? $scope.settings.unit === null : units.includes($scope.settings.unit);
 			};
 			$scope.getKeyFields = () => Field.findByType('text');
 			$scope.getValueFields = () => Field.findByType('numeric');
@@ -734,11 +734,11 @@
 				$scope.interval = Interval.valueOf($scope.settings.interval) || Interval.VALUES[1];
 				$scope.range = '';
 				var q = '';
-				$.each($scope.getConstraints($scope.keyField), (i, constraint) => {
+				$scope.getConstraints($scope.keyField).forEach((constraint) => {
 					q = constraint.value;
 				});
 				var r = '';
-				$.each($scope.getConstraintsB($scope.keyField), (i, constraint) => {
+				$scope.getConstraintsB($scope.keyField).forEach((constraint) => {
 					r = constraint.value;
 				});
 				var prefix = commonPrefix(q, r);
@@ -762,9 +762,9 @@
 			};
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend($scope.params(), options, settings)], (result, resultB) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign($scope.params(), options, settings)], (result, resultB) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.$broadcast('settings'); // notify nested widget
 					$scope.update(null, result, resultB);
 				});
@@ -800,7 +800,7 @@
 				var begin = null;
 				var end = null;
 				var length = 0;
-				$.each(times, (i, time) => {
+				times.forEach((time) => {
 					if (time.count > 0) {
 						begin = begin || time.value;
 						++length;
@@ -875,13 +875,13 @@
 				}
 				var spreadsheet = new Spreadsheet([$scope.interval.name, header]);
 				var field = Field.find($scope.settings.field);
-				$.each($scope.times, (i, time) => {
+				$scope.times.forEach((time) => {
 					var value = time[$scope.settings.statistic || 'count'];
 					spreadsheet.addRecord([time.label, angular.isDefined(value) ? field.toNumber(value) : '']);
 				});
 				if ($scope.timesB?.length) {
 					spreadsheet.addHeader(header);
-					$.each($scope.timesB, (i, time) => {
+					$scope.timesB.forEach((time) => {
 						var value = time[$scope.settings.statistic || 'count'];
 						spreadsheet.mergeRecord([time.label, angular.isDefined(value) ? field.toNumber(value) : '']);
 					});
@@ -900,17 +900,17 @@
 								selection: (event) => {
 									var from = null;
 									var to = null;
-									$.each($scope.times, (i, time) => {
+									$scope.times.forEach((time) => {
 										from = from || time.label;
 										to = time.label;
 									});
-									$.each($scope.times, (i, time) => {
-										if (time.time >= event.xAxis[0].min) {
-											from = time.label;
-											return false;
+									for (var ti = 0; ti < $scope.times.length; ti++) {
+										if ($scope.times[ti].time >= event.xAxis[0].min) {
+											from = $scope.times[ti].label;
+											break;
 										}
-									});
-									$.each($scope.times, (i, time) => {
+									}
+									$scope.times.forEach((time) => {
 										if (time.time <= event.xAxis[0].max) {
 											to = time.label;
 										}
@@ -1013,7 +1013,7 @@
 					if ($scope.settings.placement === 'top') {
 						options.chart.height = 150;
 					}
-					$.each($scope.times, (i, time) => {
+					$scope.times.forEach((time) => {
 						var value = time[$scope.settings.statistic || 'count'];
 						if (value !== undefined) {
 							options.series[0].data.push({ x: time.time, y: field.toNumber(value), filter: time.label, tooltip: field.toText(value) });
@@ -1063,7 +1063,7 @@
 							fillColor: 'rgba(204, 102, 0, 0.1)',
 							zIndex: 0,
 						});
-						$.each($scope.timesB, (i, time) => {
+						$scope.timesB.forEach((time) => {
 							var value = time[$scope.settings.statistic || 'count'];
 							if (value !== undefined) {
 								options.series[2].data.push({ x: time.time, y: field.toNumber(value), filter: time.label, tooltip: field.toText(value) });
@@ -1117,7 +1117,7 @@
 			function toXY(times) {
 				var xy = [];
 				var field = Field.find($scope.settings.field);
-				$.each(times, (i, time) => {
+				times.forEach((time) => {
 					var value = time[$scope.settings.statistic || 'count'];
 					if (value !== undefined) {
 						xy.push([time.time, field.toNumber(value)]);
@@ -1158,7 +1158,7 @@
 			$scope.refresh = (options, settings) => {
 				$scope.init();
 				if (shouldRequestStats()) {
-					$scope.search([$.extend($scope.params(), options, settings)], (result, resultB) => {
+					$scope.search([Object.assign($scope.params(), options, settings)], (result, resultB) => {
 						$scope.update(null, result, resultB);
 					});
 				} else {
@@ -1190,8 +1190,8 @@
 				return r;
 			}
 			function toNumbers(items, field) {
-				var numbers = $.map(items, (item) => field.toNumber(item[$scope.settings.statistic || 'count']));
-				return $.grep(numbers, (number) => !Number.isNaN(number));
+				var numbers = items.map((item) => field.toNumber(item[$scope.settings.statistic || 'count']));
+				return numbers.filter((number) => !Number.isNaN(number));
 			}
 			function toObject(number) {
 				return $scope.settings.unit ? { '@value': number, unit: $scope.settings.unit } : number;
@@ -1324,10 +1324,10 @@
 
 			function isUnitValid() {
 				var units = $scope.getUnits();
-				return units.length === 0 ? $scope.settings.unit === null : $.inArray($scope.settings.unit, units) !== -1;
+				return units.length === 0 ? $scope.settings.unit === null : units.includes($scope.settings.unit);
 			}
 			function isStatisticValid() {
-				return $.grep($scope.getStatistics($scope.settings.field), (statistic) => $scope.settings.statistic === statistic).length > 0;
+				return $scope.getStatistics($scope.settings.field).filter((statistic) => $scope.settings.statistic === statistic).length > 0;
 			}
 
 			$scope.init = () => {
@@ -1341,7 +1341,7 @@
 			};
 			$scope.getStatistics = (field) => (field === $scope.keyField ? ['count'] : ['sum', 'avg', 'min', 'max']);
 			$scope.getUnits = () => Field.find($scope.settings.field).units || [];
-			$scope.subfields = $.map(Field.find($scope.keyField).subfields, (subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
+			$scope.subfields = Field.find($scope.keyField).subfields.map((subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
 			$scope.getIntervals = () => Interval.VALUES;
 			$scope.valid = () => isUnitValid() && isStatisticValid();
 
@@ -1371,7 +1371,7 @@
 				var f = (2 * Math.PI) / data.length; // factor for converting keys to radians
 				var x = 0;
 				var y = 0;
-				$.each(data, (i, time) => {
+				data.forEach((time) => {
 					x += time.count * Math.sin(f * i);
 					y += time.count * Math.cos(f * i);
 				});
@@ -1413,9 +1413,9 @@
 			});
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend($scope.params(), options, settings)], (result, resultB) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign($scope.params(), options, settings)], (result, resultB) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result, resultB);
 				});
 			};
@@ -1437,13 +1437,13 @@
 				}
 				var spreadsheet = new Spreadsheet([$scope.settings.interval, header]);
 				var field = Field.find($scope.settings.value_field);
-				$.each($scope.times, (i, time) => {
+				$scope.times.forEach((time) => {
 					var value = time[$scope.settings.statistic || 'count'];
 					spreadsheet.addRecord([time.value, angular.isDefined(value) ? field.toNumber(value) : '']);
 				});
 				if ($scope.timesB?.length) {
 					spreadsheet.addHeader(header);
-					$.each($scope.timesB, (i, time) => {
+					$scope.timesB.forEach((time) => {
 						var value = time[$scope.settings.statistic || 'count'];
 						spreadsheet.mergeRecord([time.value, angular.isDefined(value) ? field.toNumber(value) : '']);
 					});
@@ -1518,7 +1518,7 @@
 					if ($scope.settings.placement === 'top') {
 						options.chart.height = 150;
 					}
-					$.each($scope.times, (i, time) => {
+					$scope.times.forEach((time) => {
 						var value = time[$scope.settings.statistic || 'count'];
 						options.xAxis.categories.push(time.label);
 						options.series[0].data.push(value !== undefined ? field.toNumber(value) : 0);
@@ -1536,7 +1536,7 @@
 								},
 							},
 						});
-						$.each($scope.timesB, (i, time) => {
+						$scope.timesB.forEach((time) => {
 							var value = time[$scope.settings.statistic || 'count'];
 							options.xAxis.categories.push(time.label);
 							options.series[1].data.push(value !== undefined ? field.toNumber(value) : 0);
@@ -1573,13 +1573,13 @@
 
 			function isUnitValid() {
 				var units = $scope.getUnits();
-				return units.length === 0 ? $scope.settings.unit === null : $.inArray($scope.settings.unit, units) !== -1;
+				return units.length === 0 ? $scope.settings.unit === null : units.includes($scope.settings.unit);
 			}
 			function isStatisticValid() {
-				return $.grep($scope.getStatistics($scope.settings.value_field), (statistic) => $scope.settings.statistic === statistic).length > 0;
+				return $scope.getStatistics($scope.settings.value_field).filter((statistic) => $scope.settings.statistic === statistic).length > 0;
 			}
 
-			$scope.subfields = $.map(Field.find($scope.keyField).subfields, (subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
+			$scope.subfields = Field.find($scope.keyField).subfields.map((subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
 			$scope.getFields = () => {
 				var fields = Field.findByType('numeric');
 				fields.unshift(Field.find($scope.keyField));
@@ -1669,10 +1669,10 @@
 
 		function rank(x) {
 			var ranked = [];
-			$.each(x, (i, a) => {
+			x.forEach((a) => {
 				var rank = 1;
 				var freq = 0;
-				$.each(x, (j, b) => {
+				x.forEach((b) => {
 					if (b > a) {
 						++rank;
 					} else if (b === a) {
@@ -1815,13 +1815,13 @@
 			});
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				var params = $.extend($scope.params(), options, settings);
+				var params = Object.assign($scope.params(), options, settings);
 				if (/hour|minute|second/.test(params.interval)) {
 					params.timezone = timezone;
 				}
 				$scope.search([params], (result, resultB) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result, resultB);
 				});
 			};
@@ -1850,11 +1850,11 @@
 					buildHeader($scope.settings.label_y, $scope.settings.statistic_y, $scope.settings.field_y, $scope.settings.unit_y),
 					compareMode ? 'dataset' : '',
 				]);
-				$.each($scope.data, (i, value) => {
+				$scope.data.forEach((value) => {
 					spreadsheet.addRecord([value[0], value[1], compareMode ? 'a' : '']);
 				});
 				if (compareMode) {
-					$.each($scope.dataB, (i, value) => {
+					$scope.dataB.forEach((value) => {
 						spreadsheet.addRecord([value[0], value[1], 'b']);
 					});
 				}
@@ -2135,7 +2135,7 @@
 
 			function isUnitValid(field, unit) {
 				var units = $scope.getUnits(field);
-				return units.length === 0 ? unit === null : $.inArray(unit, units) !== -1;
+				return units.length === 0 ? unit === null : units.includes(unit);
 			}
 
 			$scope.regressionMethods = ['linear'];
@@ -2145,7 +2145,7 @@
 				fields.unshift(keyField);
 				return fields;
 			};
-			$scope.subfields = $.map(Field.find($scope.keyField).subfields, (subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
+			$scope.subfields = Field.find($scope.keyField).subfields.map((subfield) => ({ label: subfield, value: subfield ? $scope.keyField + '$' + subfield : $scope.keyField }));
 			$scope.getIntervals = () => Interval.VALUES;
 			$scope.getStatistics = (field) => (field === keyField.name ? ['count'] : ['sum', 'avg', 'min', 'max']);
 			$scope.getUnits = (field) => (field && Field.find(field).units) || [];
@@ -2211,9 +2211,9 @@
 			$scope.params = () => params($scope.settings);
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend(params($scope.settings), params(settings))], (result, resultB) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign(params($scope.settings), params(settings))], (result, resultB) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result, resultB);
 				});
 			};
@@ -2278,7 +2278,7 @@
 				}
 			};
 			function drawConstraintBounds(constraints, lineColor) {
-				$.each(constraints, (i, constraint) => {
+				constraints.forEach((constraint) => {
 					var c = constraint.value.split(',');
 					if (c.length === 4) {
 						var sw = new google.maps.LatLng(c[0], c[1]);
@@ -2341,12 +2341,12 @@
 				$scope.addConstraint($scope.field, $scope.map.getBounds().toUrlValue(3), true);
 			};
 			$scope.addPoints = () => {
-				$.each($scope.markers, (i, marker) => {
+				$scope.markers.forEach((marker) => {
 					marker.setMap(null);
 				});
 				$scope.markers = [];
 				if ($scope.map && ($scope.points?.length || $scope.pointsB?.length)) {
-					$.each($scope.points, (i, point) => {
+					$scope.points.forEach((point) => {
 						var marker = new google.maps.Marker({
 							position: new google.maps.LatLng(point.lat, point.lon),
 							map: $scope.map,
@@ -2394,7 +2394,7 @@
 							$scope.markers.push(filterRectangle);
 						}
 					});
-					$.each($scope.pointsB, (i, point) => {
+					$scope.pointsB.forEach((point) => {
 						$scope.markers.push(
 							new google.maps.Marker({
 								position: new google.maps.LatLng(point.lat, point.lon),
@@ -2480,9 +2480,9 @@
 			$scope.params = () => params($scope.settings);
 			$scope.refresh = (options, settings) => {
 				$scope.init();
-				$scope.search([$.extend(params($scope.settings), params(settings))], (result, resultB) => {
-					$.extend($scope, options);
-					$.extend($scope.settings, settings);
+				$scope.search([Object.assign(params($scope.settings), params(settings))], (result, resultB) => {
+					Object.assign($scope, options);
+					Object.assign($scope.settings, settings);
 					$scope.update(null, result, resultB);
 				});
 			};
@@ -2538,7 +2538,7 @@
 				}
 			};
 			function drawConstraintBounds(constraints, lineColor) {
-				$.each(constraints, (i, constraint) => {
+				constraints.forEach((constraint) => {
 					var c = constraint.value.split(',');
 					if (c.length === 4) {
 						var sw = new google.maps.LatLng(c[0], c[1]);
@@ -2605,12 +2605,12 @@
 				if ($scope.map && ($scope.points?.length || $scope.pointsB?.length)) {
 					var field = Field.find($scope.settings.value_field);
 					var data = [];
-					$.each($scope.points, (i, point) => {
+					$scope.points.forEach((point) => {
 						var weight = field && $scope.points.length > 1 ? field.toNumber(point.sum) : point.count;
 						data.push({ position: [point.lon, point.lat], weight: weight });
 					});
 					var dataB = [];
-					$.each($scope.pointsB, (i, point) => {
+					$scope.pointsB.forEach((point) => {
 						var weight = field && $scope.pointsB.length > 1 ? field.toNumber(point.sum) : point.count;
 						dataB.push({ position: [point.lon, point.lat], weight: weight });
 					});
@@ -2754,11 +2754,11 @@
 			};
 			$scope.params = () => null;
 			$scope.update = (event, result) => {
-				$.each(result, (id, data) => {
-					if ($.isArray(data) && data.length && data[0].time) {
+				Object.entries(result).forEach(([id, data]) => {
+					if (Array.isArray(data) && data.length && data[0].time) {
 						var useCounts = true;
 						var _unit = null;
-						var values = $.map(data, (item) => {
+						var values = data.map((item) => {
 							if (Object.hasOwn(item, 'avg')) {
 								if (typeof item.avg === 'object') {
 									_unit = item.avg.unit;
@@ -2776,7 +2776,7 @@
 			};
 			$scope.refresh = (options, settings) => {
 				$scope.stop();
-				$.extend($scope.settings, settings);
+				Object.assign($scope.settings, settings);
 				if ($scope.tracks.length === 0) {
 					$scope.$parent.refresh();
 				}
@@ -2784,7 +2784,7 @@
 			$scope.play = () => {
 				audio.resume();
 				if ($scope.playing === 0) {
-					$.each($scope.tracks, (i, track) => {
+					$scope.tracks.forEach((track) => {
 						play(track, scales[$scope.settings.scale], $scope.settings.tempo, 1.0 / $scope.tracks.length);
 					});
 				}
@@ -2821,11 +2821,11 @@
 			$scope.$on('refresh', $scope.init);
 
 			function normalize(values) {
-				var nonZeroValues = $.grep(values, (value) => value !== 0);
+				var nonZeroValues = values.filter((value) => value !== 0);
 				var min = Math.min.apply(null, nonZeroValues) || 0;
-				values = $.map(values, (value) => Math.max(value - min, 0));
+				values = values.map((value) => Math.max(value - min, 0));
 				var max = Math.max.apply(null, values) || 1;
-				return $.map(values, (value) => value / max);
+				return values.map((value) => value / max);
 			}
 
 			function play(notes, scale, tempo, volume) {

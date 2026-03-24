@@ -3,7 +3,7 @@
 	 * Stub console object if not present.
 	 */
 	((console) => {
-		$.each(['assert', 'log'], (i, method) => {
+		['assert', 'log'].forEach((method) => {
 			console[method] = console[method] || (() => {});
 		});
 	})((window.console = window.console || {}));

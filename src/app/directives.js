@@ -11,10 +11,10 @@
 				var html = '';
 				if (event) {
 					var count = 0;
-					$.each(Field.findAll(), (i, field) => {
+					Field.findAll().forEach((field) => {
 						var value = event[field.name];
 						if (angular.isDefined(value)) {
-							$.each($.isArray(value) ? value : [value], (i, value) => {
+							(Array.isArray(value) ? value : [value]).forEach((value) => {
 								if (count > 0) {
 									html += ' &nbsp; ';
 								}
@@ -226,7 +226,7 @@
 								scope.chart.destroy();
 							}
 							if (newOptions) {
-								scope.chart = new Highcharts.Chart($.extend(true, {}, newOptions, defaultOptions));
+								scope.chart = new Highcharts.Chart(deepExtend({}, newOptions, defaultOptions));
 								$('#' + attrs.uiId + '-tab').on('shown', () => {
 									scope.chart.reflow();
 								});
@@ -295,12 +295,12 @@
 			var validationErrorKey = 'filter';
 
 			function checkSyntax(value) {
-				return !value || $.grep(value.split('|'), (expression) => expression.split(':').length !== 2).length === 0;
+				return !value || value.split('|').filter((expression) => expression.split(':').length !== 2).length === 0;
 			}
 
 			function checkResults(bucket, value, callback) {
 				$http
-					.get('/buckets/' + bucket['@id'] + '/?' + $.param({ q: value.split('|'), limit: 0 }, true))
+					.get('/buckets/' + bucket['@id'] + '/?' + param({ q: value.split('|'), limit: 0 }, true))
 					.success(() => {
 						callback(true);
 					})
