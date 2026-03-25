@@ -1,0 +1,10 @@
+export { default as CountWidget } from './CountWidget.vue';
+export { default as GanttWidget } from './GanttWidget.vue';
+export { default as HeatmapWidget } from './HeatmapWidget.vue';
+export { default as ListWidget } from './ListWidget.vue';
+export { default as MapWidget } from './MapWidget.vue';
+export { default as PolarWidget } from './PolarWidget.vue';
+export { default as RatingsWidget } from './RatingsWidget.vue';
+export { default as ScatterPlotWidget } from './ScatterPlotWidget.vue';
+export { default as ScoreboardWidget } from './ScoreboardWidget.vue';
+export { default as TimelineWidget } from './TimelineWidget.vue';

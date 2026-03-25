@@ -1,0 +1,514 @@
+<script setup lang="ts">
+import { type ComponentPublicInstance, computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import type { Bucket, WidgetSettings } from '../../types';
+import api from '../api';
+import AddWidgetDialog from '../components/AddWidgetDialog.vue';
+import ErrorBoundary from '../components/ErrorBoundary.vue';
+import CreateTaskDialog from '../components/CreateTaskDialog.vue';
+import EditBucketDialog from '../components/EditBucketDialog.vue';
+import EventEditDialog from '../components/EventEditDialog.vue';
+import ExportDialog from '../components/ExportDialog.vue';
+import ImportDialog from '../components/ImportDialog.vue';
+import SaveAsViewDialog from '../components/SaveAsViewDialog.vue';
+import TaskListDialog from '../components/TaskListDialog.vue';
+import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
+import { type AlertApi, alertKey } from '../composables/useAlert';
+import { type AuthApi, authKey } from '../composables/useAuth';
+import { useDashboard } from '../composables/useDashboard';
+import { getFieldIcon } from '../utils/fieldRegistry';
+import { getUserName } from '../utils/userNames';
+import CountWidget from '../widgets/CountWidget.vue';
+import GanttWidget from '../widgets/GanttWidget.vue';
+import HeatmapWidget from '../widgets/HeatmapWidget.vue';
+import HistogramWidget from '../widgets/HistogramWidget.vue';
+import ListWidget from '../widgets/ListWidget.vue';
+import MapWidget from '../widgets/MapWidget.vue';
+import PolarWidget from '../widgets/PolarWidget.vue';
+import RatingsWidget from '../widgets/RatingsWidget.vue';
+import ScatterPlotWidget from '../widgets/ScatterPlotWidget.vue';
+import ScoreboardWidget from '../widgets/ScoreboardWidget.vue';
+import SonificationWidget from '../widgets/SonificationWidget.vue';
+import TimelineWidget from '../widgets/TimelineWidget.vue';
+
+const WIDGET_COMPONENTS: Record<string, unknown> = {
+	list: ListWidget,
+	count: CountWidget,
+	gantt: GanttWidget,
+	ratings: RatingsWidget,
+	histogram: HistogramWidget,
+	timeline: TimelineWidget,
+	polar: PolarWidget,
+	scatterplot: ScatterPlotWidget,
+	map: MapWidget,
+	heatmap: HeatmapWidget,
+	scoreboard: ScoreboardWidget,
+	sonification: SonificationWidget,
+};
+
+const route = useRoute();
+const router = useRouter();
+const auth = inject<AuthApi>(authKey)!;
+const alertApi = inject<AlertApi>(alertKey)!;
+const bucketId = route.params.bucketId as string;
+
+const bucket = ref<Bucket | null>(null);
+const message = ref('');
+const activeTabs = ref<Record<string, string>>({});
+const dirty = ref(false);
+const loading = ref(false);
+const widgetRefs = ref<Record<string, ComponentPublicInstance | null>>({});
+
+function setDirty() {
+	dirty.value = true;
+}
+
+async function run() {
+	alertApi.clear();
+	loading.value = true;
+	try {
+		const response = await api.get<{ tasks: Array<{ '@id': string }> }>(`/buckets/${bucketId}/tasks/`);
+		for (const task of response.data.tasks) {
+			await api.get(`/tasks/${task['@id']}`);
+		}
+		setTimeout(() => dashboard.refresh(), 1000);
+	} finally {
+		loading.value = false;
+	}
+}
+
+async function saveBucket() {
+	if (!bucket.value) return;
+	alertApi.clear();
+	try {
+		const response = await api.put(`/buckets/${bucketId}`, bucket.value);
+		if (bucket.value.version) {
+			bucket.value.version += 1;
+		}
+		dirty.value = false;
+		alertApi.show('Saved settings.', 'success', response.headers('X-Command-ID') || '');
+	} catch (e: unknown) {
+		const status = (e as { status?: number }).status;
+		if (status && status < 500) {
+			alertApi.show("Can't save this bucket.", 'error');
+		} else {
+			alertApi.show("Couldn't save this bucket. Try again later or contact support.", 'error');
+		}
+	}
+}
+
+function revertBucket() {
+	location.reload();
+}
+
+const menuOpen = ref(false);
+
+const editable = computed(() => {
+	if (!auth.user.value || !bucket.value) return false;
+	return bucket.value.roles.some((r) => r.principal === auth.user.value!['@id'] && (r.role === 'owner' || r.role === 'contributor'));
+});
+
+const dashboard = useDashboard(
+	bucketId,
+	(url: string) => api.get(url) as Promise<{ data: Record<string, unknown> }>,
+	(params) => {
+		const query: Record<string, string> = {};
+		for (const [key, value] of Object.entries(params)) {
+			if (value) {
+				query[key] = value.join('|');
+			}
+		}
+		router.replace({ query });
+	},
+	() => route.query as Record<string, string | string[] | undefined>,
+);
+
+function getWidgets(placement: string): WidgetSettings[] {
+	return bucket.value?.widgets?.filter((w: WidgetSettings) => w.placement === placement) ?? [];
+}
+
+function hasWidgets(placement: string): boolean {
+	return getWidgets(placement).length > 0;
+}
+
+function getComponent(type: string): unknown {
+	return WIDGET_COMPONENTS[type] || null;
+}
+
+function getActiveTab(placement: string): string {
+	if (activeTabs.value[placement]) return activeTabs.value[placement];
+	const widgets = getWidgets(placement);
+	return widgets.length > 0 ? widgets[0].id : '';
+}
+
+function setActiveTab(placement: string, id: string) {
+	activeTabs.value[placement] = id;
+	nextTick(() => {
+		const widget = widgetRefs.value[id];
+		if (widget && typeof (widget as unknown as { reflow: () => void }).reflow === 'function') {
+			(widget as unknown as { reflow: () => void }).reflow();
+		}
+	});
+}
+
+function setWidgetRef(id: string, el: ComponentPublicInstance | null) {
+	widgetRefs.value[id] = el;
+}
+
+// Drag-and-drop tab reordering
+const dragSourceId = ref<string | null>(null);
+const dropTargetId = ref<string | null>(null);
+
+function onDragStart(e: DragEvent, widgetId: string) {
+	dragSourceId.value = widgetId;
+	e.dataTransfer!.effectAllowed = 'move';
+	e.dataTransfer!.setData('text/plain', widgetId);
+}
+
+function onDragOver(e: DragEvent, widgetId: string) {
+	e.preventDefault();
+	e.dataTransfer!.dropEffect = 'move';
+	dropTargetId.value = widgetId;
+}
+
+function onDragLeave() {
+	dropTargetId.value = null;
+}
+
+function onDrop(e: DragEvent, targetId: string, placement: string) {
+	e.preventDefault();
+	dropTargetId.value = null;
+	const sourceId = dragSourceId.value;
+	dragSourceId.value = null;
+	if (!sourceId || sourceId === targetId || !bucket.value?.widgets) return;
+
+	const widgets = bucket.value.widgets;
+	const sourceIdx = widgets.findIndex((w) => w.id === sourceId);
+	if (sourceIdx === -1) return;
+
+	const source = widgets.splice(sourceIdx, 1)[0];
+	source.placement = placement;
+
+	if (targetId === `+${placement}`) {
+		// Dropped on the "+" tab — append to end
+		widgets.push(source);
+	} else {
+		const targetIdx = widgets.findIndex((w) => w.id === targetId);
+		if (targetIdx === -1) {
+			widgets.push(source);
+		} else {
+			widgets.splice(targetIdx, 0, source);
+		}
+	}
+
+	activeTabs.value[placement] = sourceId;
+	setDirty();
+}
+
+function onDragEnd() {
+	dragSourceId.value = null;
+	dropTargetId.value = null;
+}
+
+// Event edit dialog
+const showEventDialog = ref(false);
+const editingEvent = ref<Record<string, unknown> | null>(null);
+
+function openEventDialog(event: Record<string, unknown>) {
+	editingEvent.value = event;
+	showEventDialog.value = true;
+}
+
+async function removeEvent(eventId: string) {
+	alertApi.clear();
+	try {
+		const response = await api.del(`/buckets/${bucketId}/${eventId}`);
+		alertApi.show('Deleted an event.', 'success', response.headers('X-Command-ID') || '');
+		setTimeout(() => dashboard.refresh(), 1000);
+	} catch (e: unknown) {
+		const status = (e as { status?: number }).status;
+		if (status && status < 500) {
+			alertApi.show("Can't delete the event.", 'error');
+		} else {
+			alertApi.show("Couldn't delete the event. Try again later or contact support.", 'error');
+		}
+	}
+}
+
+function onEventSaved() {
+	setTimeout(() => dashboard.refresh(), 1000);
+}
+
+// Dialog visibility states
+const showAddWidgetDialog = ref(false);
+const addWidgetPlacement = ref('top');
+
+const showEditBucketDialog = ref(false);
+const showSaveAsViewDialog = ref(false);
+const showTaskListDialog = ref(false);
+const showCreateTaskDialog = ref(false);
+const showImportDialog = ref(false);
+const showExportDialog = ref(false);
+
+function openAddWidget(placement: string) {
+	addWidgetPlacement.value = placement;
+	showAddWidgetDialog.value = true;
+}
+
+function onWidgetAdded(settings: WidgetSettings) {
+	if (bucket.value?.widgets) {
+		bucket.value.widgets.push(settings);
+		activeTabs.value[settings.placement || 'top'] = settings.id;
+		dashboard.setExpectedWidgetCount(bucket.value.widgets.length);
+		setDirty();
+		nextTick(() => openWidgetSettings(settings.id));
+	}
+}
+
+function openSettings() {
+	menuOpen.value = false;
+	showEditBucketDialog.value = true;
+}
+
+function openSaveView() {
+	menuOpen.value = false;
+	showSaveAsViewDialog.value = true;
+}
+
+function openTasks() {
+	menuOpen.value = false;
+	showTaskListDialog.value = true;
+}
+
+function openImport() {
+	menuOpen.value = false;
+	showImportDialog.value = true;
+}
+
+function openExport() {
+	menuOpen.value = false;
+	showExportDialog.value = true;
+}
+
+function onBucketSaved(updatedBucket: Bucket) {
+	bucket.value = updatedBucket;
+	setTimeout(() => dashboard.refresh(), 1000);
+}
+
+function onImported() {
+	setTimeout(() => dashboard.refresh(), 1000);
+}
+
+function onTaskCreated() {
+	// After creating a task, could refresh or reopen the task list
+}
+
+function openCreateTaskFromList() {
+	showCreateTaskDialog.value = true;
+}
+
+const showWidgetSettingsDialog = ref(false);
+const editingWidgetSettings = ref<WidgetSettings | null>(null);
+const editingWidgetType = ref('');
+
+function openWidgetSettings(settingsId: string) {
+	const widget = bucket.value?.widgets?.find((w) => w.id === settingsId);
+	if (widget) {
+		editingWidgetSettings.value = widget;
+		editingWidgetType.value = widget.type;
+		showWidgetSettingsDialog.value = true;
+	}
+}
+
+function onWidgetSettingsSaved(updated: WidgetSettings) {
+	if (bucket.value?.widgets) {
+		const index = bucket.value.widgets.findIndex((w) => w.id === updated.id);
+		if (index !== -1) {
+			bucket.value.widgets[index] = updated;
+			setDirty();
+			// Wait for Vue to propagate the new settings to widget props before refreshing
+			nextTick(() => dashboard.refresh());
+		}
+	}
+}
+
+function onWidgetRemoved() {
+	if (editingWidgetSettings.value && bucket.value?.widgets) {
+		if (bucket.value.widgets.length <= 1) {
+			alertApi.show('Cannot remove the last widget.', 'error');
+			return;
+		}
+		const id = editingWidgetSettings.value.id;
+		bucket.value.widgets = bucket.value.widgets.filter((w) => w.id !== id);
+		setDirty();
+		dashboard.refresh();
+	}
+}
+
+let refreshInterval: ReturnType<typeof setInterval> | undefined;
+
+onMounted(async () => {
+	try {
+		const response = await api.get<Bucket>(`/buckets/${bucketId}`);
+		dashboard.setExpectedWidgetCount(response.data.widgets?.length ?? 0);
+		bucket.value = response.data;
+		if (bucket.value.refresh) {
+			refreshInterval = setInterval(() => dashboard.refresh(), 60000);
+		}
+	} catch (e: unknown) {
+		const status = (e as { status?: number }).status;
+		if (status && status < 500) {
+			message.value = "Can't retrieve this bucket.";
+		} else {
+			message.value = "Couldn't retrieve this bucket. Try again later or contact support.";
+		}
+	}
+});
+
+onBeforeUnmount(() => {
+	if (refreshInterval) {
+		clearInterval(refreshInterval);
+	}
+});
+
+watch(
+	() => route.query,
+	() => {
+		if (bucket.value) {
+			dashboard.refresh();
+		}
+	},
+);
+</script>
+
+<template>
+	<div class="container-fluid">
+		<div v-if="message" class="alert alert-block alert-error">{{ message }}</div>
+
+		<div v-if="!bucket && !message">Loading...</div>
+
+		<div class="alert alert-block alert-info" v-if="dirty && editable">
+			<a class="close" @click="revertBucket()">&times;</a>
+			<p>
+				<strong><a @click="saveBucket()">Save</a></strong> or
+				<strong><a @click="revertBucket()">revert</a></strong> changes to this dashboard.
+			</p>
+		</div>
+
+		<div v-if="bucket">
+			<!-- Title bar -->
+			<div class="row-fluid page-titlebar">
+				<p class="pull-left page-title">
+					<span class="page-title-text" :class="{ 'bucket-archived': bucket.archived }">{{ bucket.label }}</span>
+					{{ ' ' }}
+					<span class="badge badge-success page-title-decoration" title="Events" v-if="dashboard.total.value >= 0">{{ dashboard.total.value.toLocaleString() }}</span>
+					<span class="badge badge-important page-title-decoration" title="Couldn't load any events" v-if="dashboard.total.value < 0">0</span>
+					{{ ' ' }}
+					<a class="page-title-decoration" @click="run()" title="Refresh" v-if="editable"><i class="fa fa-refresh" :class="{ 'fa-spin': loading }" /></a>
+					{{ ' ' }}
+					<a class="page-title-decoration" @click="openEventDialog({})" title="Create Event..." v-if="editable && !bucket.aliases?.length"><i class="fa fa-plus" /></a>
+				</p>
+
+				<div class="pull-right page-title dropdown" :class="{ open: menuOpen }" v-if="editable">
+					<a class="dropdown-toggle" @click="menuOpen = !menuOpen" title="More..."><i class="fa fa-bars" /> {{ ' ' }} <b class="caret" /></a>
+					<ul class="dropdown-menu" role="menu">
+						<li role="presentation" v-if="!bucket.aliases?.length"><a role="menuitem" @click="openSaveView()">Save View...</a></li>
+						<li role="presentation" class="divider" v-if="!bucket.aliases?.length" />
+						<li role="presentation" v-if="!bucket.aliases?.length"><a role="menuitem" @click="openTasks()">Tasks...</a></li>
+						<li role="presentation" v-if="!bucket.aliases?.length"><a role="menuitem" @click="openImport()">Import...</a></li>
+						<li role="presentation" v-if="dashboard.total.value > 0"><a role="menuitem" @click="openExport()">Export...</a></li>
+						<li role="presentation" class="divider" />
+						<li role="presentation"><a role="menuitem" @click="openSettings()">Settings...</a></li>
+					</ul>
+				</div>
+			</div>
+
+			<!-- Description -->
+			<p class="nav pull-left" v-if="bucket.description">{{ bucket.description }}</p>
+
+			<!-- Constraints -->
+			<ul class="nav nav-pills pull-left" v-if="dashboard.constraints.value.length || dashboard.constraintsB.value.length">
+				<li class="active" v-for="constraint in dashboard.constraints.value" :key="constraint.toString()">
+					<a :title="constraint.toString()">
+						<i class="fa fa-minus fa-white" v-if="constraint.negated" />
+						<i :class="'fa fa-white ' + getFieldIcon(constraint.field)" @click="dashboard.invertConstraint(constraint)" /> {{ constraint.field === 'author' ? getUserName(constraint.shortValue()) : constraint.shortValue() }}
+						<i class="fa fa-times fa-white" @click="dashboard.removeConstraint(constraint)" />
+					</a>
+				</li>
+				<li><a title="A/B Comparison" @click="dashboard.swapAB()"><i class="fa fa-adjust" /></a></li>
+				<li class="active active-b" v-for="constraint in dashboard.constraintsB.value" :key="'b-' + constraint.toString()">
+					<a :title="constraint.toString()">
+						<i class="fa fa-minus fa-white" v-if="constraint.negated" />
+						<i :class="'fa fa-white ' + getFieldIcon(constraint.field)" @click="dashboard.invertConstraintB(constraint)" /> {{ constraint.field === 'author' ? getUserName(constraint.shortValue()) : constraint.shortValue() }}
+						<i class="fa fa-times fa-white" @click="dashboard.removeConstraintB(constraint)" />
+					</a>
+				</li>
+			</ul>
+
+			<!-- Top placement -->
+			<div class="row-fluid" v-if="hasWidgets('top') || dirty">
+				<div class="span12">
+					<ul class="nav nav-tabs">
+						<li v-for="settings in getWidgets('top')" :key="settings.id" :class="{ active: getActiveTab('top') === settings.id, drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'top')" @dragend="onDragEnd">
+							<a @click.prevent="setActiveTab('top', settings.id)">{{ settings.label }}&nbsp;<i class="fa fa-cog fa-hover" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></a>
+						</li>
+						<li :class="{ drop: dropTargetId === '+top' }" @dragover="onDragOver($event, '+top')" @dragleave="onDragLeave" @drop="onDrop($event, '+top', 'top')"><a title="Add..." @click="openAddWidget('top')"><i class="fa fa-plus fa-hover" /></a></li>
+					</ul>
+					<div class="tab-content">
+						<div v-for="settings in getWidgets('top')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('top') === settings.id }">
+							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: Record<string, unknown>) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Left + Right placement -->
+			<div class="row-fluid">
+				<div class="span6" v-if="hasWidgets('left') || dirty">
+					<ul class="nav nav-tabs">
+						<li v-for="settings in getWidgets('left')" :key="settings.id" :class="{ active: getActiveTab('left') === settings.id, drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'left')" @dragend="onDragEnd">
+							<a @click.prevent="setActiveTab('left', settings.id)">{{ settings.label }}&nbsp;<i class="fa fa-cog fa-hover" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></a>
+						</li>
+						<li :class="{ drop: dropTargetId === '+left' }" @dragover="onDragOver($event, '+left')" @dragleave="onDragLeave" @drop="onDrop($event, '+left', 'left')"><a title="Add..." @click="openAddWidget('left')"><i class="fa fa-plus fa-hover" /></a></li>
+					</ul>
+					<div class="tab-content">
+						<div v-for="settings in getWidgets('left')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('left') === settings.id }">
+							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: Record<string, unknown>) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+						</div>
+					</div>
+				</div>
+				<div class="span6" v-if="hasWidgets('right') || dirty">
+					<ul class="nav nav-tabs">
+						<li v-for="settings in getWidgets('right')" :key="settings.id" :class="{ active: getActiveTab('right') === settings.id, drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'right')" @dragend="onDragEnd">
+							<a @click.prevent="setActiveTab('right', settings.id)">{{ settings.label }}&nbsp;<i class="fa fa-cog fa-hover" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></a>
+						</li>
+						<li :class="{ drop: dropTargetId === '+right' }" @dragover="onDragOver($event, '+right')" @dragleave="onDragLeave" @drop="onDrop($event, '+right', 'right')"><a title="Add..." @click="openAddWidget('right')"><i class="fa fa-plus fa-hover" /></a></li>
+					</ul>
+					<div class="tab-content">
+						<div v-for="settings in getWidgets('right')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('right') === settings.id }">
+							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: Record<string, unknown>) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<EventEditDialog v-model="showEventDialog" :bucket-id="bucketId" :event="editingEvent" @saved="onEventSaved()" />
+
+		<AddWidgetDialog v-if="bucket" v-model="showAddWidgetDialog" :bucket-id="bucketId" :bucket="bucket" :placement="addWidgetPlacement" @added="onWidgetAdded" />
+
+		<EditBucketDialog v-if="bucket" v-model="showEditBucketDialog" :bucket-id="bucketId" :bucket="bucket" @saved="onBucketSaved" />
+
+		<SaveAsViewDialog v-if="bucket" v-model="showSaveAsViewDialog" :bucket-id="bucketId" :bucket="bucket" :constraints="dashboard.constraints.value" />
+
+		<TaskListDialog v-model="showTaskListDialog" :bucket-id="bucketId" @open-create-task="openCreateTaskFromList" />
+
+		<CreateTaskDialog v-model="showCreateTaskDialog" :bucket-id="bucketId" @created="onTaskCreated" />
+
+		<ImportDialog v-model="showImportDialog" :bucket-id="bucketId" @imported="onImported" />
+
+		<ExportDialog v-model="showExportDialog" :bucket-id="bucketId" :total="dashboard.total.value" :constraints="dashboard.constraints.value" />
+
+		<WidgetSettingsDialog v-if="editingWidgetSettings" v-model="showWidgetSettingsDialog" :settings="editingWidgetSettings as any" :widget-type="editingWidgetType as any" @save="(s: any) => onWidgetSettingsSaved(s)" @remove="onWidgetRemoved" />
+	</div>
+</template>

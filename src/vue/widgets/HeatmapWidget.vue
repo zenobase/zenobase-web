@@ -1,0 +1,304 @@
+<script setup lang="ts">
+import { inject, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+
+declare const google: {
+	maps: {
+		Map: new (el: HTMLElement, options: Record<string, unknown>) => GoogleMap;
+		LatLng: new (lat: number, lng: number) => GoogleLatLng;
+		LatLngBounds: new (sw?: GoogleLatLng, ne?: GoogleLatLng) => GoogleLatLngBounds;
+		Rectangle: new (options: Record<string, unknown>) => unknown;
+		MapTypeId: { ROADMAP: string };
+		MapTypeControlStyle: { DROPDOWN_MENU: string };
+		ControlPosition: { TOP_RIGHT: number };
+		event: {
+			addListener(instance: unknown, event: string, handler: () => void): void;
+			trigger(instance: unknown, event: string): void;
+		};
+	};
+};
+
+declare const deck: {
+	GoogleMapsOverlay: new () => DeckOverlay;
+	HeatmapLayer: new (options: Record<string, unknown>) => unknown;
+};
+
+interface DeckOverlay {
+	setMap(map: GoogleMap): void;
+	setProps(props: Record<string, unknown>): void;
+}
+
+interface GoogleMap {
+	fitBounds(bounds: GoogleLatLngBounds): void;
+	getBounds(): GoogleLatLngBounds;
+	getZoom(): number;
+	controls: Record<number, { push(el: HTMLElement): void }>;
+}
+
+interface GoogleLatLng {
+	lat(): number;
+	lng(): number;
+}
+
+interface GoogleLatLngBounds {
+	isEmpty(): boolean;
+	union(other: GoogleLatLngBounds): GoogleLatLngBounds;
+	getSouthWest(): GoogleLatLng;
+	getNorthEast(): GoogleLatLng;
+	toSpan(): GoogleLatLng;
+	toUrlValue(precision: number): string;
+}
+
+function fieldToNumber(value: unknown): number {
+	if (typeof value === 'number') return value;
+	if (typeof value === 'object' && value !== null && '@value' in value) return (value as { '@value': number })['@value'];
+	return Number(value);
+}
+
+interface HeatmapPoint {
+	lat: number;
+	lon: number;
+	count: number;
+	sum?: unknown;
+}
+
+const props = defineProps<{
+	settings: {
+		id: string;
+		value_field?: string;
+		unit?: string;
+		filter?: string;
+	};
+}>();
+
+const dashboard = inject<DashboardApi>(dashboardKey)!;
+const locationField = 'location';
+
+const mapEl = ref<HTMLDivElement | null>(null);
+let map: GoogleMap | null = null;
+let overlay: DeckOverlay | null = null;
+let bounds: GoogleLatLngBounds | null = null;
+let boundsB: GoogleLatLngBounds | null = null;
+let precision = 8;
+let boundsUpdateTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const loading = ref(true);
+const empty = ref(false);
+
+function toBounds(result: Record<string, unknown>): GoogleLatLngBounds {
+	if (result.lat_min !== undefined) {
+		const sw = new google.maps.LatLng(result.lat_min as number, result.lon_min as number);
+		const ne = new google.maps.LatLng(result.lat_max as number, result.lon_max as number);
+		return new google.maps.LatLngBounds(sw, ne);
+	}
+	return new google.maps.LatLngBounds();
+}
+
+function drawConstraintBounds(constraints: Array<{ value: string }>, lineColor: string) {
+	if (!map) return;
+	constraints.forEach((constraint) => {
+		const c = constraint.value.split(',');
+		if (c.length === 4) {
+			const sw = new google.maps.LatLng(parseFloat(c[0]), parseFloat(c[1]));
+			const ne = new google.maps.LatLng(parseFloat(c[2]), parseFloat(c[3]));
+			new google.maps.Rectangle({
+				strokeColor: lineColor,
+				strokeOpacity: 0.8,
+				strokeWeight: 2,
+				fillOpacity: 0,
+				map,
+				bounds: new google.maps.LatLngBounds(sw, ne),
+				clickable: false,
+			});
+		}
+	});
+}
+
+function createFilterControl(): HTMLElement {
+	const parent = document.createElement('div');
+	parent.style.padding = '0 10px';
+	const control = document.createElement('div');
+	control.title = 'Filter bucket for events in this area';
+	control.className = 'map-control';
+	parent.appendChild(control);
+	const label = document.createElement('i');
+	label.className = 'fa fa-filter';
+	control.appendChild(label);
+	control.addEventListener('click', () => {
+		if (map) {
+			dashboard.addConstraint(locationField, map.getBounds().toUrlValue(3), true);
+		}
+	});
+	return parent;
+}
+
+function getFilter(): string | undefined {
+	let filter = props.settings.filter;
+	if (bounds && !bounds.isEmpty()) {
+		filter = filter ? filter + '|' : '';
+		filter += 'location:' + [bounds.getSouthWest().lat(), bounds.getSouthWest().lng(), bounds.getNorthEast().lat(), bounds.getNorthEast().lng()].join(',');
+	}
+	return filter;
+}
+
+async function refreshPoints() {
+	const pointsParams: Record<string, unknown> = {
+		id: props.settings.id,
+		type: 'heatmap',
+		precision,
+		value_field: props.settings.value_field,
+		unit: props.settings.unit,
+		filter: getFilter(),
+	};
+	const result = await dashboard.search([pointsParams]);
+	const points = (result[props.settings.id] as HeatmapPoint[]) || [];
+	addPoints(points, []);
+}
+
+function addPoints(points: HeatmapPoint[], pointsB: HeatmapPoint[]) {
+	if (!map || (!points.length && !pointsB.length)) return;
+
+	const data: Array<{ position: number[]; weight: number }> = [];
+	points.forEach((point) => {
+		const weight = props.settings.value_field && points.length > 1 ? fieldToNumber(point.sum) : point.count;
+		data.push({ position: [point.lon, point.lat], weight });
+	});
+
+	const dataB: Array<{ position: number[]; weight: number }> = [];
+	pointsB.forEach((point) => {
+		const weight = props.settings.value_field && pointsB.length > 1 ? fieldToNumber(point.sum) : point.count;
+		dataB.push({ position: [point.lon, point.lat], weight });
+	});
+
+	const layers: unknown[] = [];
+	if (data.length) {
+		layers.push(
+			new deck.HeatmapLayer({
+				id: 'heatmap-primary',
+				data,
+				getPosition: (d: { position: number[] }) => d.position,
+				getWeight: (d: { weight: number }) => d.weight,
+				radiusPixels: 20,
+				opacity: 0.5,
+				colorRange: [
+					[0, 126, 216],
+					[64, 126, 216],
+					[128, 126, 216],
+					[192, 126, 216],
+					[255, 126, 216],
+				],
+			}),
+		);
+	}
+	if (dataB.length) {
+		layers.push(
+			new deck.HeatmapLayer({
+				id: 'heatmap-secondary',
+				data: dataB,
+				getPosition: (d: { position: number[] }) => d.position,
+				getWeight: (d: { weight: number }) => d.weight,
+				radiusPixels: 20,
+				opacity: 0.5,
+				colorRange: [
+					[204, 103, 0],
+					[204, 140, 0],
+					[204, 180, 0],
+					[204, 220, 0],
+					[204, 255, 0],
+				],
+			}),
+		);
+	}
+
+	overlay?.setProps({ layers });
+}
+
+function drawMap() {
+	if ((!bounds || bounds.isEmpty()) && (!boundsB || boundsB.isEmpty())) {
+		empty.value = true;
+		return;
+	}
+
+	if (!mapEl.value) return;
+
+	const mapOptions = {
+		mapTypeId: google.maps.MapTypeId.ROADMAP,
+		streetViewControl: false,
+		mapTypeControlOptions: {
+			style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+		},
+		styles: [{ stylers: [{ saturation: -100 }] }],
+		minZoom: 1,
+	};
+
+	map = new google.maps.Map(mapEl.value, mapOptions);
+	map.fitBounds(bounds!.union(boundsB!));
+
+	google.maps.event.addListener(map, 'bounds_changed', () => {
+		if (boundsUpdateTimeout) clearTimeout(boundsUpdateTimeout);
+		boundsUpdateTimeout = setTimeout(() => {
+			if (!map) return;
+			const currentBounds = map.getBounds();
+			if (currentBounds.toSpan().lat() !== 0) {
+				precision = Math.min(Math.ceil(map.getZoom() / 3.0) + 3, 9);
+				bounds = currentBounds;
+				refreshPoints();
+			}
+		}, 1000);
+	});
+
+	overlay = new deck.GoogleMapsOverlay();
+	overlay.setMap(map);
+	drawConstraintBounds(dashboard.getConstraints(locationField), 'rgb(47, 126, 216)');
+	drawConstraintBounds(dashboard.getConstraintsB(locationField), 'rgb(204, 102, 0)');
+	map.controls[google.maps.ControlPosition.TOP_RIGHT].push(createFilterControl());
+}
+
+function params(): Record<string, unknown> {
+	const filters: string[] = [];
+	if (props.settings.filter) {
+		filters.push(props.settings.filter);
+	}
+	if (props.settings.value_field) {
+		filters.push(props.settings.value_field + ':*');
+	}
+	return {
+		id: props.settings.id,
+		type: 'geobounds',
+		filter: filters.join('|'),
+	};
+}
+
+function update(result: Record<string, unknown>, resultB?: Record<string, unknown>) {
+	bounds = toBounds((result[props.settings.id] as Record<string, unknown>) || {});
+	boundsB = toBounds((resultB?.[props.settings.id] as Record<string, unknown>) || {});
+	loading.value = false;
+	empty.value = false;
+	nextTick(drawMap);
+}
+
+function init() {
+	map = null;
+	overlay = null;
+	bounds = null;
+	boundsB = null;
+	precision = 8;
+	loading.value = true;
+	empty.value = false;
+}
+
+onBeforeUnmount(() => {
+	if (boundsUpdateTimeout) clearTimeout(boundsUpdateTimeout);
+});
+
+const registration: WidgetRegistration = { params, update, init };
+onMounted(() => dashboard.register(registration));
+</script>
+
+<template>
+	<div>
+		<div ref="mapEl" :id="settings.id + '-map'" style="height: 400px" v-show="!loading && !empty" />
+		<p v-if="loading" class="none">Loading...</p>
+		<p v-else-if="empty" class="none">None</p>
+	</div>
+</template>

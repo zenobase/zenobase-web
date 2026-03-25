@@ -1,7 +1,7 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
 	"files": {
-		"includes": ["src/**/*.{js,ts}", "vite.config.js"]
+		"includes": ["src/**/*.{js,ts,vue}", "vite.config.js"]
 	},
 	"formatter": {
 		"indentStyle": "tab",
@@ -20,12 +20,15 @@
 			"correctness": {
 				"noUndeclaredVariables": "off",
 				"noUnusedFunctionParameters": "off",
+				"noUnusedVariables": "off",
+				"noUnusedImports": "off",
 				"noInnerDeclarations": "off"
 			},
 			"style": {
 				"useConst": "off",
 				"noParameterAssign": "off",
-				"useTemplate": "off"
+				"useTemplate": "off",
+				"noNonNullAssertion": "off"
 			},
 			"complexity": {
 				"useLiteralKeys": "off",
