@@ -1,5 +1,9 @@
 name: Build
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -28,11 +32,14 @@ jobs:
           node-version: 24
           cache: npm
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - run: npm run lint
+      - name: Lint
+        run: npm run lint
 
-      - run: npm run build
+      - name: Build
+        run: npm run build
 
       - uses: aws-actions/configure-aws-credentials@v6
         with:
