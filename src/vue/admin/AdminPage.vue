@@ -560,7 +560,7 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="command in journal.commands" :key="command['@id']">
+								<tr v-for="command in journal.commands" :key="command['@id'] as string">
 									<td>{{ command['@id'] }}</td>
 									<td>
 										<a @click="setConstraint(command.principal as string)">{{ formatUsername(command.principal as string) }}</a>
@@ -616,9 +616,9 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="bucket in buckets.items" :key="bucket['@id']">
+								<tr v-for="bucket in buckets.items" :key="bucket['@id'] as string">
 									<td>
-										<span :class="bucket.aliases && (bucket.aliases as unknown[]).length && 'bucket-virtual'">{{ bucket['@id'] }}</span>
+										<span :class="bucket.aliases && (bucket.aliases as unknown[]).length ? 'bucket-virtual' : undefined">{{ bucket['@id'] }}</span>
 									</td>
 									<td>
 										<a @click="setConstraint(getOwner(bucket))">{{ formatUsername(getOwner(bucket)) }}</a>
@@ -682,9 +682,9 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="user in users.items" :key="user['@id']">
+								<tr v-for="user in users.items" :key="user['@id'] as string">
 									<td>
-										<a v-if="!user.suspended" @click="setConstraint(user['@id'] as string)" :class="user.superuser && 'b'">{{ user.name }}</a>
+										<a v-if="!user.suspended" @click="setConstraint(user['@id'] as string)" :class="user.superuser ? 'b' : undefined">{{ user.name }}</a>
 										<span v-else style="color: gray">{{ user.name }}</span>
 									</td>
 									<td>
@@ -774,7 +774,7 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="auth in authorizations.items" :key="auth['@id']">
+								<tr v-for="auth in authorizations.items" :key="auth['@id'] as string">
 									<td>{{ auth['@id'] }}</td>
 									<td>
 										<a @click="setConstraint(auth.principal as string)">{{ formatUsername(auth.principal as string) }}</a>
@@ -829,7 +829,7 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="credential in credentials.items" :key="credential['@id']">
+								<tr v-for="credential in credentials.items" :key="credential['@id'] as string">
 									<td>{{ credential['@id'] }}</td>
 									<td><a @click="setConstraint(credential.principal as string)">{{ formatUsername(credential.principal as string) }}</a></td>
 									<td>{{ credential.type }}</td>
@@ -880,7 +880,7 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="task in tasks.items" :key="task['@id']">
+								<tr v-for="task in tasks.items" :key="task['@id'] as string">
 									<td>{{ task['@id'] }}</td>
 									<td><a @click="setConstraint(task.principal as string)">{{ formatUsername(task.principal as string) }}</a></td>
 									<td>{{ task.bucket }}</td>
@@ -939,7 +939,7 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="job in scheduler.jobs" :key="job.label">
+								<tr v-for="job in scheduler.jobs" :key="job.label as string">
 									<td>{{ job.label }}</td>
 									<td>{{ job.begin }}</td>
 									<td style="text-align: right">{{ job.period }}</td>
@@ -973,7 +973,7 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="snapshot in snapshots.items" :key="snapshot['@id']">
+								<tr v-for="snapshot in snapshots.items" :key="snapshot['@id'] as string">
 									<td>{{ snapshot['@id'] }}</td>
 									<td>{{ snapshot.state }}</td>
 									<td style="white-space: nowrap">

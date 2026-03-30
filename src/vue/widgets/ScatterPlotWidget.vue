@@ -2,7 +2,7 @@
 import { inject, nextTick, onMounted, ref } from 'vue';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
-import HighchartsChart from './HighchartsChart.vue';
+import type HighchartsChart from './HighchartsChart.vue';
 
 interface FieldInfo {
 	toText(value: unknown): string;

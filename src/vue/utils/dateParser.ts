@@ -1,8 +1,7 @@
 import moment from 'moment';
 import 'moment-timezone';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const dateParser: any = {
+export const dateParser = {
 	parse(value: string, format?: string) {
 		return format ? moment(value, format) : moment(value);
 	},

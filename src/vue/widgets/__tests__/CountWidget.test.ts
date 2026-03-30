@@ -21,6 +21,7 @@ function createMockDashboard(searchResult: Record<string, unknown> = {}): Dashbo
 		getConstraintsB: vi.fn().mockReturnValue([]),
 		addConstraintB: vi.fn(),
 		swapAB: vi.fn(),
+		reduceExpectedWidgetCount: vi.fn(),
 	};
 }
 

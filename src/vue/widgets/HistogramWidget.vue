@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, nextTick, onMounted, ref } from 'vue';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
-import HighchartsChart from './HighchartsChart.vue';
+import type HighchartsChart from './HighchartsChart.vue';
 
 interface Interval {
 	from: unknown;

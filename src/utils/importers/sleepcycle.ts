@@ -1,5 +1,7 @@
+import type { DurationInputArg1, DurationInputArg2 } from 'moment';
+
 export interface DateParser {
-	parse(value: string): { add(ms: number, unit: string): unknown; format(fmt: string): string };
+	parse(value: string): { add(amount: DurationInputArg1, unit?: DurationInputArg2): unknown; format(fmt: string): string };
 }
 
 function parseTimeInBed(value: string): number {
