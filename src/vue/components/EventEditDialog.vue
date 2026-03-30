@@ -2,7 +2,7 @@
 import { computed, inject, nextTick, ref, watch } from 'vue';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
-import { formatDuration, formatRelativeTime } from '../utils/eventFormatter';
+import { formatDuration, formatRelativeTime, locationText } from '../utils/eventFormatter';
 import { getFieldIcon, getNumericFieldNames, getTextFieldNames, getUnitsForField } from '../utils/fieldRegistry';
 
 declare const google: {
@@ -269,7 +269,7 @@ function rebuildEntries() {
 				if ('@value' in v) {
 					result.push({ field, value: `${v['@value']} ${v['unit'] || ''}`.trim() });
 				} else if ('lat' in v && 'lon' in v) {
-					result.push({ field, value: `${v['lat']}, ${v['lon']}` });
+					result.push({ field, value: locationText(v as Record<string, unknown>) });
 				} else if ('url' in v && 'title' in v) {
 					result.push({ field, value: `${v['title']}` });
 				} else {

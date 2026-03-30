@@ -3,7 +3,8 @@ import { inject, nextTick, onMounted, ref } from 'vue';
 import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
-import type HighchartsChart from './HighchartsChart.vue';
+// biome-ignore lint/style/useImportType: Vue component used in template
+import HighchartsChart from './HighchartsChart.vue';
 
 function pad(n: number): string {
 	return n < 10 ? `0${n}` : String(n);

@@ -185,14 +185,15 @@ function unwrap(value: unknown): unknown {
 	return value;
 }
 
-export function formatEventHtml(event: Record<string, unknown>, excludeFields?: Set<string>): string {
+export function formatEventHtml(event: Record<string, unknown>, excludeFields?: Set<string>, fieldOverrides?: Record<string, (value: unknown) => string>): string {
 	const parts: string[] = [];
 	for (const field of FIELD_REGISTRY) {
 		if (excludeFields?.has(field.name)) continue;
 		let value = event[field.name];
 		if (value === undefined || value === null) continue;
 		value = unwrap(value);
-		const html = field.toHtml(value);
+		const toHtml = fieldOverrides?.[field.name] ?? field.toHtml;
+		const html = toHtml(value);
 		if (html) parts.push(html);
 	}
 	return parts.join(' &nbsp; ');

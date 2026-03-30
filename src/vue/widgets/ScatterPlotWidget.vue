@@ -2,7 +2,8 @@
 import { inject, nextTick, onMounted, ref } from 'vue';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
-import type HighchartsChart from './HighchartsChart.vue';
+// biome-ignore lint/style/useImportType: Vue component used in template
+import HighchartsChart from './HighchartsChart.vue';
 
 interface FieldInfo {
 	toText(value: unknown): string;
