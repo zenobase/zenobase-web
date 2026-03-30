@@ -1,4 +1,4 @@
-import { type InjectionKey, type MaybeRefOrGetter, provide, type Ref, ref, shallowRef, toValue } from 'vue';
+import { type InjectionKey, type MaybeRefOrGetter, type Ref, ref, shallowRef, toValue } from 'vue';
 import { Constraint } from '../../utils/constraint';
 import { param } from '../../utils/helpers';
 
@@ -254,8 +254,6 @@ export function useDashboard(
 		getConstraints,
 		getConstraintsB,
 	};
-
-	provide(dashboardKey, api);
 
 	return { ...api, setExpectedWidgetCount, reset };
 }

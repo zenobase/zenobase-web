@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
-import { defineComponent, inject } from 'vue';
+import { defineComponent, inject, provide } from 'vue';
 import { Constraint } from '../../../utils/constraint';
 import { type DashboardApi, dashboardKey, useDashboard } from '../useDashboard';
 
@@ -18,6 +18,7 @@ function createTestComponent(bucketId: string, httpGet: (url: string) => Promise
 				},
 				() => locationParams,
 			);
+			provide(dashboardKey, dashboard);
 			return { dashboard };
 		},
 		template: '<div><slot /></div>',

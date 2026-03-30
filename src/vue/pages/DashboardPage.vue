@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type ComponentPublicInstance, computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { type ComponentPublicInstance, computed, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Bucket, WidgetSettings } from '../../types';
 import api from '../api';
@@ -15,7 +15,7 @@ import TaskListDialog from '../components/TaskListDialog.vue';
 import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
-import { useDashboard } from '../composables/useDashboard';
+import { dashboardKey, useDashboard } from '../composables/useDashboard';
 import { getFieldIcon } from '../utils/fieldRegistry';
 import { getUserName } from '../utils/userNames';
 import CountWidget from '../widgets/CountWidget.vue';
@@ -122,6 +122,7 @@ const dashboard = useDashboard(
 	},
 	() => route.query as Record<string, string | string[] | undefined>,
 );
+provide(dashboardKey, dashboard);
 
 function getWidgets(placement: string): WidgetSettings[] {
 	return bucket.value?.widgets?.filter((w: WidgetSettings) => w.placement === placement) ?? [];

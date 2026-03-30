@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { provide, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from './api';
 import LostPasswordDialog from './components/LostPasswordDialog.vue';
 import SignInDialog from './components/SignInDialog.vue';
 import SignUpDialog from './components/SignUpDialog.vue';
-import { useAlert } from './composables/useAlert';
-import { useAuth } from './composables/useAuth';
+import { alertKey, useAlert } from './composables/useAlert';
+import { authKey, useAuth } from './composables/useAuth';
 
 const router = useRouter();
 const auth = useAuth();
+provide(authKey, auth);
 const alertApi = useAlert(async (commandId: string) => {
 	await api.post('/journal/', { undo: commandId });
 	router.go(0);
 });
+provide(alertKey, alertApi);
 
 const showSignIn = ref(false);
 const showSignUp = ref(false);

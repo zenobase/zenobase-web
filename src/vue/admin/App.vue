@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { provide, ref } from 'vue';
 import api from '../api';
 import SignInDialog from '../components/SignInDialog.vue';
-import { useAuth } from '../composables/useAuth';
+import { authKey, useAuth } from '../composables/useAuth';
 
 const auth = useAuth();
+provide(authKey, auth);
 const showSignIn = ref(false);
 
 auth.whoami();

@@ -1,4 +1,4 @@
-import { type InjectionKey, provide, type Ref, ref } from 'vue';
+import { type InjectionKey, type Ref, ref } from 'vue';
 
 export interface AlertState {
 	message: string;
@@ -34,7 +34,6 @@ export function useAlert(onUndo?: (commandId: string) => Promise<void>) {
 	}
 
 	const api: AlertApi = { alert, show, clear, undo };
-	provide(alertKey, api);
 
 	return api;
 }

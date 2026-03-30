@@ -1,4 +1,4 @@
-import { type InjectionKey, provide, type Ref, ref } from 'vue';
+import { type InjectionKey, type Ref, ref } from 'vue';
 import type { User } from '../../types';
 import { param } from '../../utils/helpers';
 import api, { ApiError } from '../api';
@@ -68,7 +68,6 @@ export function useAuth() {
 	}
 
 	const auth: AuthApi = { user, loading, whoami, signIn, signOut, signUp, requestPasswordReset, resetPassword };
-	provide(authKey, auth);
 
 	return auth;
 }
