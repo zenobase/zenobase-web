@@ -1,4 +1,4 @@
-import { type InjectionKey, provide, type Ref, ref, shallowRef } from 'vue';
+import { type InjectionKey, type MaybeRefOrGetter, provide, type Ref, ref, shallowRef, toValue } from 'vue';
 import { Constraint } from '../../utils/constraint';
 import { param } from '../../utils/helpers';
 
@@ -35,7 +35,7 @@ function escape(s: unknown): unknown {
 }
 
 export function useDashboard(
-	bucketId: string,
+	bucketId: MaybeRefOrGetter<string>,
 	httpGet: (url: string) => Promise<{ data: Record<string, unknown> }>,
 	onLocationChange: (params: Record<string, string[] | null>) => void,
 	getLocationParams: () => Record<string, string | string[] | undefined>,
@@ -83,7 +83,7 @@ export function useDashboard(
 	}
 
 	async function doSearch(q: Constraint[], facets: string[]): Promise<Record<string, unknown>> {
-		const url = `/buckets/${bucketId}/?${param({ q: q.map((c) => c.toString()), facet: facets }, true)}`;
+		const url = `/buckets/${toValue(bucketId)}/?${param({ q: q.map((c) => c.toString()), facet: facets }, true)}`;
 		const response = await httpGet(url);
 		return response.data;
 	}
@@ -146,6 +146,15 @@ export function useDashboard(
 
 	function setExpectedWidgetCount(count: number) {
 		expectedWidgetCount.value = count;
+	}
+
+	function reset() {
+		widgets.length = 0;
+		registeredCount = 0;
+		expectedWidgetCount.value = 0;
+		constraints.value = [];
+		constraintsB.value = [];
+		total.value = 0;
 	}
 
 	function addConstraint(field: string, value: string, replace = false, negated = false) {
@@ -248,5 +257,5 @@ export function useDashboard(
 
 	provide(dashboardKey, api);
 
-	return { ...api, setExpectedWidgetCount };
+	return { ...api, setExpectedWidgetCount, reset };
 }

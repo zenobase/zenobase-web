@@ -4,9 +4,9 @@ import { useRoute, useRouter } from 'vue-router';
 import type { Bucket, WidgetSettings } from '../../types';
 import api from '../api';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
-import ErrorBoundary from '../components/ErrorBoundary.vue';
 import CreateTaskDialog from '../components/CreateTaskDialog.vue';
 import EditBucketDialog from '../components/EditBucketDialog.vue';
+import ErrorBoundary from '../components/ErrorBoundary.vue';
 import EventEditDialog from '../components/EventEditDialog.vue';
 import ExportDialog from '../components/ExportDialog.vue';
 import ImportDialog from '../components/ImportDialog.vue';
@@ -50,7 +50,7 @@ const route = useRoute();
 const router = useRouter();
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
-const bucketId = route.params.bucketId as string;
+const bucketId = computed(() => route.params.bucketId as string);
 
 const bucket = ref<Bucket | null>(null);
 const message = ref('');
@@ -67,7 +67,7 @@ async function run() {
 	alertApi.clear();
 	loading.value = true;
 	try {
-		const response = await api.get<{ tasks: Array<{ '@id': string }> }>(`/buckets/${bucketId}/tasks/`);
+		const response = await api.get<{ tasks: Array<{ '@id': string }> }>(`/buckets/${bucketId.value}/tasks/`);
 		for (const task of response.data.tasks) {
 			await api.get(`/tasks/${task['@id']}`);
 		}
@@ -81,7 +81,7 @@ async function saveBucket() {
 	if (!bucket.value) return;
 	alertApi.clear();
 	try {
-		const response = await api.put(`/buckets/${bucketId}`, bucket.value);
+		const response = await api.put(`/buckets/${bucketId.value}`, bucket.value);
 		if (bucket.value.version) {
 			bucket.value.version += 1;
 		}
@@ -222,7 +222,7 @@ function openEventDialog(event: Record<string, unknown>) {
 async function removeEvent(eventId: string) {
 	alertApi.clear();
 	try {
-		const response = await api.del(`/buckets/${bucketId}/${eventId}`);
+		const response = await api.del(`/buckets/${bucketId.value}/${eventId}`);
 		alertApi.show('Deleted an event.', 'success', response.headers('X-Command-ID') || '');
 		setTimeout(() => dashboard.refresh(), 1000);
 	} catch (e: unknown) {
@@ -347,11 +347,13 @@ function onWidgetRemoved() {
 
 let refreshInterval: ReturnType<typeof setInterval> | undefined;
 
-onMounted(async () => {
+async function loadBucket() {
+	message.value = '';
 	try {
-		const response = await api.get<Bucket>(`/buckets/${bucketId}`);
+		const response = await api.get<Bucket>(`/buckets/${bucketId.value}`);
 		dashboard.setExpectedWidgetCount(response.data.widgets?.length ?? 0);
 		bucket.value = response.data;
+		if (refreshInterval) clearInterval(refreshInterval);
 		if (bucket.value.refresh) {
 			refreshInterval = setInterval(() => dashboard.refresh(), 60000);
 		}
@@ -363,12 +365,20 @@ onMounted(async () => {
 			message.value = "Couldn't retrieve this bucket. Try again later or contact support.";
 		}
 	}
-});
+}
+
+onMounted(loadBucket);
 
 onBeforeUnmount(() => {
 	if (refreshInterval) {
 		clearInterval(refreshInterval);
 	}
+});
+
+watch(bucketId, () => {
+	dashboard.reset();
+	dirty.value = false;
+	loadBucket();
 });
 
 watch(
