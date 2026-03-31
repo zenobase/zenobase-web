@@ -1,23 +1,12 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, ref, watch } from 'vue';
+import { inject, nextTick, ref, watch } from 'vue';
 import type { ZenoEvent } from '../../types';
-import { parseBasis } from '../../utils/importers/basis';
+import { parseLibreView, parseSleepCycle } from '../../utils/importers';
 import { parseCSV } from '../../utils/importers/csv';
-import { parseHabitBull } from '../../utils/importers/habitbull';
-import { parseHealthKit } from '../../utils/importers/healthkit';
-import { parseLibreView } from '../../utils/importers/libreview';
-import { parseMoodPanda } from '../../utils/importers/moodpanda';
-import { parseNomie } from '../../utils/importers/nomie';
-import { parseNomie5 } from '../../utils/importers/nomie5';
-import { parseSleepCycle } from '../../utils/importers/sleepcycle';
-import { parseSleepyHead } from '../../utils/importers/sleepyhead';
-import { parseSunSprite } from '../../utils/importers/sunsprite';
-import { parseTapLog } from '../../utils/importers/taplog';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { dateParser } from '../utils/dateParser';
 import { formatEventHtml } from '../utils/eventFormatter';
-import { getUnitsForField, NUMERIC_FIELDS } from '../utils/fieldRegistry';
 
 const props = defineProps<{
 	bucketId: string;
@@ -31,7 +20,7 @@ const emit = defineEmits<{
 
 const alertApi = inject<AlertApi>(alertKey)!;
 
-type SettingsType = 'field-unit' | 'tag-timezone' | 'timezone';
+type SettingsType = 'timezone';
 
 interface ImportSettings {
 	field?: string;
@@ -68,24 +57,6 @@ const formats: ImportFormat[] = [
 		},
 	},
 	{
-		id: 'basis',
-		label: 'Basis',
-		description: 'Import a <b>.csv</b> file from <a href="https://www.mybasis.com/" target="_blank">Basis</a>.',
-		parse: (data: string) => parseBasis(data, { tag: 'Basis' }, dateParser),
-	},
-	{
-		id: 'habitbull',
-		label: 'HabitBull',
-		description: 'Import a <b>.csv</b> file from <a href="http://www.habitbull.com/" target="_blank">HabitBull</a>.',
-		parse: (data: string) => parseHabitBull(data, dateParser),
-	},
-	{
-		id: 'healthkit',
-		label: 'HealthKit',
-		description: 'Import HealthKit data from a <b>.csv</b> file exported with the <a href="http://quantifiedself.com/access-app/app" target="_blank">QS Access</a> app.',
-		parse: (data: string) => parseHealthKit(data, dateParser),
-	},
-	{
 		id: 'libreview',
 		label: 'LibreView',
 		description: 'Import a <b>.csv</b> file containing blood sugar readings and notes from <a href="https://www.libreview.com/" target="_blank">LibreView</a>.',
@@ -94,55 +65,10 @@ const formats: ImportFormat[] = [
 		parse: (data: string, settings: ImportSettings) => parseLibreView(data, { tag: 'Glucose', timezone: settings.timezone || 'UTC' }, dateParser),
 	},
 	{
-		id: 'nomie',
-		label: 'Nomie',
-		description: 'Import a <b>.json</b> or <b>.csv</b> file from <a href="https://nomie.io/" target="_blank">Nomie</a>.',
-		settingsType: 'field-unit',
-		parse: (data: string, settings: ImportSettings) => parseNomie(data, { field: settings.field!, unit: settings.unit! }, dateParser),
-	},
-	{
-		id: 'nomie5',
-		label: 'Nomie 5',
-		description: 'Import a <b>.csv</b> file from <a href="https://nomie.io/" target="_blank">Nomie</a>.',
-		settingsType: 'field-unit',
-		parse: (data: string, settings: ImportSettings) => parseNomie5(data, { field: settings.field!, unit: settings.unit! }, dateParser),
-	},
-	{
-		id: 'moodpanda',
-		label: 'MoodPanda',
-		description: 'Import a <b>.csv</b> file from <a href="https://moodpanda.com/" target="_blank">MoodPanda</a>.',
-		settingsType: 'tag-timezone',
-		defaultSettings: { tag: 'Mood', timezone: 'UTC' },
-		parse: (data: string, settings: ImportSettings) => parseMoodPanda(data, { tag: settings.tag || 'Mood', timezone: settings.timezone || 'UTC' }, dateParser),
-	},
-	{
 		id: 'sleepcycle',
 		label: 'SleepCycle',
 		description: 'Import a <b>.csv</b> file from <a href="https://www.sleepcycle.com/" target="_blank">SleepCycle</a>.',
 		parse: (data: string) => parseSleepCycle(data, dateParser),
-	},
-	{
-		id: 'sleepyhead',
-		label: 'SleepyHead',
-		description: 'Import a <b>.csv</b> file from <a href="https://sleepyhead.jedimark.net/" target="_blank">SleepyHead</a>.',
-		settingsType: 'tag-timezone',
-		defaultSettings: { tag: 'sleep', timezone: 'UTC' },
-		parse: (data: string, settings: ImportSettings) => parseSleepyHead(data, { tag: settings.tag || 'sleep', timezone: settings.timezone || 'UTC' }, dateParser),
-	},
-	{
-		id: 'sunsprite',
-		label: 'SunSprite',
-		description: 'Import a <b>.csv</b> file from <a href="https://www.sunsprite.com/" target="_blank">SunSprite</a>.',
-		settingsType: 'tag-timezone',
-		defaultSettings: { tag: 'Sunlight', timezone: 'UTC' },
-		parse: (data: string, settings: ImportSettings) => parseSunSprite(data, { tag: settings.tag || 'Sunlight', timezone: settings.timezone || 'UTC' }, dateParser),
-	},
-	{
-		id: 'taplog',
-		label: 'TapLog',
-		description: 'Import a <b>.csv</b> file from <a href="https://welcome.taplog.info/" target="_blank">TapLog</a>.',
-		settingsType: 'field-unit',
-		parse: (data: string, settings: ImportSettings) => parseTapLog(data, { field: settings.field!, unit: settings.unit! }),
 	},
 ];
 
@@ -154,7 +80,6 @@ const timezones = (() => {
 	}
 })();
 
-const numericFields = NUMERIC_FIELDS.map((f) => f.name);
 const previewExcludeFields = new Set(['author']);
 
 const visible = ref(false);
@@ -165,11 +90,6 @@ const settings = ref<ImportSettings>({});
 const events = ref<ZenoEvent[]>([]);
 const previewOffset = ref(0);
 const fileInput = ref<HTMLInputElement | null>(null);
-
-const availableUnits = computed(() => {
-	const field = settings.value.field as string;
-	return field ? getUnitsForField(field) : [];
-});
 
 function initSettings() {
 	if (selectedFormat.value.defaultSettings) {
@@ -281,14 +201,6 @@ watch(
 watch(selectedFormat, () => {
 	onFormatChange();
 });
-
-watch(
-	() => settings.value.field,
-	() => {
-		const units = availableUnits.value;
-		settings.value.unit = units.length ? units[0] : undefined;
-	},
-);
 </script>
 
 <template>
@@ -314,34 +226,6 @@ watch(
 					</div>
 					<div class="controls">
 						<span class="help-block" v-html="selectedFormat.description"></span>
-					</div>
-				</div>
-				<div class="modal-body modal-append" v-if="events.length === 0 && selectedFormat.settingsType === 'field-unit'">
-					<div class="controls form-horizontal">
-						<select name="field" class="input-medium" v-model="settings.field">
-							<option value="">N/A</option>
-							<option v-for="f in numericFields" :key="f" :value="f">{{ f }}</option>
-						</select>
-						<span v-if="availableUnits.length"> in
-							<select name="unit" class="input-small" v-model="settings.unit">
-								<option v-for="u in availableUnits" :key="u" :value="u">{{ u }}</option>
-							</select>
-						</span>
-					</div>
-					<div class="control-group">
-						<p class="help-block">The field to map {{ selectedFormat.id === 'taplog' ? 'numbers' : 'values' }} to.</p>
-					</div>
-				</div>
-				<div class="modal-body modal-append" v-if="events.length === 0 && selectedFormat.settingsType === 'tag-timezone'">
-					<div class="control-group">
-						<input name="tag" type="text" required v-model="settings.tag" />
-						<p class="help-block">A tag to add to every event.</p>
-					</div>
-					<div class="control-group">
-						<select name="timezone" v-model="settings.timezone" required>
-							<option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
-						</select>
-						<p class="help-block">The timezone to use.</p>
 					</div>
 				</div>
 				<div class="modal-body modal-append" v-if="events.length === 0 && selectedFormat.settingsType === 'timezone'">

@@ -1,11 +1,2 @@
-export { parseBasis } from './basis';
-export { parseHabitBull } from './habitbull';
-export { parseHealthKit } from './healthkit';
 export { parseLibreView } from './libreview';
-export { parseMoodPanda } from './moodpanda';
-export { parseNomie } from './nomie';
-export { parseNomie5 } from './nomie5';
 export { parseSleepCycle } from './sleepcycle';
-export { parseSleepyHead } from './sleepyhead';
-export { parseSunSprite } from './sunsprite';
-export { parseTapLog } from './taplog';
