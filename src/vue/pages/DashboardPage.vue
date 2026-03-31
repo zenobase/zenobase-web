@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
-import { type ComponentPublicInstance, computed, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
+import { type ComponentPublicInstance, computed, defineAsyncComponent, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Bucket, SearchResult, WidgetSettings, ZenoEvent } from '../../types';
 import api from '../api';
@@ -21,10 +21,14 @@ import { getFieldIcon } from '../utils/fieldRegistry';
 import { getUserName } from '../utils/userNames';
 import CountWidget from '../widgets/CountWidget.vue';
 import GanttWidget from '../widgets/GanttWidget.vue';
-import HeatmapWidget from '../widgets/HeatmapWidget.vue';
+
+const HeatmapWidget = defineAsyncComponent(() => import('../widgets/HeatmapWidget.vue'));
+
 import HistogramWidget from '../widgets/HistogramWidget.vue';
 import ListWidget from '../widgets/ListWidget.vue';
-import MapWidget from '../widgets/MapWidget.vue';
+
+const MapWidget = defineAsyncComponent(() => import('../widgets/MapWidget.vue'));
+
 import PolarWidget from '../widgets/PolarWidget.vue';
 import RatingsWidget from '../widgets/RatingsWidget.vue';
 import ScatterPlotWidget from '../widgets/ScatterPlotWidget.vue';

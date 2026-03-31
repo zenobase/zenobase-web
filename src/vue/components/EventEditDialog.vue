@@ -3,48 +3,11 @@ import { computed, inject, nextTick, ref, watch } from 'vue';
 import type { ZenoEvent } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
+import { loadGoogleMaps } from '../composables/useGoogleMaps';
 import { formatDuration, formatRelativeTime, locationText } from '../utils/eventFormatter';
 import { getFieldIcon, getNumericFieldNames, getTextFieldNames, getUnitsForField } from '../utils/fieldRegistry';
 
-declare const google: {
-	maps: {
-		Map: new (el: HTMLElement, options: Record<string, unknown>) => GoogleMap;
-		LatLng: new (lat: number, lng: number) => GoogleLatLng;
-		Marker: new (options: Record<string, unknown>) => GoogleMarker;
-		MapTypeId: { ROADMAP: string };
-		event: {
-			addListener(instance: unknown, event: string, handler: (...args: unknown[]) => void): void;
-		};
-		places: {
-			Autocomplete: new (input: HTMLInputElement, options?: Record<string, unknown>) => GooglePlacesAutocomplete;
-		};
-	};
-};
-
-interface GoogleMap {
-	setCenter(latLng: GoogleLatLng): void;
-	setZoom(zoom: number): void;
-	getBounds(): GoogleLatLngBounds | undefined;
-}
-
-interface GoogleLatLng {
-	lat(): number;
-	lng(): number;
-}
-
-interface GoogleLatLngBounds {
-	isEmpty(): boolean;
-}
-
-interface GoogleMarker {
-	setPosition(latLng: GoogleLatLng): void;
-	setMap(map: GoogleMap | null): void;
-}
-
-interface GooglePlacesAutocomplete {
-	bindTo(key: string, map: GoogleMap): void;
-	getPlace(): { geometry?: { location?: GoogleLatLng } };
-}
+let maps: typeof google.maps;
 
 const props = defineProps<{
 	bucketId: string;
@@ -90,8 +53,8 @@ const locationSearchEl = ref<HTMLInputElement | null>(null);
 const locationMapEl = ref<HTMLElement | null>(null);
 
 // Map state
-let map: GoogleMap | null = null;
-let marker: GoogleMarker | null = null;
+let map: google.maps.Map | null = null;
+let marker: google.maps.Marker | null = null;
 
 // Tags cache
 const tags = ref<string[]>([]);
@@ -420,7 +383,7 @@ function setLocationFromLatLng(lat: number, lng: number) {
 	newLat.value = lat;
 	newLon.value = lng;
 	if (marker && map) {
-		const pos = new google.maps.LatLng(lat, lng);
+		const pos = new maps.LatLng(lat, lng);
 		marker.setPosition(pos);
 	}
 }
@@ -439,37 +402,38 @@ function onLocationSearchInput() {
 	if (parsed) {
 		setLocationFromLatLng(parsed.lat, parsed.lng);
 		marker!.setMap(map);
-		map!.setCenter(new google.maps.LatLng(parsed.lat, parsed.lng));
+		map!.setCenter(new maps.LatLng(parsed.lat, parsed.lng));
 	}
 }
 
-function initLocationMap() {
+async function initLocationMap() {
+	maps = await loadGoogleMaps();
 	if (!locationMapEl.value) return;
-	map = new google.maps.Map(locationMapEl.value, {
-		center: new google.maps.LatLng(0, 0),
+	map = new maps.Map(locationMapEl.value, {
+		center: new maps.LatLng(0, 0),
 		zoom: 2,
-		mapTypeId: google.maps.MapTypeId.ROADMAP,
+		mapTypeId: maps.MapTypeId.ROADMAP,
 		draggableCursor: 'crosshair',
 		streetViewControl: false,
 	});
-	marker = new google.maps.Marker({
+	marker = new maps.Marker({
 		map: null,
 		draggable: true,
 	});
-	google.maps.event.addListener(map, 'click', (...args: unknown[]) => {
-		const e = args[0] as { latLng: GoogleLatLng };
+	maps.event.addListener(map, 'click', (...args: unknown[]) => {
+		const e = args[0] as { latLng: google.maps.LatLng };
 		setLocationFromLatLng(e.latLng.lat(), e.latLng.lng());
 		marker!.setMap(map);
 	});
-	google.maps.event.addListener(marker, 'dragend', (...args: unknown[]) => {
-		const e = args[0] as { latLng: GoogleLatLng };
+	maps.event.addListener(marker, 'dragend', (...args: unknown[]) => {
+		const e = args[0] as { latLng: google.maps.LatLng };
 		newLat.value = e.latLng.lat();
 		newLon.value = e.latLng.lng();
 	});
 	if (locationSearchEl.value) {
-		const autocomplete = new google.maps.places.Autocomplete(locationSearchEl.value);
-		autocomplete.bindTo('bounds', map as unknown as GoogleMap);
-		google.maps.event.addListener(autocomplete, 'place_changed', () => {
+		const autocomplete = new maps.places.Autocomplete(locationSearchEl.value);
+		autocomplete.bindTo('bounds', map);
+		maps.event.addListener(autocomplete, 'place_changed', () => {
 			const place = autocomplete.getPlace();
 			if (place.geometry?.location) {
 				const loc = place.geometry.location;
@@ -490,7 +454,7 @@ function geolocate() {
 		const lng = pos.coords.longitude;
 		setLocationFromLatLng(lat, lng);
 		marker!.setMap(map);
-		map!.setCenter(new google.maps.LatLng(lat, lng));
+		map!.setCenter(new maps.LatLng(lat, lng));
 		map!.setZoom(10);
 	});
 }

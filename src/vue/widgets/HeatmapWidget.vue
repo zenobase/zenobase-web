@@ -1,54 +1,12 @@
 <script setup lang="ts">
+import { HeatmapLayer } from '@deck.gl/aggregation-layers';
+import { GoogleMapsOverlay } from '@deck.gl/google-maps';
 import { inject, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { GeoBounds, HeatmapParams, HeatmapPoint, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { loadGoogleMaps } from '../composables/useGoogleMaps';
 
-declare const google: {
-	maps: {
-		Map: new (el: HTMLElement, options: Record<string, unknown>) => GoogleMap;
-		LatLng: new (lat: number, lng: number) => GoogleLatLng;
-		LatLngBounds: new (sw?: GoogleLatLng, ne?: GoogleLatLng) => GoogleLatLngBounds;
-		Rectangle: new (options: Record<string, unknown>) => unknown;
-		MapTypeId: { ROADMAP: string };
-		MapTypeControlStyle: { DROPDOWN_MENU: string };
-		ControlPosition: { TOP_RIGHT: number };
-		event: {
-			addListener(instance: unknown, event: string, handler: () => void): void;
-			trigger(instance: unknown, event: string): void;
-		};
-	};
-};
-
-declare const deck: {
-	GoogleMapsOverlay: new () => DeckOverlay;
-	HeatmapLayer: new (options: Record<string, unknown>) => unknown;
-};
-
-interface DeckOverlay {
-	setMap(map: GoogleMap): void;
-	setProps(props: Record<string, unknown>): void;
-}
-
-interface GoogleMap {
-	fitBounds(bounds: GoogleLatLngBounds): void;
-	getBounds(): GoogleLatLngBounds;
-	getZoom(): number;
-	controls: Record<number, { push(el: HTMLElement): void }>;
-}
-
-interface GoogleLatLng {
-	lat(): number;
-	lng(): number;
-}
-
-interface GoogleLatLngBounds {
-	isEmpty(): boolean;
-	union(other: GoogleLatLngBounds): GoogleLatLngBounds;
-	getSouthWest(): GoogleLatLng;
-	getNorthEast(): GoogleLatLng;
-	toSpan(): GoogleLatLng;
-	toUrlValue(precision: number): string;
-}
+let maps: typeof google.maps;
 
 function fieldToNumber(value: unknown): number {
 	if (typeof value === 'number') return value;
@@ -69,23 +27,23 @@ const dashboard = inject<DashboardApi>(dashboardKey)!;
 const locationField = 'location';
 
 const mapEl = ref<HTMLDivElement | null>(null);
-let map: GoogleMap | null = null;
-let overlay: DeckOverlay | null = null;
-let bounds: GoogleLatLngBounds | null = null;
-let boundsB: GoogleLatLngBounds | null = null;
+let map: google.maps.Map | null = null;
+let overlay: GoogleMapsOverlay | null = null;
+let bounds: google.maps.LatLngBounds | null = null;
+let boundsB: google.maps.LatLngBounds | null = null;
 let precision = 8;
 let boundsUpdateTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const loading = ref(true);
 const empty = ref(false);
 
-function toBounds(result: Partial<GeoBounds>): GoogleLatLngBounds {
+function toBounds(result: Partial<GeoBounds>): google.maps.LatLngBounds {
 	if (result.lat_min !== undefined) {
-		const sw = new google.maps.LatLng(result.lat_min, result.lon_min!);
-		const ne = new google.maps.LatLng(result.lat_max!, result.lon_max!);
-		return new google.maps.LatLngBounds(sw, ne);
+		const sw = new maps.LatLng(result.lat_min, result.lon_min!);
+		const ne = new maps.LatLng(result.lat_max!, result.lon_max!);
+		return new maps.LatLngBounds(sw, ne);
 	}
-	return new google.maps.LatLngBounds();
+	return new maps.LatLngBounds();
 }
 
 function drawConstraintBounds(constraints: Array<{ value: string }>, lineColor: string) {
@@ -93,15 +51,15 @@ function drawConstraintBounds(constraints: Array<{ value: string }>, lineColor: 
 	constraints.forEach((constraint) => {
 		const c = constraint.value.split(',');
 		if (c.length === 4) {
-			const sw = new google.maps.LatLng(parseFloat(c[0]), parseFloat(c[1]));
-			const ne = new google.maps.LatLng(parseFloat(c[2]), parseFloat(c[3]));
-			new google.maps.Rectangle({
+			const sw = new maps.LatLng(parseFloat(c[0]), parseFloat(c[1]));
+			const ne = new maps.LatLng(parseFloat(c[2]), parseFloat(c[3]));
+			new maps.Rectangle({
 				strokeColor: lineColor,
 				strokeOpacity: 0.8,
 				strokeWeight: 2,
 				fillOpacity: 0,
 				map,
-				bounds: new google.maps.LatLngBounds(sw, ne),
+				bounds: new maps.LatLngBounds(sw, ne),
 				clickable: false,
 			});
 		}
@@ -120,7 +78,7 @@ function createFilterControl(): HTMLElement {
 	control.appendChild(label);
 	control.addEventListener('click', () => {
 		if (map) {
-			dashboard.addConstraint(locationField, map.getBounds().toUrlValue(3), true);
+			dashboard.addConstraint(locationField, map.getBounds()!.toUrlValue(3), true);
 		}
 	});
 	return parent;
@@ -164,13 +122,13 @@ function addPoints(points: HeatmapPoint[], pointsB: HeatmapPoint[]) {
 		dataB.push({ position: [point.lon, point.lat], weight });
 	});
 
-	const layers: unknown[] = [];
+	const layers: HeatmapLayer[] = [];
 	if (data.length) {
 		layers.push(
-			new deck.HeatmapLayer({
+			new HeatmapLayer({
 				id: 'heatmap-primary',
 				data,
-				getPosition: (d: { position: number[] }) => d.position,
+				getPosition: (d: { position: number[] }) => d.position as [number, number],
 				getWeight: (d: { weight: number }) => d.weight,
 				radiusPixels: 20,
 				opacity: 0.5,
@@ -186,10 +144,10 @@ function addPoints(points: HeatmapPoint[], pointsB: HeatmapPoint[]) {
 	}
 	if (dataB.length) {
 		layers.push(
-			new deck.HeatmapLayer({
+			new HeatmapLayer({
 				id: 'heatmap-secondary',
 				data: dataB,
-				getPosition: (d: { position: number[] }) => d.position,
+				getPosition: (d: { position: number[] }) => d.position as [number, number],
 				getWeight: (d: { weight: number }) => d.weight,
 				radiusPixels: 20,
 				opacity: 0.5,
@@ -216,36 +174,36 @@ function drawMap() {
 	if (!mapEl.value) return;
 
 	const mapOptions = {
-		mapTypeId: google.maps.MapTypeId.ROADMAP,
+		mapTypeId: maps.MapTypeId.ROADMAP,
 		streetViewControl: false,
 		mapTypeControlOptions: {
-			style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+			style: maps.MapTypeControlStyle.DROPDOWN_MENU,
 		},
 		styles: [{ stylers: [{ saturation: -100 }] }],
 		minZoom: 1,
 	};
 
-	map = new google.maps.Map(mapEl.value, mapOptions);
+	map = new maps.Map(mapEl.value, mapOptions);
 	map.fitBounds(bounds!.union(boundsB!));
 
-	google.maps.event.addListener(map, 'bounds_changed', () => {
+	maps.event.addListener(map, 'bounds_changed', () => {
 		if (boundsUpdateTimeout) clearTimeout(boundsUpdateTimeout);
 		boundsUpdateTimeout = setTimeout(() => {
 			if (!map) return;
 			const currentBounds = map.getBounds();
-			if (currentBounds.toSpan().lat() !== 0) {
-				precision = Math.min(Math.ceil(map.getZoom() / 3.0) + 3, 9);
+			if (currentBounds && currentBounds.toSpan().lat() !== 0) {
+				precision = Math.min(Math.ceil(map.getZoom()! / 3.0) + 3, 9);
 				bounds = currentBounds;
 				refreshPoints();
 			}
 		}, 1000);
 	});
 
-	overlay = new deck.GoogleMapsOverlay();
+	overlay = new GoogleMapsOverlay({});
 	overlay.setMap(map);
 	drawConstraintBounds(dashboard.getConstraints(locationField), 'rgb(47, 126, 216)');
 	drawConstraintBounds(dashboard.getConstraintsB(locationField), 'rgb(204, 102, 0)');
-	map.controls[google.maps.ControlPosition.TOP_RIGHT].push(createFilterControl());
+	map.controls[maps.ControlPosition.TOP_RIGHT].push(createFilterControl());
 }
 
 function params(): HeatmapParams {
@@ -263,7 +221,8 @@ function params(): HeatmapParams {
 	};
 }
 
-function update(result: SearchResult, resultB?: SearchResult) {
+async function update(result: SearchResult, resultB?: SearchResult) {
+	maps = await loadGoogleMaps();
 	bounds = toBounds((result[props.settings.id] as GeoBounds) || {});
 	boundsB = toBounds((resultB?.[props.settings.id] as GeoBounds) || {});
 	loading.value = false;

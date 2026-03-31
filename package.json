@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.8",
+    "@types/google.maps": "^3.58.1",
     "@types/papaparse": "^5.5.2",
     "@vue/test-utils": "^2.4.6",
     "jsdom": "^29.0.1",
@@ -26,6 +27,10 @@
     "vue-tsc": "^3.2.6"
   },
   "dependencies": {
+    "@deck.gl/aggregation-layers": "^9.2.11",
+    "@deck.gl/core": "^9.2.11",
+    "@deck.gl/google-maps": "^9.2.11",
+    "@googlemaps/js-api-loader": "^2.0.2",
     "@mdi/font": "^7.4.47",
     "@sentry/vite-plugin": "^5.1.1",
     "@sentry/vue": "^10.46.0",
