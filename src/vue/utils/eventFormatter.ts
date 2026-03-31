@@ -1,3 +1,4 @@
+import type { GeoPoint, ResourceRef, UnitValue, ZenoEvent } from '../../types';
 import { getUserName } from './userNames';
 
 function esc(value: unknown): string {
@@ -8,8 +9,8 @@ function esc(value: unknown): string {
 
 function textWithUnit(value: unknown): string {
 	if (typeof value === 'object' && value !== null && '@value' in value) {
-		const obj = value as Record<string, unknown>;
-		return obj['@value'] + ' ' + (obj['unit'] || '');
+		const obj = value as UnitValue;
+		return obj['@value'] + ' ' + (obj.unit || '');
 	}
 	return String(value);
 }
@@ -54,7 +55,7 @@ function ratingStarsHtml(value: number): string {
 	return html;
 }
 
-function locationText(value: Record<string, unknown>): string {
+function locationText(value: { lat: number; lon: number }): string {
 	return Math.round(Number(value['lat']) * 1000) / 1000 + ', ' + Math.round(Number(value['lon']) * 1000) / 1000;
 }
 
@@ -72,11 +73,11 @@ export const FIELD_REGISTRY: FieldDef[] = [
 		icon: 'fa-bookmark',
 		title: 'Resource',
 		toHtml: (v) => {
-			const obj = v as Record<string, unknown>;
-			if (!obj || !obj['title']) return '';
+			const obj = v as ResourceRef;
+			if (!obj || !obj.title) return '';
 			return (
 				'<span><i class="fa fa-bookmark" title="Resource"></i>&nbsp;<a href="/to?url=' +
-				esc(obj['url']) +
+				esc(obj.url) +
 				'" target="_blank" rel="nofollow noopener noreferrer">' +
 				esc(obj['title']) +
 				'</a></span>'
@@ -117,7 +118,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 		icon: 'fa-map-marker',
 		title: 'Location',
 		toHtml: (v) => {
-			const obj = v as Record<string, unknown>;
+			const obj = v as { lat: number; lon: number };
 			if (!obj || !('lat' in obj)) return '';
 			const text = locationText(obj);
 			return '<span class="nowrap"><i class="fa fa-map-marker" title="Location"></i> ' + esc(text) + '</span>';
@@ -136,7 +137,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 		icon: 'fa-clock-o',
 		title: 'Duration',
 		toHtml: (v) => {
-			const ms = typeof v === 'number' ? v : typeof v === 'object' && v !== null && '@value' in v ? Number((v as Record<string, unknown>)['@value']) : 0;
+			const ms = typeof v === 'number' ? v : typeof v === 'object' && v !== null && '@value' in v ? Number((v as UnitValue)['@value']) : 0;
 			return '<span class="nowrap"><i class="fa fa-clock-o" title="Duration"></i> <abbr>' + esc(formatDuration(ms)) + '</abbr></span>';
 		},
 	},
@@ -165,13 +166,13 @@ export const FIELD_REGISTRY: FieldDef[] = [
 		icon: 'fa-external-link',
 		title: 'Source',
 		toHtml: (v) => {
-			const obj = v as Record<string, unknown>;
-			if (!obj || !obj['title']) return '';
+			const obj = v as ResourceRef;
+			if (!obj || !obj.title) return '';
 			return (
 				'<span class="nowrap"><i class="fa fa-external-link" title="Source"></i> <a href="/to?url=' +
-				esc(obj['url']) +
+				esc(obj.url) +
 				'" target="_blank" rel="nofollow noopener noreferrer">' +
-				esc(obj['title']) +
+				esc(obj.title) +
 				'</a></span>'
 			);
 		},
@@ -185,7 +186,7 @@ function unwrap(value: unknown): unknown {
 	return value;
 }
 
-export function formatEventHtml(event: Record<string, unknown>, excludeFields?: Set<string>, fieldOverrides?: Record<string, (value: unknown) => string>): string {
+export function formatEventHtml(event: ZenoEvent, excludeFields?: Set<string>, fieldOverrides?: Record<string, (value: unknown) => string>): string {
 	const parts: string[] = [];
 	for (const field of FIELD_REGISTRY) {
 		if (excludeFields?.has(field.name)) continue;

@@ -1,3 +1,4 @@
+import type { ZenoEvent } from '../../types';
 import { parseCSV } from './csv';
 
 export interface SunSpriteSettings {
@@ -17,8 +18,8 @@ function mean(values: number[]): number {
 	return sum / values.length;
 }
 
-export function parseSunSprite(s: string, settings: SunSpriteSettings, dateParser: DateParser): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+export function parseSunSprite(s: string, settings: SunSpriteSettings, dateParser: DateParser): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const csv = parseCSV(s);
 
 	let hour: string | null = null;
@@ -27,8 +28,8 @@ export function parseSunSprite(s: string, settings: SunSpriteSettings, dateParse
 	let uvs: number[] = [];
 
 	function push() {
-		const event: Record<string, unknown> = {
-			timestamp: hour,
+		const event: ZenoEvent = {
+			timestamp: hour!,
 			duration: 3600000,
 			tag: [settings.tag],
 			source: { title: 'SunSprite', url: 'https://www.sunsprite.com/' },

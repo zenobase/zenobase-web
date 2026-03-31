@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue';
+import type { CountParams, CountTerm, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { getUserName, resolveUserNames } from '../utils/userNames';
 
@@ -46,7 +47,7 @@ function next() {
 	refresh();
 }
 
-function params(): Record<string, unknown> {
+function params(): CountParams {
 	return {
 		id: props.settings.id,
 		type: 'count',
@@ -58,8 +59,8 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>) {
-	const data = (result[props.settings.id] as Array<{ label: string; count: number }>) || [];
+function update(result: SearchResult) {
+	const data = (result[props.settings.id] as CountTerm[]) || [];
 	more.value = data.length > props.settings.limit;
 	terms.value = more.value ? data.slice(0, props.settings.limit) : data;
 	if (props.settings.field === 'author' && terms.value.length > 0) {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, ref, watch } from 'vue';
+import type { ZenoEvent } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { formatDuration, formatRelativeTime, locationText } from '../utils/eventFormatter';
@@ -48,7 +49,7 @@ interface GooglePlacesAutocomplete {
 const props = defineProps<{
 	bucketId: string;
 	modelValue: boolean;
-	event: Record<string, unknown> | null;
+	event: ZenoEvent | null;
 }>();
 
 const emit = defineEmits<{
@@ -96,7 +97,7 @@ let marker: GoogleMarker | null = null;
 const tags = ref<string[]>([]);
 
 const isNew = ref(true);
-const eventData = ref<Record<string, unknown>>({});
+const eventData = ref<ZenoEvent>({});
 const visible = ref(false);
 
 const TIMEZONE_OFFSETS = [
@@ -239,7 +240,7 @@ function resetField() {
 	resetInputs();
 }
 
-function init(event: Record<string, unknown> | null) {
+function init(event: ZenoEvent | null) {
 	message.value = '';
 	resetField();
 	if (event && Object.keys(event).length > 0) {
@@ -269,7 +270,7 @@ function rebuildEntries() {
 				if ('@value' in v) {
 					result.push({ field, value: `${v['@value']} ${v['unit'] || ''}`.trim() });
 				} else if ('lat' in v && 'lon' in v) {
-					result.push({ field, value: locationText(v as Record<string, unknown>) });
+					result.push({ field, value: locationText(v as { lat: number; lon: number }) });
 				} else if ('url' in v && 'title' in v) {
 					result.push({ field, value: `${v['title']}` });
 				} else {

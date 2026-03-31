@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import type { GeoBounds, HeatmapParams, HeatmapPoint, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 
 declare const google: {
@@ -55,13 +56,6 @@ function fieldToNumber(value: unknown): number {
 	return Number(value);
 }
 
-interface HeatmapPoint {
-	lat: number;
-	lon: number;
-	count: number;
-	sum?: unknown;
-}
-
 const props = defineProps<{
 	settings: {
 		id: string;
@@ -85,10 +79,10 @@ let boundsUpdateTimeout: ReturnType<typeof setTimeout> | null = null;
 const loading = ref(true);
 const empty = ref(false);
 
-function toBounds(result: Record<string, unknown>): GoogleLatLngBounds {
+function toBounds(result: Partial<GeoBounds>): GoogleLatLngBounds {
 	if (result.lat_min !== undefined) {
-		const sw = new google.maps.LatLng(result.lat_min as number, result.lon_min as number);
-		const ne = new google.maps.LatLng(result.lat_max as number, result.lon_max as number);
+		const sw = new google.maps.LatLng(result.lat_min, result.lon_min!);
+		const ne = new google.maps.LatLng(result.lat_max!, result.lon_max!);
 		return new google.maps.LatLngBounds(sw, ne);
 	}
 	return new google.maps.LatLngBounds();
@@ -142,7 +136,7 @@ function getFilter(): string | undefined {
 }
 
 async function refreshPoints() {
-	const pointsParams: Record<string, unknown> = {
+	const pointsParams: HeatmapParams = {
 		id: props.settings.id,
 		type: 'heatmap',
 		precision,
@@ -254,7 +248,7 @@ function drawMap() {
 	map.controls[google.maps.ControlPosition.TOP_RIGHT].push(createFilterControl());
 }
 
-function params(): Record<string, unknown> {
+function params(): HeatmapParams {
 	const filters: string[] = [];
 	if (props.settings.filter) {
 		filters.push(props.settings.filter);
@@ -269,9 +263,9 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>, resultB?: Record<string, unknown>) {
-	bounds = toBounds((result[props.settings.id] as Record<string, unknown>) || {});
-	boundsB = toBounds((resultB?.[props.settings.id] as Record<string, unknown>) || {});
+function update(result: SearchResult, resultB?: SearchResult) {
+	bounds = toBounds((result[props.settings.id] as GeoBounds) || {});
+	boundsB = toBounds((resultB?.[props.settings.id] as GeoBounds) || {});
 	loading.value = false;
 	empty.value = false;
 	nextTick(drawMap);

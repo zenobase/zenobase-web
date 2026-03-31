@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, ref, watch } from 'vue';
+import type { ZenoEvent } from '../../types';
 import { parseBasis } from '../../utils/importers/basis';
 import { parseCSV } from '../../utils/importers/csv';
 import { parseHabitBull } from '../../utils/importers/habitbull';
@@ -32,13 +33,22 @@ const alertApi = inject<AlertApi>(alertKey)!;
 
 type SettingsType = 'field-unit' | 'tag-timezone' | 'timezone';
 
+interface ImportSettings {
+	field?: string;
+	unit?: string;
+	tag?: string;
+	timezone?: string;
+	encoding?: string;
+	[key: string]: unknown;
+}
+
 interface ImportFormat {
 	id: string;
 	label: string;
 	description: string;
 	settingsType?: SettingsType;
-	defaultSettings?: Record<string, unknown>;
-	parse: (data: string, settings: Record<string, unknown>) => Record<string, unknown>[];
+	defaultSettings?: ImportSettings;
+	parse: (data: string, settings: ImportSettings) => ZenoEvent[];
 }
 
 const formats: ImportFormat[] = [
@@ -50,11 +60,11 @@ const formats: ImportFormat[] = [
 			if (data.charAt(0) === '{' || data.charAt(0) === '[') {
 				const events = JSON.parse(data);
 				if (events?.events) {
-					return Array.isArray(events.events) ? events.events : [];
+					return Array.isArray(events.events) ? (events.events as ZenoEvent[]) : [];
 				}
-				return Array.isArray(events) ? events : [];
+				return Array.isArray(events) ? (events as ZenoEvent[]) : [];
 			}
-			return parseCSV(data).data as unknown as Record<string, unknown>[];
+			return parseCSV(data).data as unknown as ZenoEvent[];
 		},
 	},
 	{
@@ -81,21 +91,21 @@ const formats: ImportFormat[] = [
 		description: 'Import a <b>.csv</b> file containing blood sugar readings and notes from <a href="https://www.libreview.com/" target="_blank">LibreView</a>.',
 		settingsType: 'timezone',
 		defaultSettings: { timezone: 'UTC', encoding: 'UTF-16LE' },
-		parse: (data: string, settings: Record<string, unknown>) => parseLibreView(data, { tag: 'Glucose', timezone: (settings.timezone as string) || 'UTC' }, dateParser),
+		parse: (data: string, settings: ImportSettings) => parseLibreView(data, { tag: 'Glucose', timezone: settings.timezone || 'UTC' }, dateParser),
 	},
 	{
 		id: 'nomie',
 		label: 'Nomie',
 		description: 'Import a <b>.json</b> or <b>.csv</b> file from <a href="https://nomie.io/" target="_blank">Nomie</a>.',
 		settingsType: 'field-unit',
-		parse: (data: string, settings: Record<string, unknown>) => parseNomie(data, { field: settings.field as string, unit: settings.unit as string }, dateParser),
+		parse: (data: string, settings: ImportSettings) => parseNomie(data, { field: settings.field!, unit: settings.unit! }, dateParser),
 	},
 	{
 		id: 'nomie5',
 		label: 'Nomie 5',
 		description: 'Import a <b>.csv</b> file from <a href="https://nomie.io/" target="_blank">Nomie</a>.',
 		settingsType: 'field-unit',
-		parse: (data: string, settings: Record<string, unknown>) => parseNomie5(data, { field: settings.field as string, unit: settings.unit as string }, dateParser),
+		parse: (data: string, settings: ImportSettings) => parseNomie5(data, { field: settings.field!, unit: settings.unit! }, dateParser),
 	},
 	{
 		id: 'moodpanda',
@@ -103,7 +113,7 @@ const formats: ImportFormat[] = [
 		description: 'Import a <b>.csv</b> file from <a href="https://moodpanda.com/" target="_blank">MoodPanda</a>.',
 		settingsType: 'tag-timezone',
 		defaultSettings: { tag: 'Mood', timezone: 'UTC' },
-		parse: (data: string, settings: Record<string, unknown>) => parseMoodPanda(data, { tag: (settings.tag as string) || 'Mood', timezone: (settings.timezone as string) || 'UTC' }, dateParser),
+		parse: (data: string, settings: ImportSettings) => parseMoodPanda(data, { tag: settings.tag || 'Mood', timezone: settings.timezone || 'UTC' }, dateParser),
 	},
 	{
 		id: 'sleepcycle',
@@ -117,7 +127,7 @@ const formats: ImportFormat[] = [
 		description: 'Import a <b>.csv</b> file from <a href="https://sleepyhead.jedimark.net/" target="_blank">SleepyHead</a>.',
 		settingsType: 'tag-timezone',
 		defaultSettings: { tag: 'sleep', timezone: 'UTC' },
-		parse: (data: string, settings: Record<string, unknown>) => parseSleepyHead(data, { tag: (settings.tag as string) || 'sleep', timezone: (settings.timezone as string) || 'UTC' }, dateParser),
+		parse: (data: string, settings: ImportSettings) => parseSleepyHead(data, { tag: settings.tag || 'sleep', timezone: settings.timezone || 'UTC' }, dateParser),
 	},
 	{
 		id: 'sunsprite',
@@ -125,14 +135,14 @@ const formats: ImportFormat[] = [
 		description: 'Import a <b>.csv</b> file from <a href="https://www.sunsprite.com/" target="_blank">SunSprite</a>.',
 		settingsType: 'tag-timezone',
 		defaultSettings: { tag: 'Sunlight', timezone: 'UTC' },
-		parse: (data: string, settings: Record<string, unknown>) => parseSunSprite(data, { tag: (settings.tag as string) || 'Sunlight', timezone: (settings.timezone as string) || 'UTC' }, dateParser),
+		parse: (data: string, settings: ImportSettings) => parseSunSprite(data, { tag: settings.tag || 'Sunlight', timezone: settings.timezone || 'UTC' }, dateParser),
 	},
 	{
 		id: 'taplog',
 		label: 'TapLog',
 		description: 'Import a <b>.csv</b> file from <a href="https://welcome.taplog.info/" target="_blank">TapLog</a>.',
 		settingsType: 'field-unit',
-		parse: (data: string, settings: Record<string, unknown>) => parseTapLog(data, { field: settings.field as string, unit: settings.unit as string }),
+		parse: (data: string, settings: ImportSettings) => parseTapLog(data, { field: settings.field!, unit: settings.unit! }),
 	},
 ];
 
@@ -151,8 +161,8 @@ const visible = ref(false);
 const message = ref('');
 const importing = ref(false);
 const selectedFormat = ref<ImportFormat>(formats[0]);
-const settings = ref<Record<string, unknown>>({});
-const events = ref<Record<string, unknown>[]>([]);
+const settings = ref<ImportSettings>({});
+const events = ref<ZenoEvent[]>([]);
 const previewOffset = ref(0);
 const fileInput = ref<HTMLInputElement | null>(null);
 
@@ -276,7 +286,7 @@ watch(
 	() => settings.value.field,
 	() => {
 		const units = availableUnits.value;
-		settings.value.unit = units.length ? units[0] : null;
+		settings.value.unit = units.length ? units[0] : undefined;
 	},
 );
 </script>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, nextTick, onMounted, ref } from 'vue';
+import type { FieldInfo, SearchResult, TimeEntry, TimelineParams } from '../../types/search';
 import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
@@ -57,26 +58,6 @@ function subtractDate(unit: string, n: number): Date {
 			break;
 	}
 	return d;
-}
-
-interface FieldInfo {
-	toNumber(value: unknown): number;
-	toText(value: unknown): string;
-	formatAxis(axis: Record<string, unknown>): void;
-	minValue?: number;
-	maxValue?: number;
-}
-
-interface TimeEntry {
-	time: number;
-	label: string;
-	value: string;
-	count: number;
-	min?: unknown;
-	max?: unknown;
-	sum?: unknown;
-	avg?: unknown;
-	[key: string]: unknown;
 }
 
 const props = defineProps<{
@@ -317,7 +298,7 @@ function computeEffectSize() {
 	effectSizeOptions.value = opts;
 }
 
-function params(): Record<string, unknown> {
+function params(): TimelineParams {
 	interval = Interval.valueOf(props.settings.interval || '') || Interval.VALUES[1];
 	let range = '';
 	let q = '';
@@ -347,7 +328,7 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>, resultB?: Record<string, unknown>) {
+function update(result: SearchResult, resultB?: SearchResult) {
 	times.value = (result[props.settings.id] as TimeEntry[]) || [];
 	timesB.value = (resultB?.[props.settings.id] as TimeEntry[]) || [];
 	nextTick(() => {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, nextTick, ref, watch } from 'vue';
+import type { WidgetSettings } from '../../types';
 import { param } from '../../utils/helpers';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
@@ -21,7 +22,7 @@ interface Task {
 	type: string;
 	status?: string;
 	completed?: string;
-	settings?: Record<string, unknown>;
+	settings?: WidgetSettings;
 }
 
 const visible = ref(false);

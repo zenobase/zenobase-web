@@ -1,16 +1,8 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue';
+import type { ScoreboardParams, ScoreboardTerm, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { getUserName, resolveUserNames } from '../utils/userNames';
-
-interface ScoreboardTerm {
-	label: string;
-	count: number;
-	min?: number;
-	max?: number;
-	sum?: number;
-	avg?: number;
-}
 
 const props = defineProps<{
 	settings: {
@@ -43,7 +35,7 @@ function selected(stat: string): boolean {
 	return statistics.value.includes(stat);
 }
 
-function params(): Record<string, unknown> {
+function params(): ScoreboardParams {
 	return {
 		id: props.settings.id,
 		type: 'scoreboard',
@@ -56,7 +48,7 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>) {
+function update(result: SearchResult) {
 	terms.value = (result[props.settings.id] as ScoreboardTerm[]) || [];
 	if (props.settings.key_field === 'author' && terms.value.length > 0) {
 		resolveUserNames(terms.value.map((t) => t.label)).then(() => {

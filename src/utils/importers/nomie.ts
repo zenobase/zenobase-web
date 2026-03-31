@@ -1,3 +1,4 @@
+import type { ZenoEvent } from '../../types';
 import { parseCSV } from './csv';
 
 export interface NomieSettings {
@@ -24,8 +25,8 @@ interface NomieJsonItem {
 	value: string | number;
 }
 
-function parseJSON(s: string, settings: NomieSettings, dateParser: DateParser): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+function parseJSON(s: string, settings: NomieSettings, dateParser: DateParser): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const data: NomieJsonData = JSON.parse(s);
 	const tags: Record<string, string[]> = {};
 
@@ -43,7 +44,7 @@ function parseJSON(s: string, settings: NomieSettings, dateParser: DateParser): 
 	const add = (item: NomieJsonItem) => {
 		const t = dateParser.parse(String(item.time));
 		const formatted = (t.utcOffset(-item.offset) as { format(f: string): string }).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-		const event: Record<string, unknown> = {
+		const event: ZenoEvent = {
 			timestamp: formatted,
 			tag: tags[item.parent],
 			rating: (Number(item.charge) + 3) * 20,
@@ -64,8 +65,8 @@ function parseJSON(s: string, settings: NomieSettings, dateParser: DateParser): 
 	return events;
 }
 
-function parseNomieCSV(s: string, settings: NomieSettings, dateParser: DateParser): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+function parseNomieCSV(s: string, settings: NomieSettings, dateParser: DateParser): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const csv = parseCSV(s);
 	for (const row of csv.data) {
 		const t = dateParser.parse(row['iso_date']);
@@ -74,7 +75,7 @@ function parseNomieCSV(s: string, settings: NomieSettings, dateParser: DateParse
 			t.utcOffset(-offset);
 		}
 		const timestamp = t.format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-		const event: Record<string, unknown> = { timestamp, tag: [] as string[] };
+		const event: ZenoEvent = { timestamp, tag: [] as string[] };
 		if (row['tracker'] === '') return events;
 		if (row['tracker'] !== 'Unknown') {
 			(event['tag'] as string[]).push(row['tracker']);
@@ -98,6 +99,6 @@ function parseNomieCSV(s: string, settings: NomieSettings, dateParser: DateParse
 	return events;
 }
 
-export function parseNomie(s: string, settings: NomieSettings, dateParser: DateParser): Record<string, unknown>[] {
+export function parseNomie(s: string, settings: NomieSettings, dateParser: DateParser): ZenoEvent[] {
 	return s.charAt(0) === '{' ? parseJSON(s, settings, dateParser) : parseNomieCSV(s, settings, dateParser);
 }

@@ -1,3 +1,4 @@
+import type { ZenoEvent } from '../../types';
 import { parseCSV } from './csv';
 
 export interface SleepyHeadSettings {
@@ -9,8 +10,8 @@ export interface DateParser {
 	parseTz(value: string, timezone: string): { valueOf(): number; format(fmt: string): string };
 }
 
-export function parseSleepyHead(s: string, settings: SleepyHeadSettings, dateParser: DateParser): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+export function parseSleepyHead(s: string, settings: SleepyHeadSettings, dateParser: DateParser): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const csv = parseCSV(s);
 	for (const row of csv.data) {
 		const t0 = dateParser.parseTz(row['Start'], settings.timezone);

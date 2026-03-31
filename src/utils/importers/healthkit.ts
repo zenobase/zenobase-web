@@ -1,11 +1,12 @@
+import type { ZenoEvent } from '../../types';
 import { parseCSV } from './csv';
 
 export interface DateParser {
 	parse(value: string, format: string): { valueOf(): number; format(fmt: string): string };
 }
 
-export function parseHealthKit(s: string, dateParser: DateParser): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+export function parseHealthKit(s: string, dateParser: DateParser): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const csv = parseCSV(s);
 	for (const row of csv.data) {
 		const f = 'DD/MMM/YYYY H:mm:ss';
@@ -13,7 +14,7 @@ export function parseHealthKit(s: string, dateParser: DateParser): Record<string
 		const t1 = dateParser.parse(row['Finish'], f);
 		const duration = t1.valueOf() - t0.valueOf();
 		const timestamp = t0.format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-		const eventsByTag: Record<string, Record<string, unknown>> = {};
+		const eventsByTag: Record<string, ZenoEvent> = {};
 
 		function push(tag: string, field: string, value: unknown) {
 			let event = eventsByTag[tag];

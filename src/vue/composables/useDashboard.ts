@@ -1,10 +1,11 @@
 import { type InjectionKey, type MaybeRefOrGetter, type Ref, ref, shallowRef, toValue } from 'vue';
+import type { BaseWidgetParams, SearchResult } from '../../types/search';
 import { Constraint } from '../../utils/constraint';
 import { param } from '../../utils/helpers';
 
 export interface WidgetRegistration {
-	params: () => Record<string, unknown>;
-	update: (result: Record<string, unknown>, resultB?: Record<string, unknown>) => void;
+	params: () => BaseWidgetParams | null;
+	update: (result: SearchResult, resultB?: SearchResult) => void;
 	init: () => void;
 }
 
@@ -12,7 +13,7 @@ export interface DashboardApi {
 	constraints: Ref<Constraint[]>;
 	constraintsB: Ref<Constraint[]>;
 	total: Ref<number>;
-	search: (params: Record<string, unknown>[]) => Promise<Record<string, unknown>>;
+	search: (params: BaseWidgetParams[]) => Promise<SearchResult>;
 	register: (widget: WidgetRegistration) => void;
 	reduceExpectedWidgetCount: () => void;
 	refresh: () => void;
@@ -36,7 +37,7 @@ function escape(s: unknown): unknown {
 
 export function useDashboard(
 	bucketId: MaybeRefOrGetter<string>,
-	httpGet: (url: string) => Promise<{ data: Record<string, unknown> }>,
+	httpGet: (url: string) => Promise<{ data: SearchResult }>,
 	onLocationChange: (params: Record<string, string[] | null>) => void,
 	getLocationParams: () => Record<string, string | string[] | undefined>,
 ) {
@@ -82,13 +83,13 @@ export function useDashboard(
 		return constraints.value.some((c) => c.field === constraint.field && c.value === constraint.value && c.negated === constraint.negated && c.subfield === constraint.subfield);
 	}
 
-	async function doSearch(q: Constraint[], facets: string[]): Promise<Record<string, unknown>> {
+	async function doSearch(q: Constraint[], facets: string[]): Promise<SearchResult> {
 		const url = `/buckets/${toValue(bucketId)}/?${param({ q: q.map((c) => c.toString()), facet: facets }, true)}`;
 		const response = await httpGet(url);
 		return response.data;
 	}
 
-	async function search(params: Record<string, unknown>[]): Promise<Record<string, unknown>> {
+	async function search(params: BaseWidgetParams[]): Promise<SearchResult> {
 		const facets = params
 			.filter((p) => p != null)
 			.map((p) =>
@@ -113,7 +114,7 @@ export function useDashboard(
 					.join(','),
 			);
 		for (const w of widgets) w.init();
-		const requests: Promise<Record<string, unknown>>[] = [doSearch(constraints.value, facets)];
+		const requests: Promise<SearchResult>[] = [doSearch(constraints.value, facets)];
 		if (constraintsB.value.length > 0) {
 			requests.push(doSearch(constraintsB.value, facets));
 		}

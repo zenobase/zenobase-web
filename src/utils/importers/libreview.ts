@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import type { ZenoEvent } from '../../types';
 
 export interface LibreViewSettings {
 	tag: string;
@@ -9,7 +10,7 @@ export interface DateParser {
 	parseTz(value: string, format: string, timezone: string): { format(fmt: string): string };
 }
 
-export function parseLibreView(s: string, settings: LibreViewSettings, dateParser: DateParser): Record<string, unknown>[] {
+export function parseLibreView(s: string, settings: LibreViewSettings, dateParser: DateParser): ZenoEvent[] {
 	const lines = s.split('\n');
 	if (lines.length > 0 && lines[0].startsWith('Export')) {
 		lines.shift();
@@ -25,10 +26,10 @@ export function parseLibreView(s: string, settings: LibreViewSettings, dateParse
 		throw new Error(`${err.message} in row ${err.row}`);
 	}
 
-	const events: Record<string, unknown>[] = [];
+	const events: ZenoEvent[] = [];
 	for (const row of result.data) {
 		const t = dateParser.parseTz(row[2], 'MM-DD-YYYY LT', settings.timezone);
-		const event: Record<string, unknown> = {
+		const event: ZenoEvent = {
 			timestamp: t.format('YYYY-MM-DDTHH:mm:00.000Z'),
 			tag: [settings.tag],
 			source: { title: row[0], url: 'https://www.libreview.com/' },

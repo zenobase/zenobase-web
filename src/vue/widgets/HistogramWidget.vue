@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import { inject, nextTick, onMounted, ref } from 'vue';
+import type { HistogramInterval, HistogramParams, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
 import HighchartsChart from './HighchartsChart.vue';
-
-interface Interval {
-	from: unknown;
-	to: unknown;
-	count: number;
-}
 
 const props = defineProps<{
 	settings: {
@@ -23,7 +18,7 @@ const props = defineProps<{
 }>();
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
-const intervals = ref<Interval[] | null>(null);
+const intervals = ref<HistogramInterval[] | null>(null);
 const chartOptions = ref<Record<string, unknown> | null>(null);
 
 function fieldToText(value: unknown): string {
@@ -35,7 +30,7 @@ function fieldToText(value: unknown): string {
 	return String(value ?? '');
 }
 
-function params(): Record<string, unknown> {
+function params(): HistogramParams {
 	return {
 		id: props.settings.id,
 		type: 'histogram',
@@ -46,8 +41,8 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>) {
-	intervals.value = (result[props.settings.id] as Interval[]) || [];
+function update(result: SearchResult) {
+	intervals.value = (result[props.settings.id] as HistogramInterval[]) || [];
 	nextTick(draw);
 }
 

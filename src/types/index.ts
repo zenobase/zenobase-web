@@ -29,9 +29,33 @@ export interface User {
 	quota?: number | null;
 }
 
+export interface UnitValue {
+	'@value': number;
+	unit?: string;
+}
+
+export interface ResourceRef {
+	title: string;
+	url: string;
+}
+
+export interface GeoPoint {
+	lat: number;
+	lon: number;
+}
+
 export interface ZenoEvent {
 	'@id'?: string;
-	timestamp?: string;
+	timestamp?: string | string[];
+	duration?: number | UnitValue | Array<number | UnitValue>;
+	tag?: string | string[];
+	note?: string | string[];
+	rating?: number | number[];
+	location?: GeoPoint | GeoPoint[];
+	resource?: ResourceRef | ResourceRef[];
+	source?: ResourceRef | ResourceRef[];
+	author?: string | string[];
+	count?: number | number[];
 	[fieldName: string]: unknown;
 }
 
@@ -70,17 +94,19 @@ export interface WidgetSettings {
 	[key: string]: unknown;
 }
 
+export type { BaseWidgetParams, SearchResult } from './search';
+
+import type { BaseWidgetParams, SearchResult } from './search';
+
 export interface Widget {
 	settings: WidgetSettings;
-	params: () => Record<string, unknown>;
+	params: () => BaseWidgetParams | null;
 	update: (result: SearchResult) => void;
 	init: () => void;
 }
 
-export type SearchResult = Record<string, unknown>;
-
 export interface DashboardApi {
-	search: (params: Record<string, unknown>[]) => Promise<SearchResult>;
+	search: (params: BaseWidgetParams[]) => Promise<SearchResult>;
 	register: (widget: Widget) => void;
 	addConstraint: (field: string, value: string) => void;
 	addConstraints: (constraints: Constraint[]) => void;

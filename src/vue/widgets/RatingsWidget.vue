@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue';
+import type { Rating, RatingsParams, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
-
-interface Rating {
-	from: number | null;
-	to: number | null;
-	count: number;
-}
 
 const props = defineProps<{
 	settings: {
@@ -18,7 +13,7 @@ const props = defineProps<{
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const ratings = ref<Rating[] | null>(null);
 
-function params(): Record<string, unknown> {
+function params(): RatingsParams {
 	return {
 		id: props.settings.id,
 		type: 'ratings',
@@ -26,7 +21,7 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>) {
+function update(result: SearchResult) {
 	ratings.value = (result[props.settings.id] as Rating[]) || [];
 }
 

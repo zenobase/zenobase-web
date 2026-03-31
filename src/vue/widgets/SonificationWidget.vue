@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue';
+import type { UnitValue } from '../../types';
+import type { SearchResult, TimeEntry } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 
 const PITCHES: Record<string, number> = {
@@ -109,18 +111,18 @@ function isRunning(): boolean {
 	return audioCtx?.state === 'running';
 }
 
-function params(): Record<string, unknown> {
-	return null as unknown as Record<string, unknown>; // sonification uses other widgets' data
+function params() {
+	return null; // sonification uses other widgets' data
 }
 
-function update(result: Record<string, unknown>) {
+function update(result: SearchResult) {
 	for (const [_id, data] of Object.entries(result)) {
 		if (Array.isArray(data) && data.length && data[0].time) {
 			let useCounts = true;
-			const values = data.map((item: Record<string, unknown>) => {
+			const values = data.map((item: TimeEntry) => {
 				if (Object.hasOwn(item, 'avg')) {
 					if (typeof item.avg === 'object' && item.avg !== null) {
-						return (item.avg as Record<string, unknown>)['@value'] as number;
+						return (item.avg as UnitValue)['@value'];
 					}
 					useCounts = false;
 					return item.avg as number;

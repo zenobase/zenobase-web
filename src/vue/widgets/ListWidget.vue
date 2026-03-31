@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { inject, onBeforeUnmount, onMounted, ref } from 'vue';
+import type { GeoPoint, ZenoEvent } from '../../types';
+import type { ListParams, SearchResult } from '../../types/search';
 import { Constraint } from '../../utils/constraint';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { esc, formatEventHtml, locationText } from '../utils/eventFormatter';
 import { resolveUserNames } from '../utils/userNames';
 
 function locationToHtml(v: unknown): string {
-	const obj = v as Record<string, unknown>;
+	const obj = v as GeoPoint;
 	if (!obj || !('lat' in obj)) return '';
 	const text = locationText(obj);
 	const filter = text.replace(' ', '') + '~100 m';
@@ -41,14 +43,14 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	removeEvent: [eventId: string];
-	openDialog: [dialogId: string, event: Record<string, unknown>];
+	openDialog: [dialogId: string, event: ZenoEvent];
 }>();
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 
 const offset = ref(0);
 const total = ref(0);
-const items = ref<Array<Record<string, unknown>> | null>(null);
+const items = ref<ZenoEvent[] | null>(null);
 const filterField = ref<FilterField>(FILTER_FIELDS[0]);
 const filterValue = ref('');
 
@@ -96,7 +98,7 @@ function clearFilter() {
 	filterValue.value = '';
 }
 
-function params(): Record<string, unknown> {
+function params(): ListParams {
 	return {
 		id: props.settings.id,
 		type: 'list',
@@ -107,9 +109,9 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>) {
-	total.value = (result['total'] as number) ?? 0;
-	items.value = (result[props.settings.id] as Array<Record<string, unknown>>) || [];
+function update(result: SearchResult) {
+	total.value = (result.total as number) ?? 0;
+	items.value = (result[props.settings.id] as ZenoEvent[]) || [];
 	// Resolve author IDs to usernames in the background
 	const authorIds = items.value.map((e) => e['author']).filter((a): a is string => typeof a === 'string');
 	if (authorIds.length > 0) {
@@ -126,7 +128,9 @@ function init() {
 }
 
 async function refresh() {
-	const result = await dashboard.search([{ ...params(), offset: offset.value }]);
+	const p = params();
+	p.offset = offset.value;
+	const result = await dashboard.search([p]);
 	init();
 	update(result);
 }

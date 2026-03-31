@@ -1,23 +1,9 @@
 <script setup lang="ts">
 import { inject, nextTick, onMounted, ref } from 'vue';
+import type { FieldInfo, PolarEntry, PolarParams, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
 import HighchartsChart from './HighchartsChart.vue';
-
-interface FieldInfo {
-	toNumber(value: unknown): number;
-	toText(value: unknown): string;
-	formatAxis?(axis: Record<string, unknown>): void;
-	minValue?: number;
-	maxValue?: number;
-}
-
-interface TimeEntry {
-	label: string;
-	value: string;
-	count: number;
-	[key: string]: unknown;
-}
 
 const props = defineProps<{
 	settings: {
@@ -37,6 +23,7 @@ const props = defineProps<{
 const defaultFieldInfo: FieldInfo = {
 	toNumber: (v) => (typeof v === 'number' ? v : typeof v === 'object' && v !== null && '@value' in v ? (v as { '@value': number })['@value'] : Number(v)),
 	toText: (v) => String(v ?? ''),
+	formatAxis: () => {},
 };
 
 function findField(name: string): FieldInfo {
@@ -46,14 +33,14 @@ function findField(name: string): FieldInfo {
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const keyField = 'timestamp';
 
-const times = ref<TimeEntry[] | null>(null);
-const timesB = ref<TimeEntry[]>([]);
+const times = ref<PolarEntry[] | null>(null);
+const timesB = ref<PolarEntry[]>([]);
 const chartOptions = ref<Record<string, unknown> | null>(null);
 
 /**
  * Based on https://stackoverflow.com/a/18070247/1144085
  */
-function circularAvg(data: TimeEntry[]): number {
+function circularAvg(data: PolarEntry[]): number {
 	const f = (2 * Math.PI) / data.length;
 	let x = 0;
 	let y = 0;
@@ -88,7 +75,7 @@ function filterByValue(value: string, negated?: boolean) {
 	dashboard.addConstraint((props.settings.key_field || keyField) + '.' + props.settings.interval, value, true, negated);
 }
 
-function params(): Record<string, unknown> {
+function params(): PolarParams {
 	return {
 		id: props.settings.id,
 		type: 'polar',
@@ -100,9 +87,9 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>, resultB?: Record<string, unknown>) {
-	times.value = (result[props.settings.id] as TimeEntry[]) || [];
-	timesB.value = (resultB?.[props.settings.id] as TimeEntry[]) || [];
+function update(result: SearchResult, resultB?: SearchResult) {
+	times.value = (result[props.settings.id] as PolarEntry[]) || [];
+	timesB.value = (resultB?.[props.settings.id] as PolarEntry[]) || [];
 	nextTick(draw);
 }
 

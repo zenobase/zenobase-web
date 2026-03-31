@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import type { AdminBucket, AdminTask, AdminUser, Authorization, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
 import { param } from '../../utils/helpers';
 import api, { ApiError } from '../api';
 
@@ -10,7 +11,7 @@ const router = useRouter();
 // --- Shared state ---
 
 const constraint = ref<string | null>((route.query.q as string) || null);
-const status = ref<Record<string, unknown> | null>(null);
+const status = ref<ClusterStatus | null>(null);
 const outstanding = ref(0);
 const refreshKey = ref(0);
 
@@ -26,7 +27,7 @@ function refreshAll() {
 
 async function fetchStatus() {
 	try {
-		const response = await api.get<Record<string, unknown>>('/status');
+		const response = await api.get<ClusterStatus>('/status');
 		status.value = response.data;
 	} catch {
 		status.value = { nodes: '?', health: 'UNKNOWN' };
@@ -77,7 +78,7 @@ async function resolveUserNames(ids: string[]) {
 	await Promise.all(
 		unknown.map(async (id) => {
 			try {
-				const response = await api.get<Record<string, unknown>>('/users/' + id);
+				const response = await api.get<AdminUser>('/users/' + id);
 				userNameCache.set(id, (response.data.name as string) || 'guest');
 			} catch {
 				userNameCache.set(id, 'guest');
@@ -95,8 +96,8 @@ function delay(callback: () => void) {
 	setTimeout(callback, 1000);
 }
 
-function getOwner(bucket: Record<string, unknown>): string {
-	const roles = bucket.roles as Array<{ principal: string; role: string }>;
+function getOwner(bucket: AdminBucket): string {
+	const roles = bucket.roles;
 	if (roles) {
 		for (const role of roles) {
 			if (role.role === 'owner') return role.principal;
@@ -105,9 +106,8 @@ function getOwner(bucket: Record<string, unknown>): string {
 	return '';
 }
 
-function isPublished(bucket: Record<string, unknown>): boolean {
-	const roles = bucket.roles as Array<{ principal: string }>;
-	return roles ? roles.some((r) => r.principal === '*') : false;
+function isPublished(bucket: AdminBucket): boolean {
+	return bucket.roles ? bucket.roles.some((r) => r.principal === '*') : false;
 }
 
 // --- Journal ---
@@ -116,23 +116,23 @@ const journal = reactive({
 	offset: 0,
 	limit: 10,
 	total: 0,
-	commands: null as Array<Record<string, unknown>> | null,
+	commands: null as JournalCommand[] | null,
 	filter: null as string | null,
 });
 
-function journalParams(overrides?: Record<string, unknown>) {
-	const params: Record<string, unknown> = { offset: journal.offset, limit: journal.limit };
+function journalParams(overrides?: Partial<PaginationParams>) {
+	const params: PaginationParams = { offset: journal.offset, limit: journal.limit };
 	if (journal.filter) params.q = journal.filter;
 	return { ...params, ...overrides };
 }
 
-async function refreshJournal(overrides?: Record<string, unknown>) {
+async function refreshJournal(overrides?: Partial<PaginationParams>) {
 	const path = constraint.value ? `/users/${constraint.value}/journal/` : '/journal/';
-	const response = await api.get<{ total: number; commands: Array<Record<string, unknown>> }>(path + '?' + param(journalParams(overrides)));
+	const response = await api.get<{ total: number; commands: JournalCommand[] }>(path + '?' + param(journalParams(overrides)));
 	if (overrides) Object.assign(journal, overrides);
 	journal.total = response.data.total;
 	journal.commands = response.data.commands;
-	resolveUserNames(response.data.commands.map((c) => c.principal as string));
+	resolveUserNames(response.data.commands.map((c) => c.principal));
 }
 
 async function undo(commandId: string) {
@@ -146,20 +146,20 @@ const buckets = reactive({
 	offset: 0,
 	limit: 10,
 	total: 0,
-	items: null as Array<Record<string, unknown>> | null,
+	items: null as AdminBucket[] | null,
 	filter: null as string | null,
 	events: 0,
 });
 
-function bucketParams(overrides?: Record<string, unknown>) {
-	const params: Record<string, unknown> = { offset: buckets.offset, limit: buckets.limit };
+function bucketParams(overrides?: Partial<PaginationParams>) {
+	const params: PaginationParams = { offset: buckets.offset, limit: buckets.limit };
 	if (buckets.filter) params.q = buckets.filter;
 	return { ...params, ...overrides };
 }
 
-async function refreshBuckets(overrides?: Record<string, unknown>) {
+async function refreshBuckets(overrides?: Partial<PaginationParams>) {
 	const basePath = constraint.value ? `/users/${constraint.value}` : '';
-	const response = await api.get<{ total: number; buckets: Array<Record<string, unknown>> }>(basePath + '/buckets/?' + param(bucketParams(overrides)));
+	const response = await api.get<{ total: number; buckets: AdminBucket[] }>(basePath + '/buckets/?' + param(bucketParams(overrides)));
 	if (overrides) Object.assign(buckets, overrides);
 	buckets.total = response.data.total;
 	buckets.items = response.data.buckets;
@@ -179,20 +179,20 @@ const users = reactive({
 	offset: 0,
 	limit: 10,
 	total: 0,
-	items: null as Array<Record<string, unknown>> | null,
+	items: null as AdminUser[] | null,
 	filter: null as string | null,
 });
 
-function userParams(overrides?: Record<string, unknown>) {
-	const params: Record<string, unknown> = { offset: users.offset, limit: users.limit };
+function userParams(overrides?: Partial<PaginationParams>) {
+	const params: PaginationParams = { offset: users.offset, limit: users.limit };
 	if (users.filter) params.q = users.filter;
 	return { ...params, ...overrides };
 }
 
-async function refreshUsers(overrides?: Record<string, unknown>) {
+async function refreshUsers(overrides?: Partial<PaginationParams>) {
 	if (constraint.value) {
-		const response = await api.get<Record<string, unknown>>('/users/' + constraint.value);
-		if (response.data && (response.data as Record<string, unknown>).name) {
+		const response = await api.get<AdminUser>('/users/' + constraint.value);
+		if (response.data?.name) {
 			users.total = 1;
 			users.items = [response.data];
 		} else {
@@ -200,7 +200,7 @@ async function refreshUsers(overrides?: Record<string, unknown>) {
 			users.items = [];
 		}
 	} else {
-		const response = await api.get<{ total: number; users: Array<Record<string, unknown>> }>('/users/?' + param(userParams(overrides)));
+		const response = await api.get<{ total: number; users: AdminUser[] }>('/users/?' + param(userParams(overrides)));
 		if (overrides) Object.assign(users, overrides);
 		users.total = response.data.total;
 		users.items = response.data.users;
@@ -212,17 +212,17 @@ async function suspendUser(username: string) {
 	delay(() => refreshAll());
 }
 
-async function reverifyUser(user: Record<string, unknown>) {
+async function reverifyUser(user: AdminUser) {
 	await api.post(`/users/@${user.name}`, { email: user.email });
 	delay(() => refreshAll());
 }
 
-async function optoutUser(user: Record<string, unknown>) {
+async function optoutUser(user: AdminUser) {
 	await api.post(`/users/@${user.name}`, { optedout: true });
 	delay(() => refreshAll());
 }
 
-async function optinUser(user: Record<string, unknown>) {
+async function optinUser(user: AdminUser) {
 	await api.post(`/users/@${user.name}`, { optedout: false });
 	delay(() => refreshAll());
 }
@@ -236,14 +236,14 @@ async function removeUser(username: string) {
 
 const showEditQuota = ref(false);
 const quota = reactive({
-	user: null as Record<string, unknown> | null,
+	user: null as AdminUser | null,
 	message: '',
 	limit: null as number | null,
 	usedOld: null as number | null,
 	usedNew: null as number | null,
 });
 
-async function openEditQuota(user: Record<string, unknown>) {
+async function openEditQuota(user: AdminUser) {
 	quota.user = user;
 	quota.message = '';
 	quota.limit = null;
@@ -279,23 +279,23 @@ const authorizations = reactive({
 	offset: 0,
 	limit: 10,
 	total: 0,
-	items: null as Array<Record<string, unknown>> | null,
+	items: null as Authorization[] | null,
 	filter: null as string | null,
 });
 
-function authorizationParams(overrides?: Record<string, unknown>) {
-	const params: Record<string, unknown> = { offset: authorizations.offset, limit: authorizations.limit };
+function authorizationParams(overrides?: Partial<PaginationParams>) {
+	const params: PaginationParams = { offset: authorizations.offset, limit: authorizations.limit };
 	if (authorizations.filter) params.q = authorizations.filter;
 	return { ...params, ...overrides };
 }
 
-async function refreshAuthorizations(overrides?: Record<string, unknown>) {
+async function refreshAuthorizations(overrides?: Partial<PaginationParams>) {
 	const path = constraint.value ? `/users/${constraint.value}/authorizations/` : '/authorizations/';
-	const response = await api.get<{ total: number; authorizations: Array<Record<string, unknown>> }>(path + '?' + param(authorizationParams(overrides)));
+	const response = await api.get<{ total: number; authorizations: Authorization[] }>(path + '?' + param(authorizationParams(overrides)));
 	if (overrides) Object.assign(authorizations, overrides);
 	authorizations.total = response.data.total;
 	authorizations.items = response.data.authorizations;
-	resolveUserNames(response.data.authorizations.flatMap((a) => [a.principal as string, a.client as string]));
+	resolveUserNames(response.data.authorizations.flatMap((a) => [a.principal, a.client]));
 }
 
 async function removeAuthorization(authId: string) {
@@ -309,23 +309,23 @@ const credentials = reactive({
 	offset: 0,
 	limit: 10,
 	total: 0,
-	items: null as Array<Record<string, unknown>> | null,
+	items: null as Credential[] | null,
 	filter: null as string | null,
 });
 
-function credentialParams(overrides?: Record<string, unknown>) {
-	const params: Record<string, unknown> = { offset: credentials.offset, limit: credentials.limit };
+function credentialParams(overrides?: Partial<PaginationParams>) {
+	const params: PaginationParams = { offset: credentials.offset, limit: credentials.limit };
 	if (credentials.filter) params.q = credentials.filter;
 	return { ...params, ...overrides };
 }
 
-async function refreshCredentials(overrides?: Record<string, unknown>) {
+async function refreshCredentials(overrides?: Partial<PaginationParams>) {
 	const path = constraint.value ? `/users/${constraint.value}/credentials/` : '/credentials/';
-	const response = await api.get<{ total: number; items: Array<Record<string, unknown>> }>(path + '?' + param(credentialParams(overrides)));
+	const response = await api.get<{ total: number; items: Credential[] }>(path + '?' + param(credentialParams(overrides)));
 	if (overrides) Object.assign(credentials, overrides);
 	credentials.total = response.data.total;
 	credentials.items = response.data.items;
-	resolveUserNames(response.data.items.map((c) => c.principal as string));
+	resolveUserNames(response.data.items.map((c) => c.principal));
 }
 
 async function removeCredential(credentialsId: string) {
@@ -339,37 +339,37 @@ const tasks = reactive({
 	offset: 0,
 	limit: 10,
 	total: 0,
-	items: null as Array<Record<string, unknown>> | null,
+	items: null as AdminTask[] | null,
 	filter: null as string | null,
 	running: {} as Record<string, boolean>,
 });
 
-function taskParams(overrides?: Record<string, unknown>) {
-	const params: Record<string, unknown> = { offset: tasks.offset, limit: tasks.limit };
+function taskParams(overrides?: Partial<PaginationParams>) {
+	const params: PaginationParams = { offset: tasks.offset, limit: tasks.limit };
 	if (tasks.filter) params.q = tasks.filter;
 	return { ...params, ...overrides };
 }
 
-async function refreshTasks(overrides?: Record<string, unknown>) {
+async function refreshTasks(overrides?: Partial<PaginationParams>) {
 	const path = constraint.value ? `/users/${constraint.value}/tasks/` : '/tasks/';
-	const response = await api.get<{ total: number; tasks: Array<Record<string, unknown>> }>(path + '?' + param(taskParams(overrides)));
+	const response = await api.get<{ total: number; tasks: AdminTask[] }>(path + '?' + param(taskParams(overrides)));
 	if (overrides) Object.assign(tasks, overrides);
 	tasks.total = response.data.total;
 	tasks.items = response.data.tasks;
-	resolveUserNames(response.data.tasks.map((t) => t.principal as string));
+	resolveUserNames(response.data.tasks.map((t) => t.principal));
 }
 
 async function runTask(taskId: string) {
 	tasks.running[taskId] = true;
 	try {
-		const response = await api.get<Record<string, unknown>>('/tasks/' + taskId);
+		const response = await api.get<AdminTask>('/tasks/' + taskId);
 		const credentialsHeader = response.headers('X-Credentials');
 		const linkHeader = response.headers('Link');
 		if (credentialsHeader) {
 			try {
-				const credResponse = await api.post<Record<string, unknown>>('/credentials/', { type: credentialsHeader });
-				if ((credResponse.data as Record<string, unknown>).authorizationUrl) {
-					window.open((credResponse.data as Record<string, unknown>).authorizationUrl as string);
+				const credResponse = await api.post<Credential>('/credentials/', { type: credentialsHeader });
+				if (credResponse.data.authorizationUrl) {
+					window.open(credResponse.data.authorizationUrl);
 				}
 			} catch {
 				// credential creation failed
@@ -406,11 +406,11 @@ async function removeTask(taskId: string) {
 // --- Scheduler ---
 
 const scheduler = reactive({
-	jobs: null as Array<Record<string, unknown>> | null,
+	jobs: null as SchedulerJob[] | null,
 });
 
 async function refreshScheduler() {
-	const response = await api.get<{ jobs: Array<Record<string, unknown>> }>('/jobs/');
+	const response = await api.get<{ jobs: SchedulerJob[] }>('/jobs/');
 	scheduler.jobs = response.data.jobs;
 }
 
@@ -425,17 +425,17 @@ const snapshots = reactive({
 	offset: 0,
 	limit: 10,
 	total: 0,
-	items: null as Array<Record<string, unknown>> | null,
+	items: null as Snapshot[] | null,
 	snapshotting: false,
 });
 
-function snapshotParams(overrides?: Record<string, unknown>) {
-	const params: Record<string, unknown> = { offset: snapshots.offset, limit: snapshots.limit };
+function snapshotParams(overrides?: Partial<PaginationParams>) {
+	const params: PaginationParams = { offset: snapshots.offset, limit: snapshots.limit };
 	return { ...params, ...overrides };
 }
 
-async function refreshSnapshots(overrides?: Record<string, unknown>) {
-	const response = await api.get<{ total: number; snapshots: Array<Record<string, unknown>> }>('/snapshots/?' + param(snapshotParams(overrides)));
+async function refreshSnapshots(overrides?: Partial<PaginationParams>) {
+	const response = await api.get<{ total: number; snapshots: Snapshot[] }>('/snapshots/?' + param(snapshotParams(overrides)));
 	if (overrides) Object.assign(snapshots, overrides);
 	snapshots.total = response.data.total;
 	snapshots.items = response.data.snapshots;

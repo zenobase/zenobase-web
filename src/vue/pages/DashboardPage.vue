@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import type { Component } from 'vue';
 import { type ComponentPublicInstance, computed, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { Bucket, WidgetSettings } from '../../types';
+import type { Bucket, SearchResult, WidgetSettings, ZenoEvent } from '../../types';
 import api from '../api';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import CreateTaskDialog from '../components/CreateTaskDialog.vue';
@@ -31,7 +32,7 @@ import ScoreboardWidget from '../widgets/ScoreboardWidget.vue';
 import SonificationWidget from '../widgets/SonificationWidget.vue';
 import TimelineWidget from '../widgets/TimelineWidget.vue';
 
-const WIDGET_COMPONENTS: Record<string, unknown> = {
+const WIDGET_COMPONENTS: Record<string, Component> = {
 	list: ListWidget,
 	count: CountWidget,
 	gantt: GanttWidget,
@@ -110,7 +111,7 @@ const editable = computed(() => {
 
 const dashboard = useDashboard(
 	bucketId,
-	(url: string) => api.get(url) as Promise<{ data: Record<string, unknown> }>,
+	(url: string) => api.get(url) as Promise<{ data: SearchResult }>,
 	(params) => {
 		const query: Record<string, string> = {};
 		for (const [key, value] of Object.entries(params)) {
@@ -132,7 +133,7 @@ function hasWidgets(placement: string): boolean {
 	return getWidgets(placement).length > 0;
 }
 
-function getComponent(type: string): unknown {
+function getComponent(type: string): Component | null {
 	return WIDGET_COMPONENTS[type] || null;
 }
 
@@ -213,9 +214,9 @@ function onDragEnd() {
 
 // Event edit dialog
 const showEventDialog = ref(false);
-const editingEvent = ref<Record<string, unknown> | null>(null);
+const editingEvent = ref<ZenoEvent | null>(null);
 
-function openEventDialog(event: Record<string, unknown>) {
+function openEventDialog(event: ZenoEvent) {
 	editingEvent.value = event;
 	showEventDialog.value = true;
 }
@@ -467,7 +468,7 @@ watch(
 					</ul>
 					<div class="tab-content">
 						<div v-for="settings in getWidgets('top')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('top') === settings.id }">
-							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: Record<string, unknown>) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
 						</div>
 					</div>
 				</div>
@@ -484,7 +485,7 @@ watch(
 					</ul>
 					<div class="tab-content">
 						<div v-for="settings in getWidgets('left')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('left') === settings.id }">
-							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: Record<string, unknown>) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
 						</div>
 					</div>
 				</div>
@@ -497,7 +498,7 @@ watch(
 					</ul>
 					<div class="tab-content">
 						<div v-for="settings in getWidgets('right')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('right') === settings.id }">
-							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: Record<string, unknown>) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
 						</div>
 					</div>
 				</div>

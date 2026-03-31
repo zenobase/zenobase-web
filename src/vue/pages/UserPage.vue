@@ -240,7 +240,7 @@ async function loadProfile() {
 	}
 }
 
-async function loadBuckets(overrides: Record<string, unknown> = {}) {
+async function loadBuckets(overrides: { offset?: number; limit?: number; q?: string; include_archived?: boolean } = {}) {
 	if (!profile.value || !isSelf.value) return;
 	const params = { order: 'label', offset: bucketOffset.value, limit: bucketLimit, include_archived: includeArchived.value, ...overrides };
 	try {

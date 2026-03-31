@@ -24,7 +24,7 @@ interface WidgetTemplate {
 	label: string;
 	description: string;
 	thumbnail: string;
-	settings: Record<string, unknown>;
+	settings: Partial<WidgetSettings>;
 	singleton?: boolean;
 }
 
@@ -136,7 +136,7 @@ function add(template: WidgetTemplate) {
 		label: template.label,
 		placement: props.placement,
 	};
-	deepExtend(settings as Record<string, unknown>, template.settings);
+	deepExtend(settings, template.settings);
 	close();
 	emit('added', settings);
 }

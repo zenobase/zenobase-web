@@ -1,16 +1,10 @@
 <script setup lang="ts">
 import { inject, nextTick, onMounted, ref } from 'vue';
+import type { FieldInfo, ScatterPlotParams, SearchResult } from '../../types/search';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
 import HighchartsChart from './HighchartsChart.vue';
-
-interface FieldInfo {
-	toText(value: unknown): string;
-	formatAxis(axis: Record<string, unknown>): void;
-	minValue?: number;
-	maxValue?: number;
-}
 
 const props = defineProps<{
 	settings: {
@@ -36,6 +30,7 @@ const props = defineProps<{
 }>();
 
 const defaultFieldInfo: FieldInfo = {
+	toNumber: (v) => Number(v),
 	toText: (v) => String(v ?? ''),
 	formatAxis: () => {},
 };
@@ -59,7 +54,7 @@ function buildLabel(label: string | undefined, statistic: string | undefined, fi
 	return header;
 }
 
-function params(): Record<string, unknown> {
+function params(): ScatterPlotParams {
 	return {
 		id: props.settings.id,
 		type: 'scatterplot',
@@ -77,7 +72,7 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>, resultB?: Record<string, unknown>) {
+function update(result: SearchResult, resultB?: SearchResult) {
 	data.value = (result[props.settings.id] as number[][]) || [];
 	dataB.value = (resultB?.[props.settings.id] as number[][]) || [];
 	nextTick(draw);

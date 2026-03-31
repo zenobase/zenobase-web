@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue';
+import type { GanttParams, GanttTerm, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { getUserName, resolveUserNames } from '../utils/userNames';
-
-interface GanttTerm {
-	label: string;
-	first: string;
-	last: string;
-	count: number;
-	freq?: number;
-}
 
 const props = defineProps<{
 	settings: {
@@ -34,7 +27,7 @@ function classesForOrderBy(column: string): string[] {
 	return classes;
 }
 
-function params(): Record<string, unknown> {
+function params(): GanttParams {
 	return {
 		id: props.settings.id,
 		type: 'gantt',
@@ -46,7 +39,7 @@ function params(): Record<string, unknown> {
 	};
 }
 
-function update(result: Record<string, unknown>) {
+function update(result: SearchResult) {
 	const data = (result[props.settings.id] as GanttTerm[]) || [];
 	for (const term of data) {
 		if (term.count > 1) {

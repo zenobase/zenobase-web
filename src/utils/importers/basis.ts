@@ -1,3 +1,4 @@
+import type { ZenoEvent } from '../../types';
 import { parseCSV } from './csv';
 
 export interface BasisSettings {
@@ -20,8 +21,8 @@ function meanOfNonZeroValues(values: number[]): number {
 	return sum / count;
 }
 
-export function parseBasis(s: string, settings: BasisSettings, dateParser: DateParser): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+export function parseBasis(s: string, settings: BasisSettings, dateParser: DateParser): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const csv = parseCSV(s);
 
 	let hour: string | null = null;
@@ -32,8 +33,8 @@ export function parseBasis(s: string, settings: BasisSettings, dateParser: DateP
 	let temperatures: number[] = [];
 
 	function push() {
-		const event: Record<string, unknown> = {
-			timestamp: hour,
+		const event: ZenoEvent = {
+			timestamp: hour!,
 			duration: 3600000,
 			tag: [settings.tag],
 			energy: { '@value': Math.round(10 * energy) / 10, unit: 'kcal' },

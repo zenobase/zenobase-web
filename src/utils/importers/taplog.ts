@@ -1,3 +1,4 @@
+import type { ZenoEvent } from '../../types';
 import { parseCSV } from './csv';
 
 export interface TapLogSettings {
@@ -5,11 +6,11 @@ export interface TapLogSettings {
 	unit?: string;
 }
 
-export function parseTapLog(s: string, settings: TapLogSettings = {}): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+export function parseTapLog(s: string, settings: TapLogSettings = {}): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const csv = parseCSV(s);
 	for (const row of csv.data) {
-		const event: Record<string, unknown> = {
+		const event: ZenoEvent = {
 			timestamp: row['timestamp'],
 			tag: [] as string[],
 		};

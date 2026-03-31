@@ -1,3 +1,4 @@
+import type { ZenoEvent } from '../../types';
 import { parseCSV } from './csv';
 
 export interface Nomie5Settings {
@@ -9,8 +10,8 @@ export interface DateParser {
 	parse(value: string): { utcOffset(offset: number): unknown; format(fmt: string): string };
 }
 
-export function parseNomie5(s: string, settings: Nomie5Settings, dateParser: DateParser): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+export function parseNomie5(s: string, settings: Nomie5Settings, dateParser: DateParser): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const csv = parseCSV(s);
 	for (const row of csv.data) {
 		const t0 = dateParser.parse(row['start']);
@@ -20,7 +21,7 @@ export function parseNomie5(s: string, settings: Nomie5Settings, dateParser: Dat
 			t0.utcOffset(-offset);
 			t1.utcOffset(-offset);
 		}
-		const event: Record<string, unknown> = {
+		const event: ZenoEvent = {
 			timestamp: [t0.format('YYYY-MM-DDTHH:mm:ss.SSSZ'), t1.format('YYYY-MM-DDTHH:mm:ss.SSSZ')],
 			tag: [] as string[],
 		};

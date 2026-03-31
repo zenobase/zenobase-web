@@ -1,4 +1,5 @@
 import type { DurationInputArg1, DurationInputArg2 } from 'moment';
+import type { ZenoEvent } from '../../types';
 
 export interface DateParser {
 	parse(value: string): { add(amount: DurationInputArg1, unit?: DurationInputArg2): unknown; format(fmt: string): string };
@@ -38,8 +39,8 @@ function parseSleepNotes(values: string): string[] {
 	return tags;
 }
 
-export function parseSleepCycle(data: string, dateParser: DateParser): Record<string, unknown>[] {
-	const events: Record<string, unknown>[] = [];
+export function parseSleepCycle(data: string, dateParser: DateParser): ZenoEvent[] {
+	const events: ZenoEvent[] = [];
 	const lines = data.split(/[\r\n]+/g);
 	const expected = ['Start', 'End', 'Sleep quality', 'Time in bed', 'Wake up', 'Sleep Notes'];
 	const headers = (lines.shift() ?? '').split(';').slice(0, 6);
@@ -54,7 +55,7 @@ export function parseSleepCycle(data: string, dateParser: DateParser): Record<st
 			}
 			const begin = dateParser.parse(fields[0]);
 			const duration = parseTimeInBed(fields[3]);
-			const event: Record<string, unknown> = {
+			const event: ZenoEvent = {
 				tag: parseSleepNotes(fields[5]),
 				timestamp: [begin.format('YYYY-MM-DDTHH:mm:ss.SSSZ'), (begin.add(duration, 'ms') as { format(f: string): string }).format('YYYY-MM-DDTHH:mm:ss.SSSZ')],
 				duration,
