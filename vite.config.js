@@ -1,10 +1,17 @@
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 /// <reference types="vitest/config" />
 
 import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	plugins: [vue()],
+	plugins: [
+		vue(),
+		sentryVitePlugin({
+			org: 'zenobase',
+			project: 'zenobase-web',
+		}),
+	],
 	test: {
 		globals: true,
 		environment: 'jsdom',
@@ -12,12 +19,15 @@ export default defineConfig({
 	},
 	build: {
 		cssMinify: false,
+
 		rollupOptions: {
 			input: {
 				main: 'index.html',
 				admin: 'admin/index.html',
 			},
 		},
+
+		sourcemap: true,
 	},
 	server: {
 		port: 5173,
