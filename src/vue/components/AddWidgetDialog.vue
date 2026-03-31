@@ -163,8 +163,9 @@ watch(
 </script>
 
 <template>
-	<div v-if="visible" class="modal-backdrop fade in" @click="close()" />
-	<div id="add-widget-dialog" class="modal" :class="{ hide: !visible, in: visible, fade: true }" :style="visible ? { display: 'block', top: '10%' } : {}">
+	<template v-if="visible">
+	<div class="modal-backdrop fade in" @click="close()" />
+	<div id="add-widget-dialog" class="modal fade in" style="display: block; top: 10%">
 		<form class="modal-form">
 			<div class="modal-header">
 				<a class="close" @click="close()">&times;</a>
@@ -188,4 +189,5 @@ watch(
 			</div>
 		</form>
 	</div>
+	</template>
 </template>
