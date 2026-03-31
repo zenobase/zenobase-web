@@ -107,14 +107,6 @@ const templates: WidgetTemplate[] = [
 		thumbnail: '/img/widgets/scatterplot.png',
 		settings: { field_x: 'count', field_y: 'count' },
 	},
-	{
-		type: 'sonification',
-		label: 'Sonify',
-		description: 'Plays data from timeline widgets as sounds.',
-		thumbnail: '/img/widgets/sonification.png',
-		settings: { tempo: 176, scale: 'chromatic' },
-		singleton: true,
-	},
 ];
 
 function generateId(): string {

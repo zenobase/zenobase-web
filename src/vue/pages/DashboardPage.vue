@@ -33,7 +33,6 @@ import PolarWidget from '../widgets/PolarWidget.vue';
 import RatingsWidget from '../widgets/RatingsWidget.vue';
 import ScatterPlotWidget from '../widgets/ScatterPlotWidget.vue';
 import ScoreboardWidget from '../widgets/ScoreboardWidget.vue';
-import SonificationWidget from '../widgets/SonificationWidget.vue';
 import TimelineWidget from '../widgets/TimelineWidget.vue';
 
 const WIDGET_COMPONENTS: Record<string, Component> = {
@@ -48,7 +47,6 @@ const WIDGET_COMPONENTS: Record<string, Component> = {
 	map: MapWidget,
 	heatmap: HeatmapWidget,
 	scoreboard: ScoreboardWidget,
-	sonification: SonificationWidget,
 };
 
 const route = useRoute();
@@ -139,6 +137,14 @@ function hasWidgets(placement: string): boolean {
 
 function getComponent(type: string): Component | null {
 	return WIDGET_COMPONENTS[type] || null;
+}
+
+function filterWidgets(widgets: WidgetSettings[]): WidgetSettings[] {
+	return widgets.filter((w) => {
+		if (WIDGET_COMPONENTS[w.type]) return true;
+		console.warn(`Unknown widget type: ${w.type}`);
+		return false;
+	});
 }
 
 function getActiveTab(placement: string): string {
@@ -357,7 +363,8 @@ async function loadBucket() {
 	message.value = '';
 	try {
 		const response = await api.get<Bucket>(`/buckets/${bucketId.value}`);
-		dashboard.setExpectedWidgetCount(response.data.widgets?.length ?? 0);
+		response.data.widgets = filterWidgets(response.data.widgets ?? []);
+		dashboard.setExpectedWidgetCount(response.data.widgets.length);
 		bucket.value = response.data;
 		if (refreshInterval) clearInterval(refreshInterval);
 		if (bucket.value.refresh) {

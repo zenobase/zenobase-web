@@ -59,8 +59,6 @@ export const POLAR_INTERVALS = [
 	{ id: 'month_of_year', label: 'month of year' },
 ];
 
-export const SONIFICATION_SCALES = ['chromatic', 'octatonic', 'pentatonic'];
-
 export const REGRESSION_METHODS = ['linear'];
 
 export function getUnitsForField(fieldName: string): string[] {

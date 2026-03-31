@@ -8,12 +8,11 @@ import {
 	getUnitsForField,
 	POLAR_INTERVALS,
 	REGRESSION_METHODS,
-	SONIFICATION_SCALES,
 	TIMELINE_INTERVALS,
 	TIMESTAMP_SUBFIELDS,
 } from '../utils/fieldRegistry';
 
-export type WidgetType = 'count' | 'list' | 'gantt' | 'ratings' | 'histogram' | 'scoreboard' | 'timeline' | 'polar' | 'scatterplot' | 'map' | 'heatmap' | 'sonification';
+export type WidgetType = 'count' | 'list' | 'gantt' | 'ratings' | 'histogram' | 'scoreboard' | 'timeline' | 'polar' | 'scatterplot' | 'map' | 'heatmap';
 
 export interface WidgetSettings {
 	id?: string;
@@ -58,7 +57,6 @@ const WIDGET_TITLES: Record<WidgetType, string> = {
 	scatterplot: 'Scatter Plot Widget',
 	map: 'Map Widget',
 	heatmap: 'Heatmap Widget',
-	sonification: 'Sonify Widget',
 };
 
 const props = defineProps<{
@@ -649,24 +647,6 @@ watch(
 					</div>
 				</div>
 
-				<!-- Sonification: scale -->
-				<div v-if="widgetType === 'sonification'" class="control-group">
-					<label class="control-label">Scale</label>
-					<div class="controls form-horizontal">
-						<select required v-model="draft.scale" class="input-medium">
-							<option v-for="s in SONIFICATION_SCALES" :key="s" :value="s">{{ s }}</option>
-						</select>
-					</div>
-				</div>
-
-				<!-- Sonification: tempo -->
-				<div v-if="widgetType === 'sonification'" class="control-group">
-					<label class="control-label">Tempo (bpm)</label>
-					<div class="controls form-horizontal">
-						<input type="number" required min="25" max="200" v-model.number="draft.tempo" class="input-mini" />
-					</div>
-				</div>
-
 				<!-- Limit (count, list, gantt, scoreboard) -->
 				<div v-if="widgetType === 'count' || widgetType === 'list' || widgetType === 'gantt' || widgetType === 'scoreboard'" class="control-group">
 					<label class="control-label">Limit</label>
@@ -711,8 +691,8 @@ watch(
 					</div>
 				</div>
 
-				<!-- Filter (most widgets except list, map, sonification) -->
-				<div v-if="widgetType !== 'list' && widgetType !== 'map' && widgetType !== 'sonification'" class="control-group">
+				<!-- Filter (most widgets except list, map) -->
+				<div v-if="widgetType !== 'list' && widgetType !== 'map'" class="control-group">
 					<label class="control-label">Filter</label>
 					<div class="controls form-horizontal input-append">
 						<input type="text" v-model="draft.filter" placeholder="e.g. tag:xyz" />
