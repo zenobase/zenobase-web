@@ -284,97 +284,6 @@
 	},
 	{
 		"category" : "Burn",
-		"source" : "Basis",
-		"importer" : "basis",
-		"widgets" : [
-			{
-				"id" : "timeline_energy",
-				"type" : "timeline",
-				"label" : "Burn (kcal)",
-				"placement" : "top",
-				"field" : "energy",
-				"unit" : "kcal",
-				"statistic" : "sum",
-				"interval" : "month"
-			},
-			{
-				"id" : "timeline_frequency",
-				"type" : "timeline",
-				"label" : "Heart Rate (bpm)",
-				"placement" : "top",
-				"field" : "frequency",
-				"unit" : "bpm",
-				"statistic" : "avg",
-				"interval" : "month"
-			},
-			{
-				"id" : "timeline_temperature",
-				"type" : "timeline",
-				"label" : "Skin Temperature (F)",
-				"placement" : "top",
-				"field" : "temperature",
-				"unit" : "F",
-				"statistic" : "avg",
-				"interval" : "month"
-			},
-			{
-				"id" : "timeline_count",
-				"type" : "timeline",
-				"label" : "Steps",
-				"placement" : "top",
-				"field" : "count",
-				"statistic" : "sum",
-				"interval" : "month"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"order" : "-timestamp",
-				"limit" : 10,
-				"singleton" : true
-			},
-			{
-				"id" : "histogram_frequency",
-				"type" : "histogram",
-				"label" : "Histogram",
-				"placement" : "left",
-				"field" : "frequency",
-				"unit" : "bpm",
-				"interval" : 10
-			},
-			{
-				"id" : "polar_frequency",
-				"type" : "polar",
-				"label" : "Hour of Day",
-				"placement" : "right",
-				"value_field" : "frequency",
-				"unit" : "bpm",
-				"statistic" : "avg",
-				"interval" : "hour_of_day"
-			},
-			{
-				"id" : "scatterplot_frequency_temperature",
-				"type" : "scatterplot",
-				"label" : "Scatter Plot",
-				"placement" : "right",
-				"label_x" : "Heart Rate (bpm)",
-				"field_x" : "frequency",
-				"unit_x" : "bpm",
-				"statistic_x" : "avg",
-				"label_y" : "Skin Temperature (F)",
-				"field_y" : "temperature",
-				"unit_y" : "F",
-				"statistic_y" : "avg",
-				"key_field" : "timestamp",
-				"interval" : "hour",
-				"regression" : "linear"
-			}
-		]
-	},
-	{
-		"category" : "Burn",
 		"source" : "Fitbit",
 		"task" : "fitbit-burn",
 		"widgets" : [
@@ -965,46 +874,6 @@
 				"value_field" : "timestamp",
 				"unit" : null,
 				"interval" : "hour_of_day"
-			}
-		]
-	},
-	{
-		"category" : "Mood",
-		"source" : "MoodPanda",
-		"importer" : "moodpanda",
-		"widgets" : [
-			{
-				"id" : "timeline",
-				"type" : "timeline",
-				"label" : "Timeline",
-				"placement" : "top",
-				"field" : "rating",
-				"statistic" : "avg"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"singleton" : true,
-				"limit" : 10,
-				"order" : "-timestamp"
-			},
-			{
-				"id" : "ratings",
-				"type" : "ratings",
-				"label" : "Mood",
-				"placement" : "right"
-			},
-			{
-				"id" : "day_of_week",
-				"type" : "polar",
-				"label" : "Day of Week",
-				"statistic" : "avg",
-				"placement" : "right",
-				"value_field" : "rating",
-				"unit" : null,
-				"interval" : "day_of_week"
 			}
 		]
 	},
@@ -1615,79 +1484,6 @@
 	},
 	{
 		"category" : "Sleep",
-		"source" : "SleepyHead",
-		"importer" : "sleepyhead",
-		"widgets" : [
-			{
-				"id" : "timeline_duration",
-				"type" : "timeline",
-				"label" : "Timeline",
-				"placement" : "top",
-				"key_field" : "timestamp$max",
-				"field" : "duration",
-				"unit" : null,
-				"statistic" : "avg",
-				"interval" : "week"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"order" : "-timestamp",
-				"limit" : 7,
-				"singleton" : true
-			},
-			{
-				"id" : "polar_hour",
-				"type" : "polar",
-				"label" : "Hours (Begin)",
-				"placement" : "left",
-				"key_field" : "timestamp$min",
-				"value_field" : "timestamp",
-				"unit" : null,
-				"statistic" : "count",
-				"interval" : "hour_of_day"
-			},
-			{
-				"id" : "polar_day_duration",
-				"type" : "polar",
-				"label" : "Days (Duration)",
-				"placement" : "left",
-				"key_field" : "timestamp$max",
-				"value_field" : "duration",
-				"unit" : null,
-				"statistic" : "avg",
-				"interval" : "day_of_week"
-			},
-			{
-				"id" : "histogram_duration",
-				"type" : "histogram",
-				"label" : "Duration",
-				"placement" : "right",
-				"field" : "duration",
-				"unit" : null,
-				"interval" : 3600000
-			},
-			{
-				"id" : "histogram_pressure",
-				"type" : "histogram",
-				"label" : "Water Pressure",
-				"placement" : "right",
-				"field" : "pressure",
-				"unit" : "cm_wg",
-				"interval" : 10
-			},
-			{
-				"id" : "ratings",
-				"type" : "ratings",
-				"label" : "AHI",
-				"placement" : "right"
-			}
-		]
-	},
-	{
-		"category" : "Sleep",
 		"source" : "Withings",
 		"task" : "withings-sleep",
 		"widgets" : [
@@ -1910,52 +1706,6 @@
 				"unit" : null,
 				"statistic" : "avg",
 				"interval" : "day_of_week"
-			}
-		]
-	},
-	{
-		"category" : "Sunlight",
-		"source" : "SunSprite",
-		"importer" : "sunsprite",
-		"widgets" : [
-			{
-				"id" : "timeline_light",
-				"type" : "timeline",
-				"label" : "Light (lux)",
-				"placement" : "top",
-				"field" : "light",
-				"unit" : "lx",
-				"statistic" : "avg",
-				"interval" : "month"
-			},
-			{
-				"id" : "timeline_rating",
-				"type" : "timeline",
-				"label" : "UV Rating",
-				"placement" : "top",
-				"field" : "rating",
-				"unit" : null,
-				"statistic" : "avg",
-				"interval" : "month"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"order" : "-timestamp",
-				"limit" : 10,
-				"singleton" : true
-			},
-			{
-				"id" : "light_by_hour",
-				"type" : "polar",
-				"label" : "Hour of Day",
-				"placement" : "right",
-				"value_field" : "light",
-				"unit" : "lx",
-				"statistic" : "avg",
-				"interval" : "hour_of_day"
 			}
 		]
 	},
