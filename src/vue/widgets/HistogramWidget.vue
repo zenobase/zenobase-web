@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import type { ECharts } from 'echarts/core';
 import { inject, nextTick, onMounted, ref } from 'vue';
 import type { HistogramInterval, HistogramParams, SearchResult } from '../../types/search';
+import { compactNumber } from '../../utils/helpers';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
-import HighchartsChart from './HighchartsChart.vue';
+import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
 	settings: {
@@ -20,6 +22,7 @@ const props = defineProps<{
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const intervals = ref<HistogramInterval[] | null>(null);
 const chartOptions = ref<Record<string, unknown> | null>(null);
+const chartHeight = ref<number | undefined>();
 
 function fieldToText(value: unknown): string {
 	if (props.formatFieldText) return props.formatFieldText(value, props.settings.field);
@@ -55,74 +58,61 @@ function draw() {
 	if (!intervals.value?.length) return;
 
 	const height = Math.max(intervals.value.length * 20, 150);
+	chartHeight.value = height;
+	const categories = intervals.value.map((i) => `${fieldToText(i.from)}..${fieldToText(i.to)}`);
+	const counts = intervals.value.map((i) => i.count);
+
 	const options: Record<string, unknown> = {
-		chart: {
-			type: 'bar',
-			zoomType: 'x',
-			height,
-			animation: false,
-			events: {
-				selection: (event: { xAxis: Array<{ min?: number; max?: number }> }) => {
-					const min = event.xAxis[0].min !== undefined ? Math.ceil(event.xAxis[0].min) : 0;
-					const max = event.xAxis[0].max !== undefined ? Math.floor(event.xAxis[0].max) : intervals.value!.length - 1;
-					if (min <= max) {
-						const from = fieldToText(intervals.value![max].from);
-						const to = fieldToText(intervals.value![min].to);
-						if (from || to) {
-							dashboard.addConstraint(props.settings.field, `[${from}..${to})`, true);
-						}
-					}
-					return false;
-				},
-			},
-		},
-		title: { text: null },
+		animation: false,
+		grid: { left: 80, right: 20, top: 10, bottom: 30, height: height - 40 },
 		xAxis: {
-			categories: intervals.value.map((i) => `${fieldToText(i.from)}..${fieldToText(i.to)}`),
-			tickLength: 0,
+			type: 'value',
+			axisLabel: { hideOverlap: true, formatter: compactNumber },
+			splitLine: { show: false },
 		},
 		yAxis: {
-			title: null,
-			labels: { overflow: 'justify' },
-			allowDecimals: false,
+			type: 'category',
+			data: categories,
+			axisTick: { show: false },
+			inverse: true,
+		},
+		tooltip: {
+			trigger: 'item',
+			formatter: (params: { name: string; value: number }) => {
+				if (params?.value === undefined) return '';
+				return `<b>${params.name}</b>: ${params.value}`;
+			},
 		},
 		series: [
 			{
 				name: 'count',
-				color: 'rgba(47, 126, 216, 0.4)',
-				data: intervals.value.map((i) => i.count),
-			},
-		],
-		tooltip: {
-			shared: false,
-			hideDelay: 0,
-			crosshairs: false,
-			headerFormat: '<b>{point.key}</b>: ',
-			pointFormat: '{point.y}',
-		},
-		plotOptions: {
-			series: {
-				pointWidth: 10,
-				borderRadius: 5,
-				borderWidth: 0,
-				cursor: 'pointer',
-				animation: false,
-				events: {
-					click: (event: { point: { x: number } }) => {
-						const interval = intervals.value![event.point.x];
-						const range = `[${fieldToText(interval.from)}..${fieldToText(interval.to)})`;
-						dashboard.addConstraint(props.settings.field, range, true);
-					},
+				type: 'bar',
+				data: counts,
+				barWidth: 10,
+				itemStyle: {
+					color: 'rgba(47, 126, 216, 0.4)',
+					borderRadius: 5,
 				},
 			},
-		},
-		legend: { enabled: false },
-		credits: { enabled: false },
+		],
+		legend: { show: false },
 	};
+
 	chartOptions.value = options;
 }
 
-const chartRef = ref<InstanceType<typeof HighchartsChart> | null>(null);
+const chartRef = ref<InstanceType<typeof EChartsChart> | null>(null);
+
+function onChartReady(instance: ECharts) {
+	instance.on('click', (params: unknown) => {
+		const { dataIndex } = params as { dataIndex?: number };
+		if (dataIndex !== undefined && intervals.value) {
+			const interval = intervals.value[dataIndex];
+			const range = `[${fieldToText(interval.from)}..${fieldToText(interval.to)})`;
+			dashboard.addConstraint(props.settings.field, range, true);
+		}
+	});
+}
 
 function downloadCSV() {
 	if (!intervals.value?.length) return;
@@ -160,7 +150,7 @@ onMounted(() => dashboard.register(registration));
 				<a class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><i class="fa fa-camera" /></a>
 			</div>
 		</div>
-		<HighchartsChart ref="chartRef" v-if="intervals?.length" :options="chartOptions" />
+		<EChartsChart ref="chartRef" v-if="intervals?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
 		<p v-if="intervals === null" class="none">Loading...</p>
 		<p v-else-if="intervals.length === 0" class="none">None</p>
 	</div>

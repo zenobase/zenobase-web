@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import type { ECharts } from 'echarts/core';
 import { inject, nextTick, onMounted, ref } from 'vue';
 import type { FieldInfo, PolarEntry, PolarParams, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
-import HighchartsChart from './HighchartsChart.vue';
+import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
 	settings: {
@@ -36,6 +37,7 @@ const keyField = 'timestamp';
 const times = ref<PolarEntry[] | null>(null);
 const timesB = ref<PolarEntry[]>([]);
 const chartOptions = ref<Record<string, unknown> | null>(null);
+const chartHeight = ref<number | undefined>();
 
 /**
  * Based on https://stackoverflow.com/a/18070247/1144085
@@ -53,22 +55,6 @@ function circularAvg(data: PolarEntry[]): number {
 		z += 2 * Math.PI;
 	}
 	return (Math.round((z / f) * 2) / 2) % data.length;
-}
-
-function addPlotBand(opts: Record<string, unknown>, value: number, max: number, color: string) {
-	const xAxis = opts.xAxis as { plotBands: Array<{ color: string; from: number; to: number }> };
-	xAxis.plotBands.push({
-		color,
-		from: value - 0.5,
-		to: value + 0.5,
-	});
-	if (value - 0.5 < 0) {
-		xAxis.plotBands.push({
-			color,
-			from: max - 0.5,
-			to: max,
-		});
-	}
 }
 
 function filterByValue(value: string, negated?: boolean) {
@@ -105,101 +91,110 @@ function draw() {
 	const field = findField(props.settings.value_field);
 	const statistic = props.settings.statistic || 'count';
 
-	const options: Record<string, unknown> = {
-		chart: {
-			type: 'column',
-			polar: true,
-			animation: false,
-		},
-		title: { text: null },
-		xAxis: {
-			categories: [] as string[],
-			plotBands: [] as Array<{ color: string; from: number; to: number }>,
-		},
-		yAxis: {
-			title: { text: null },
-			floor: field.minValue,
-			ceiling: field.maxValue,
-		},
-		tooltip: {
-			shared: false,
-			hideDelay: 0,
-			formatter: function (this: { x: string; y: number }) {
-				return '<b>' + this.x + '</b>: ' + (field.toText(this.y) || this.y) + (props.settings.unit || '');
-			},
-		},
-		series: [
-			{
-				name: statistic,
-				data: [] as number[],
-			},
-		] as Array<Record<string, unknown>>,
-		plotOptions: {
-			series: {
-				color: 'rgba(47, 126, 216, 0.4)',
-				animation: false,
-				pointPlacement: 'on',
-				cursor: 'pointer',
-				events: {
-					click: (event: { point: { x: number } }) => {
-						filterByValue(times.value![event.point.x].value);
-					},
-				},
-			},
-			column: {
-				pointPadding: 0,
-				groupPadding: 0,
-			},
-		},
-		legend: { enabled: false },
-		credits: { enabled: false },
-	};
-
-	if (props.settings.mark === 'avg' && times.value?.length) {
-		addPlotBand(options, circularAvg(times.value), times.value.length, 'rgba(47, 126, 216, 0.2)');
-	}
-
-	if (props.settings.placement === 'top') {
-		(options.chart as Record<string, unknown>).height = 150;
-	}
-
-	const series = options.series as Array<Record<string, unknown>>;
-	const xAxis = options.xAxis as { categories: string[] };
-	const series0Data = series[0].data as number[];
+	const categories: string[] = [];
+	const seriesAData: number[] = [];
 
 	times.value?.forEach((time) => {
 		const value = time[statistic];
-		xAxis.categories.push(time.label);
-		series0Data.push(value !== undefined ? field.toNumber(value) : 0);
+		categories.push(time.label);
+		seriesAData.push(value !== undefined ? field.toNumber(value) : 0);
 	});
 
-	if (timesB.value?.length) {
-		series.push({
+	const allSeries: Record<string, unknown>[] = [
+		{
+			type: 'bar',
+			data: seriesAData,
+			coordinateSystem: 'polar',
 			name: statistic,
-			data: [] as number[],
-			color: 'rgba(204, 102, 0, 0.4)',
-			events: {
-				click: (event: { point: { x: number } }) => {
-					filterByValue(timesB.value[event.point.x].value);
-				},
-			},
-		});
-		const series1Data = series[1].data as number[];
+			barGap: '-100%',
+			barCategoryGap: '0%',
+			itemStyle: { color: 'rgba(47, 126, 216, 0.4)', borderColor: 'rgba(47, 126, 216, 0.2)', borderWidth: 1 },
+		},
+	];
+
+	if (timesB.value?.length) {
+		const seriesBData: number[] = [];
 		timesB.value.forEach((time) => {
 			const value = time[statistic];
-			xAxis.categories.push(time.label);
-			series1Data.push(value !== undefined ? field.toNumber(value) : 0);
+			seriesBData.push(value !== undefined ? field.toNumber(value) : 0);
 		});
-		if (props.settings.mark === 'avg') {
-			addPlotBand(options, circularAvg(timesB.value), timesB.value.length, 'rgba(204, 102, 0, 0.2)');
+		allSeries.push({
+			type: 'bar',
+			data: seriesBData,
+			coordinateSystem: 'polar',
+			name: statistic + '-B',
+			barGap: '-100%',
+			barCategoryGap: '0%',
+			itemStyle: { color: 'rgba(204, 102, 0, 0.4)', borderColor: 'rgba(204, 102, 0, 0.2)', borderWidth: 1 },
+		});
+	}
+
+	const markAreaData: Record<string, unknown>[][] = [];
+
+	if (props.settings.mark === 'avg' && times.value?.length) {
+		const avg = circularAvg(times.value);
+		const from = avg - 0.5;
+		const to = avg + 0.5;
+		markAreaData.push([{ xAxis: from }, { xAxis: to }]);
+		if (from < 0) {
+			markAreaData.push([{ xAxis: times.value.length - 0.5 }, { xAxis: times.value.length }]);
 		}
 	}
 
-	field.formatAxis?.(options.yAxis as Record<string, unknown>);
+	if (timesB.value?.length && props.settings.mark === 'avg') {
+		const avgB = circularAvg(timesB.value);
+		markAreaData.push([{ xAxis: avgB - 0.5 }, { xAxis: avgB + 0.5 }]);
+	}
+
+	const size = props.settings.placement === 'top' ? 150 : 350;
+	chartHeight.value = size;
+
+	const options: Record<string, unknown> = {
+		animation: false,
+		polar: { radius: '75%' },
+		angleAxis: {
+			type: 'category',
+			data: categories,
+			startAngle: 90 + 360 / (categories.length * 2),
+			axisTick: { show: false },
+			axisLine: { lineStyle: { color: '#ddd' } },
+			splitLine: { show: true, lineStyle: { color: '#ddd' } },
+		},
+		radiusAxis: {
+			axisLine: { show: false },
+			axisTick: { show: false },
+			splitLine: { show: true, lineStyle: { color: '#ddd' } },
+			axisLabel: { show: false },
+			min: field.minValue,
+			max: field.maxValue,
+		},
+		tooltip: {
+			trigger: 'item',
+			formatter: (params: { name: string; value: number }) => {
+				if (params?.value === undefined) return '';
+				return '<b>' + params.name + '</b>: ' + (field.toText(params.value) || params.value) + (props.settings.unit || '');
+			},
+		},
+		series: allSeries,
+		legend: { show: false },
+	};
+
 	chartOptions.value = options;
 }
 
-const chartRef = ref<InstanceType<typeof HighchartsChart> | null>(null);
+const chartRef = ref<InstanceType<typeof EChartsChart> | null>(null);
+
+function onChartReady(instance: ECharts) {
+	instance.on('click', (params: unknown) => {
+		const { dataIndex, seriesIndex } = params as { dataIndex?: number; seriesIndex?: number };
+		if (dataIndex !== undefined) {
+			const entries = seriesIndex === 1 ? timesB.value : times.value;
+			if (entries?.[dataIndex]) {
+				filterByValue(entries[dataIndex].value);
+			}
+		}
+	});
+}
 
 function downloadCSV() {
 	if (!times.value?.length) return;
@@ -265,7 +260,7 @@ onMounted(() => dashboard.register(registration));
 				<a class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><i class="fa fa-camera" /></a>
 			</div>
 		</div>
-		<HighchartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" />
+		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
 		<p v-if="times === null" class="none">Loading...</p>
 		<p v-else-if="times.length === 0 && timesB.length === 0" class="none">None</p>
 	</div>

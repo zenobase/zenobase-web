@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { inject, nextTick, onMounted, ref } from 'vue';
 import type { FieldInfo, ScatterPlotParams, SearchResult } from '../../types/search';
+import { compactNumber } from '../../utils/helpers';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
-import HighchartsChart from './HighchartsChart.vue';
+import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
 	settings: {
@@ -45,6 +46,7 @@ const keyField = 'timestamp';
 const data = ref<number[][] | null>(null);
 const dataB = ref<number[][]>([]);
 const chartOptions = ref<Record<string, unknown> | null>(null);
+const chartHeight = ref<number | undefined>();
 const rChartOptions = ref<Record<string, unknown> | null>(null);
 
 function buildLabel(label: string | undefined, statistic: string | undefined, field: string, unit: string | undefined): string {
@@ -91,93 +93,36 @@ function draw() {
 	const xField = findField(props.settings.field_x);
 	const yField = findField(props.settings.field_y);
 
-	const options: Record<string, unknown> = {
-		chart: {
+	const allSeries: Record<string, unknown>[] = [
+		{
 			type: 'scatter',
-			zoomType: 'xy',
-			animation: false,
+			data: data.value,
+			symbolSize: 10,
+			itemStyle: { color: 'rgba(119, 152, 191, 0.5)' },
+			selectedMode: 'single',
 		},
-		title: { text: null },
-		xAxis: {
-			title: {
-				text: buildLabel(props.settings.label_x, props.settings.statistic_x, props.settings.field_x, props.settings.unit_x),
-			},
-			tickLength: 5,
-			tickWidth: 1,
-			lineWidth: 0,
-			gridLineWidth: 0,
-			startOnTick: false,
-			floor: xField.minValue,
-			ceiling: xField.maxValue,
-		},
-		yAxis: {
-			title: {
-				text: buildLabel(props.settings.label_y, props.settings.statistic_y, props.settings.field_y, props.settings.unit_y),
-			},
-			tickLength: 5,
-			tickWidth: 1,
-			lineWidth: 0,
-			gridLineWidth: 0,
-			startOnTick: false,
-			floor: yField.minValue,
-			ceiling: yField.maxValue,
-		},
-		tooltip: {
-			crosshairs: false,
-			shared: false,
-			hideDelay: 0,
-			formatter: function (this: { x: number; y: number }) {
-				return '<b>x</b>: ' + (xField.toText(this.x) || this.x) + (props.settings.unit_x || '') + ', ' + '<b>y</b>: ' + (yField.toText(this.y) || this.y) + (props.settings.unit_y || '');
-			},
-		},
-		series: [
-			{
-				data: data.value,
-				animation: false,
-				color: 'rgba(119, 152, 191, 0.5)',
-				allowPointSelect: true,
-				marker: {
-					radius: 5,
-					symbol: 'circle',
-				},
-			},
-		] as Array<Record<string, unknown>>,
-		plotOptions: {
-			series: {
-				animation: false,
-				stickyTracking: false,
-			},
-		},
-		legend: { enabled: false },
-		credits: { enabled: false },
-	};
-
-	const series = options.series as Array<Record<string, unknown>>;
+	];
 
 	if (dataB.value?.length) {
-		series.push({
+		allSeries.push({
+			type: 'scatter',
 			data: dataB.value,
-			animation: false,
-			color: 'rgba(204, 102, 0, 0.5)',
-			allowPointSelect: true,
-			marker: {
-				radius: 5,
-				symbol: 'circle',
-			},
+			symbolSize: 10,
+			itemStyle: { color: 'rgba(204, 102, 0, 0.5)' },
+			selectedMode: 'single',
 		});
 	}
 
 	if (data.value!.length > 1 && props.settings.regression === 'linear') {
 		const regression = statistics.regression(data.value!);
 		if (regression) {
-			series.push({
+			allSeries.push({
 				type: 'line',
 				data: regression.data,
-				color: 'rgb(119, 152, 191)',
-				dashStyle: 'Dot',
-				lineWidth: 2,
-				enableMouseTracking: false,
-				marker: { enabled: false },
+				lineStyle: { type: 'dotted', width: 2, color: 'rgb(119, 152, 191)' },
+				itemStyle: { color: 'rgb(119, 152, 191)' },
+				symbol: 'none',
+				silent: true,
 			});
 		}
 	}
@@ -185,133 +130,189 @@ function draw() {
 	if (dataB.value && dataB.value.length > 1 && props.settings.regression === 'linear') {
 		const regressionB = statistics.regression(dataB.value);
 		if (regressionB) {
-			series.push({
+			allSeries.push({
 				type: 'line',
 				data: regressionB.data,
-				color: 'rgb(204, 102, 0)',
-				dashStyle: 'Dot',
-				lineWidth: 2,
-				enableMouseTracking: false,
-				marker: { enabled: false },
+				lineStyle: { type: 'dotted', width: 2, color: 'rgb(204, 102, 0)' },
+				itemStyle: { color: 'rgb(204, 102, 0)' },
+				symbol: 'none',
+				silent: true,
 			});
 		}
 	}
 
-	if (data.value!.length > 3 || dataB.value.length > 3) {
-		const rOpts: Record<string, unknown> = {
-			chart: {
-				type: 'line',
-				inverted: true,
-				height: 75,
-				plotBorderWidth: 1,
-				plotBackgroundColor: '#fafafa',
-				marginLeft: 65,
-				animation: false,
-			},
-			title: { text: null },
-			xAxis: {
-				title: { text: null },
-				labels: { enabled: false },
-				lineWidth: 0,
-				tickLength: 0,
-			},
-			yAxis: {
-				title: { text: null },
-				max: 1.0,
-				min: -1.0,
-				lineWidth: 0,
-				tickInterval: 1.0,
-				tickWidth: 0,
-				gridLineWidth: 1,
-			},
-			tooltip: {
-				shared: true,
-				hideDelay: 0,
-			},
-			series: [] as Array<Record<string, unknown>>,
-			legend: { enabled: false },
-			credits: { enabled: false },
-		};
+	chartHeight.value = props.settings.placement === 'top' ? 150 : undefined;
 
-		const rSeries = rOpts.series as Array<Record<string, unknown>>;
+	const options: Record<string, unknown> = {
+		animation: false,
+		grid: { left: 60, right: 20, top: 10, bottom: 40, containLabel: false },
+		xAxis: {
+			type: 'value',
+			name: buildLabel(props.settings.label_x, props.settings.statistic_x, props.settings.field_x, props.settings.unit_x),
+			nameLocation: 'middle',
+			nameGap: 25,
+			splitNumber: 8,
+			axisLine: { show: false, onZero: false },
+			axisTick: { show: true, lineStyle: { color: '#ccc' }, alignWithLabel: true },
+			axisLabel: { formatter: compactNumber },
+			splitLine: { show: false },
+			min: xField.minValue,
+			max: xField.maxValue,
+		},
+		yAxis: {
+			type: 'value',
+			name: buildLabel(props.settings.label_y, props.settings.statistic_y, props.settings.field_y, props.settings.unit_y),
+			nameLocation: 'middle',
+			nameGap: 40,
+			splitNumber: 8,
+			axisLine: { show: false, onZero: false },
+			axisTick: { show: true, lineStyle: { color: '#ccc' }, alignWithLabel: true },
+			axisLabel: { formatter: compactNumber },
+			splitLine: { show: false },
+			min: yField.minValue,
+			max: yField.maxValue,
+		},
+		tooltip: {
+			trigger: 'item',
+			formatter: (params: { value: number[] }) => {
+				if (!params?.value) return '';
+				return (
+					'<b>x</b>: ' +
+					(xField.toText(params.value[0]) || params.value[0]) +
+					(props.settings.unit_x || '') +
+					', ' +
+					'<b>y</b>: ' +
+					(yField.toText(params.value[1]) || params.value[1]) +
+					(props.settings.unit_y || '')
+				);
+			},
+		},
+		dataZoom: [
+			{ type: 'inside', xAxisIndex: 0 },
+			{ type: 'inside', yAxisIndex: 0 },
+		],
+		series: allSeries,
+		legend: { show: false },
+	};
+
+	chartOptions.value = options;
+
+	// Correlation chart
+	if (data.value!.length > 3 || dataB.value.length > 3) {
+		const rSeries: Record<string, unknown>[] = [];
 
 		if (data.value && data.value.length > 3) {
 			const correlation = statistics.correlate(data.value, true);
 			rSeries.push({
+				type: 'scatter',
 				data: [[0, correlation.r]],
-				color: 'rgb(119, 152, 191)',
-				animation: false,
-				marker: {
-					radius: 5,
-					symbol: 'circle',
-				},
-				tooltip: {
-					headerFormat: '',
-					pointFormat: "<b>Spearman's rho:</b> {point.y}<br/>",
-					valueDecimals: 3,
-				},
-				states: {
-					hover: { enabled: false },
-				},
+				symbolSize: 10,
+				itemStyle: { color: 'rgb(119, 152, 191)' },
+				silent: true,
 			});
-			rSeries.push({
-				type: 'errorbar',
-				data: [[0, correlation.lower, correlation.upper]],
-				lineWidth: 2,
-				color: 'rgb(119, 152, 191)',
-				animation: false,
-				tooltip: {
-					headerFormat: '',
-					pointFormat: '<b>95% confidence interval:</b> [' + correlation.lower.toFixed(3) + '..' + correlation.upper.toFixed(3) + ']<br/>',
-				},
-			});
+			if (correlation.lower !== undefined && correlation.upper !== undefined) {
+				rSeries.push({
+					type: 'custom',
+					data: [[0, correlation.lower, correlation.upper]],
+					renderItem: (_params: unknown, api: { coord: (val: number[]) => number[]; style: (opts: Record<string, unknown>) => Record<string, unknown> }) => {
+						const lowPt = api.coord([0, correlation.lower]);
+						const highPt = api.coord([0, correlation.upper]);
+						return {
+							type: 'group',
+							children: [
+								{
+									type: 'line',
+									shape: { x1: lowPt[0], y1: lowPt[1], x2: highPt[0], y2: highPt[1] },
+									style: { stroke: 'rgb(119, 152, 191)', lineWidth: 2 },
+								},
+								{
+									type: 'line',
+									shape: { x1: lowPt[0] - 4, y1: lowPt[1], x2: lowPt[0] + 4, y2: lowPt[1] },
+									style: { stroke: 'rgb(119, 152, 191)', lineWidth: 2 },
+								},
+								{
+									type: 'line',
+									shape: { x1: highPt[0] - 4, y1: highPt[1], x2: highPt[0] + 4, y2: highPt[1] },
+									style: { stroke: 'rgb(119, 152, 191)', lineWidth: 2 },
+								},
+							],
+						};
+					},
+				});
+			}
 		}
 
 		if (dataB.value && dataB.value.length > 3) {
 			const correlationB = statistics.correlate(dataB.value, true);
 			rSeries.push({
+				type: 'scatter',
 				data: [[1, correlationB.r]],
-				color: 'rgb(204, 102, 0)',
-				animation: false,
-				marker: {
-					radius: 5,
-					symbol: 'circle',
-				},
-				tooltip: {
-					headerFormat: '',
-					pointFormat: "<b>Spearman's rho:</b> {point.y}<br/>",
-					valueDecimals: 3,
-				},
-				states: {
-					hover: { enabled: false },
-				},
+				symbolSize: 10,
+				itemStyle: { color: 'rgb(204, 102, 0)' },
+				silent: true,
 			});
-			rSeries.push({
-				type: 'errorbar',
-				data: [[1, correlationB.lower, correlationB.upper]],
-				lineWidth: 2,
-				color: 'rgb(204, 102, 0)',
-				animation: false,
-				tooltip: {
-					headerFormat: '',
-					pointFormat: '<b>95% confidence interval:</b> [' + correlationB.lower.toFixed(3) + '..' + correlationB.upper.toFixed(3) + ']<br/>',
-				},
-			});
+			if (correlationB.lower !== undefined && correlationB.upper !== undefined) {
+				rSeries.push({
+					type: 'custom',
+					data: [[1, correlationB.lower, correlationB.upper]],
+					renderItem: (_params: unknown, api: { coord: (val: number[]) => number[]; style: (opts: Record<string, unknown>) => Record<string, unknown> }) => {
+						const lowPt = api.coord([1, correlationB.lower]);
+						const highPt = api.coord([1, correlationB.upper]);
+						return {
+							type: 'group',
+							children: [
+								{
+									type: 'line',
+									shape: { x1: lowPt[0], y1: lowPt[1], x2: highPt[0], y2: highPt[1] },
+									style: { stroke: 'rgb(204, 102, 0)', lineWidth: 2 },
+								},
+								{
+									type: 'line',
+									shape: { x1: lowPt[0] - 4, y1: lowPt[1], x2: lowPt[0] + 4, y2: lowPt[1] },
+									style: { stroke: 'rgb(204, 102, 0)', lineWidth: 2 },
+								},
+								{
+									type: 'line',
+									shape: { x1: highPt[0] - 4, y1: highPt[1], x2: highPt[0] + 4, y2: highPt[1] },
+									style: { stroke: 'rgb(204, 102, 0)', lineWidth: 2 },
+								},
+							],
+						};
+					},
+				});
+			}
 		}
 
-		rChartOptions.value = rOpts;
+		rChartOptions.value = {
+			animation: false,
+			grid: { left: 65, right: 20, top: 10, bottom: 10 },
+			xAxis: {
+				type: 'value',
+				show: false,
+			},
+			yAxis: {
+				type: 'value',
+				min: -1,
+				max: 1,
+				interval: 1,
+				axisLine: { show: false },
+				axisTick: { show: false },
+				splitLine: { show: true },
+			},
+			tooltip: {
+				trigger: 'item',
+				formatter: (params: { value: number[] }) => {
+					if (!params?.value) return '';
+					return "<b>Spearman's rho:</b> " + params.value[1].toFixed(3);
+				},
+			},
+			series: rSeries,
+			legend: { show: false },
+		};
 	}
-
-	if (props.settings.placement === 'top') {
-		(options.chart as Record<string, unknown>).height = 150;
-	}
-
-	xField.formatAxis(options.xAxis as Record<string, unknown>);
-	yField.formatAxis(options.yAxis as Record<string, unknown>);
-	chartOptions.value = options;
 }
 
-const chartRef = ref<InstanceType<typeof HighchartsChart> | null>(null);
+const chartRef = ref<InstanceType<typeof EChartsChart> | null>(null);
 
 function downloadCSV() {
 	if (!data.value?.length && !dataB.value?.length) return;
@@ -362,8 +363,8 @@ onMounted(() => dashboard.register(registration));
 				<a class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><i class="fa fa-camera" /></a>
 			</div>
 		</div>
-		<HighchartsChart ref="chartRef" v-if="data?.length || dataB?.length" :options="chartOptions" />
-		<HighchartsChart v-if="rChartOptions" :options="rChartOptions" />
+		<EChartsChart ref="chartRef" v-if="data?.length || dataB?.length" :options="chartOptions" :height="chartHeight" />
+		<EChartsChart v-if="rChartOptions" :options="rChartOptions" />
 		<p v-if="data === null" class="none">Loading...</p>
 		<p v-else-if="data.length === 0 && dataB.length === 0" class="none">None</p>
 	</div>

@@ -1,0 +1,121 @@
+<script setup lang="ts">
+import { BarChart, CustomChart, LineChart, ScatterChart } from 'echarts/charts';
+import { BrushComponent, DataZoomComponent, GridComponent, LegendComponent, PolarComponent, ToolboxComponent, TooltipComponent } from 'echarts/components';
+import * as echarts from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+echarts.use([BarChart, CustomChart, LineChart, ScatterChart, BrushComponent, DataZoomComponent, GridComponent, LegendComponent, PolarComponent, ToolboxComponent, TooltipComponent, CanvasRenderer]);
+
+export type { ECharts } from 'echarts/core';
+
+const props = defineProps<{
+	options: Record<string, unknown> | null;
+	height?: number;
+}>();
+
+const emit = defineEmits<{
+	snapshot: [];
+	ready: [instance: echarts.ECharts];
+}>();
+
+const chartEl = ref<HTMLDivElement | null>(null);
+let chart: echarts.ECharts | null = null;
+let resizeObserver: ResizeObserver | null = null;
+
+function render(options: Record<string, unknown> | null) {
+	if (chartEl.value) {
+		if (props.height) {
+			chartEl.value.style.height = `${props.height}px`;
+		} else if (!chartEl.value.style.height) {
+			chartEl.value.style.height = '300px';
+		}
+		if (!chartEl.value.clientWidth || !chartEl.value.clientHeight) {
+			requestAnimationFrame(() => render(options));
+			return;
+		}
+	}
+	if (chart) {
+		if (options) {
+			chart.setOption(options, { notMerge: true });
+		} else {
+			chart.dispose();
+			chart = null;
+		}
+	} else if (options && chartEl.value) {
+		chart = echarts.init(chartEl.value);
+		chart.setOption(options);
+		emit('ready', chart);
+	}
+}
+
+watch(
+	() => props.options,
+	(options) => nextTick(() => render(options)),
+	{ deep: true },
+);
+
+watch(
+	() => props.height,
+	() => nextTick(() => render(props.options)),
+);
+
+function snapshot() {
+	if (chart) {
+		const url = chart.getDataURL({ type: 'png', backgroundColor: '#fff' });
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'chart.png';
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	}
+	emit('snapshot');
+}
+
+function reflow() {
+	chart?.resize();
+}
+
+function selectPoint(seriesIndex: number, dataIndex: number, active: boolean) {
+	if (chart) {
+		chart.dispatchAction({
+			type: active ? 'select' : 'unselect',
+			seriesIndex,
+			dataIndex,
+		});
+	}
+}
+
+function getInstance(): echarts.ECharts | null {
+	return chart;
+}
+
+onMounted(() => {
+	if (chartEl.value) {
+		resizeObserver = new ResizeObserver(() => chart?.resize());
+		resizeObserver.observe(chartEl.value);
+	}
+});
+
+onBeforeUnmount(() => {
+	resizeObserver?.disconnect();
+	resizeObserver = null;
+	if (chart) {
+		chart.dispose();
+		chart = null;
+	}
+});
+
+defineExpose({ snapshot, reflow, selectPoint, getInstance });
+</script>
+
+<template>
+	<div ref="chartEl" class="echarts-chart" />
+</template>
+
+<style>
+.echarts-chart [style*="crosshair"] {
+	cursor: pointer !important;
+}
+</style>

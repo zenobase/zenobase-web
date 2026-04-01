@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import type { ECharts } from 'echarts/core';
 import { inject, nextTick, onMounted, ref } from 'vue';
 import type { FieldInfo, SearchResult, TimeEntry, TimelineParams } from '../../types/search';
+import { compactNumber } from '../../utils/helpers';
 import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
-import HighchartsChart from './HighchartsChart.vue';
+import EChartsChart from './EChartsChart.vue';
 
 function pad(n: number): string {
 	return n < 10 ? `0${n}` : String(n);
@@ -91,6 +93,7 @@ const keyField = 'timestamp';
 const times = ref<TimeEntry[] | null>(null);
 const timesB = ref<TimeEntry[]>([]);
 const chartOptions = ref<Record<string, unknown> | null>(null);
+const chartHeight = ref<number | undefined>();
 const effectSizeOptions = ref<Record<string, unknown> | null>(null);
 
 let interval: IntervalDef = Interval.VALUES[1];
@@ -222,8 +225,6 @@ function computeEffectSize() {
 	let statsB: { avg: number; stdev: number; count: number } | null;
 
 	if (statistic === 'avg') {
-		// For avg statistic, request stats from server via search
-		// For now, compute from the timeline data we already have
 		statsA = computeStats(toNumbers(times.value));
 		statsB = computeStats(toNumbers(timesB.value));
 	} else {
@@ -242,59 +243,66 @@ function computeEffectSize() {
 	const color = lower <= 0 && upper >= 0 ? '#C0C0C0' : '#555';
 
 	const opts: Record<string, unknown> = {
-		chart: {
-			type: 'line',
-			inverted: true,
-			height: 75,
-			plotBorderWidth: 1,
-			plotBackgroundColor: '#fafafa',
-			marginLeft: 45,
-			marginRight: 25,
-			animation: false,
+		animation: false,
+		grid: {
+			left: 45,
+			right: 25,
+			top: 10,
+			bottom: 10,
 		},
-		title: { text: null },
 		xAxis: {
-			title: { text: null },
-			labels: { enabled: false },
-			lineWidth: 0,
-			tickLength: 0,
+			type: 'value',
+			show: false,
 		},
 		yAxis: {
-			title: { text: null },
-			labels: { autoRotation: false },
-			lineWidth: 0,
-			tickColor: '#C0C0C0',
-			tickWidth: 1,
-			tickLength: 5,
-			tickPosition: 'inside',
-			gridLineWidth: 0,
+			type: 'value',
+			axisLine: { show: false },
+			axisTick: { show: false },
+			splitLine: { show: false },
 		},
-		tooltip: { enabled: false },
+		tooltip: { show: false },
 		series: [
 			{
+				type: 'scatter',
 				data: [[0, avgAB]],
-				color,
-				animation: false,
-				marker: { radius: 5, symbol: 'circle' },
-				states: { hover: { enabled: false } },
+				symbolSize: 10,
+				itemStyle: { color },
 			},
-		] as Array<Record<string, unknown>>,
-		legend: { enabled: false },
-		credits: { enabled: false },
+		] as unknown[],
+		legend: { show: false },
 	};
 
 	if (d > 0) {
-		(opts.series as Array<Record<string, unknown>>).push({
-			type: 'errorbar',
-			data: [[0, avgAB - d, avgAB + d]],
-			lineWidth: 2,
-			color,
-			animation: false,
-			states: { hover: { enabled: false } },
+		(opts.series as unknown[]).push({
+			type: 'custom',
+			data: [[0, lower, upper]],
+			renderItem: (_params: unknown, api: { coord: (val: number[]) => number[]; style: (opts: Record<string, unknown>) => Record<string, unknown> }) => {
+				const lowPt = api.coord([0, lower]);
+				const highPt = api.coord([0, upper]);
+				return {
+					type: 'group',
+					children: [
+						{
+							type: 'line',
+							shape: { x1: lowPt[0], y1: lowPt[1], x2: highPt[0], y2: highPt[1] },
+							style: { stroke: color, lineWidth: 2 },
+						},
+						{
+							type: 'line',
+							shape: { x1: lowPt[0] - 4, y1: lowPt[1], x2: lowPt[0] + 4, y2: lowPt[1] },
+							style: { stroke: color, lineWidth: 2 },
+						},
+						{
+							type: 'line',
+							shape: { x1: highPt[0] - 4, y1: highPt[1], x2: highPt[0] + 4, y2: highPt[1] },
+							style: { stroke: color, lineWidth: 2 },
+						},
+					],
+				};
+			},
 		});
 	}
 
-	field.formatAxis(opts.yAxis as Record<string, unknown>);
 	effectSizeOptions.value = opts;
 }
 
@@ -348,205 +356,162 @@ function draw() {
 	if (!times.value?.length && !timesB.value?.length) return;
 
 	const statistic = props.settings.statistic || 'count';
-	const type = statistic === 'count' || statistic === 'sum' ? 'column' : 'line';
+	const type = statistic === 'count' || statistic === 'sum' ? 'bar' : 'line';
 	const field = findField(props.settings.field);
 
-	const options: Record<string, unknown> = {
-		chart: {
-			animation: false,
-			zoomType: 'x',
-			events: {
-				selection: (event: { xAxis: Array<{ min: number; max: number }> }) => {
-					let from: string | null = null;
-					let to: string | null = null;
-					times.value!.forEach((time) => {
-						from = from || time.label;
-						to = time.label;
-					});
-					for (let ti = 0; ti < times.value!.length; ti++) {
-						if (times.value![ti].time >= event.xAxis[0].min) {
-							from = times.value![ti].label;
-							break;
-						}
-					}
-					times.value!.forEach((time) => {
-						if (time.time <= event.xAxis[0].max) {
-							to = time.label;
-						}
-					});
-					if (from !== null && to !== null) {
-						const range = from === to ? from : '[' + from + '..' + to + ']';
-						filterByValue(range);
-					}
-					return false;
-				},
-			},
-		},
-		title: { text: null },
-		xAxis: {
-			type: 'datetime',
-			labels: { overflow: 'justify' },
-			minTickInterval: interval.minTickInterval,
-			tickLength: 5,
-			tickWidth: 1,
-			lineWidth: 1,
-			gridLineWidth: 0,
-		},
-		yAxis: {
-			title: { text: null },
-			tickLength: 5,
-			tickWidth: 1,
-			lineWidth: 0,
-			gridLineWidth: 0,
-			startOnTick: false,
-			floor: field.minValue,
-			ceiling: field.maxValue,
-		},
-		tooltip: {
-			crosshairs: false,
-			shared: false,
-			hideDelay: 0,
-		},
-		series: [
-			{
-				name: statistic,
-				type,
-				data: [] as unknown[],
-				color: 'rgba(47, 126, 216, 0.4)',
-				lineColor: 'rgb(47, 126, 216)',
-				marker: {
+	const canDrillDown = interval !== Interval.VALUES[Interval.VALUES.length - 1];
+
+	const seriesA: Record<string, unknown> = {
+		name: statistic,
+		type,
+		data: [] as unknown[],
+		cursor: canDrillDown ? 'pointer' : 'default',
+		z: 2,
+		...(type === 'bar'
+			? {
+					itemStyle: { color: 'rgba(47, 126, 216, 0.4)', borderWidth: 0, borderRadius: 5 },
+				}
+			: {
+					lineStyle: { color: 'rgb(47, 126, 216)', width: 2 },
 					symbol: 'circle',
-					fillColor: 'white',
-					lineWidth: 2,
-					lineColor: 'rgb(47, 126, 216)',
-				},
-				borderRadius: 5,
-				borderWidth: 2,
-				zIndex: 1,
-			},
-			{
-				name: 'range',
-				data: [] as unknown[],
-				type: 'arearange',
-				lineWidth: 0,
-				linkedTo: ':previous',
-				fillColor: 'rgba(47, 126, 216, 0.1)',
-				zIndex: 0,
-			},
-		],
-		plotOptions: {
-			series: {
-				animation: false,
-				tooltip: {
-					headerFormat: '<b>{point.key}:</b> ',
-					pointFormat: '{point.tooltip}',
-				},
-			} as Record<string, unknown>,
-		},
-		legend: { enabled: false },
-		credits: { enabled: false },
-		playable: true,
+					symbolSize: 8,
+					itemStyle: { color: '#fff', borderColor: 'rgb(47, 126, 216)', borderWidth: 2 },
+				}),
 	};
 
-	const series = options.series as Array<Record<string, unknown>>;
-	const plotSeries = (options.plotOptions as Record<string, unknown>).series as Record<string, unknown>;
+	const seriesRange: Record<string, unknown> = {
+		name: 'range-upper',
+		type: 'line',
+		data: [] as unknown[],
+		lineStyle: { opacity: 0 },
+		areaStyle: { color: 'rgba(47, 126, 216, 0.1)' },
+		symbol: 'none',
+		stack: 'range-a',
+		z: 1,
+		silent: true,
+	};
 
-	if (interval !== Interval.VALUES[Interval.VALUES.length - 1]) {
-		plotSeries.cursor = 'pointer';
-		plotSeries.events = {
-			click: (event: { point: { options: { filter: string } } }) => {
-				filterByValue(event.point.options.filter);
-			},
-		};
-	}
+	const seriesRangeLower: Record<string, unknown> = {
+		name: 'range-lower',
+		type: 'line',
+		data: [] as unknown[],
+		lineStyle: { opacity: 0 },
+		areaStyle: { opacity: 0 },
+		symbol: 'none',
+		stack: 'range-a',
+		z: 1,
+		silent: true,
+	};
 
-	if (props.settings.placement === 'top') {
-		(options.chart as Record<string, unknown>).height = 150;
-	}
+	const allSeries: Record<string, unknown>[] = [seriesA];
 
-	const series0Data = series[0].data as unknown[];
-	const series1Data = series[1].data as unknown[];
+	const seriesAData = seriesA.data as unknown[];
+	const rangeUpperData = seriesRange.data as unknown[];
+	const rangeLowerData = seriesRangeLower.data as unknown[];
+
+	const labelMap: Record<number, string> = {};
 
 	times.value!.forEach((time) => {
 		const value = time[statistic];
+		labelMap[time.time] = time.label;
 		if (value !== undefined) {
-			series0Data.push({ x: time.time, y: field.toNumber(value), filter: time.label, tooltip: field.toText(value) });
+			seriesAData.push([time.time, field.toNumber(value)]);
 			if (statistic === 'avg') {
-				series1Data.push({
-					x: time.time,
-					low: field.toNumber(time['min']),
-					high: field.toNumber(time['max']),
-					filter: time.label,
-					tooltip: field.toText(time['min']) + '..' + field.toText(time['max']),
-				});
+				rangeLowerData.push([time.time, field.toNumber(time['min'])]);
+				rangeUpperData.push([time.time, field.toNumber(time['max']) - field.toNumber(time['min'])]);
 			}
 		} else {
-			series0Data.push({ x: time.time, y: null });
+			seriesAData.push([time.time, null]);
 			if (statistic === 'avg') {
-				series1Data.push({ x: time.time, low: null, high: null });
+				rangeLowerData.push([time.time, null]);
+				rangeUpperData.push([time.time, null]);
 			}
 		}
 	});
 
+	if (statistic === 'avg') {
+		allSeries.push(seriesRangeLower, seriesRange);
+	}
+
 	if (timesB.value?.length) {
 		const seriesB: Record<string, unknown> = {
-			name: statistic,
+			name: statistic + '-B',
 			type,
-			data: [],
-			color: 'rgba(204, 102, 0, 0.4)',
-			lineColor: 'rgb(204, 102, 0)',
-			marker: {
-				symbol: 'circle',
-				fillColor: 'white',
-				lineWidth: 2,
-				lineColor: 'rgb(204, 102, 0)',
-			},
-			borderRadius: 5,
-			borderWidth: 2,
-			zIndex: 1,
+			data: [] as unknown[],
+			z: 2,
+			...(type === 'bar'
+				? {
+						itemStyle: { color: 'rgba(204, 102, 0, 0.4)', borderWidth: 0, borderRadius: 5 },
+					}
+				: {
+						lineStyle: { color: 'rgb(204, 102, 0)', width: 2 },
+						symbol: 'circle',
+						symbolSize: 8,
+						itemStyle: { color: '#fff', borderColor: 'rgb(204, 102, 0)', borderWidth: 2 },
+					}),
 		};
-		const seriesBRange: Record<string, unknown> = {
-			name: 'range',
-			data: [],
-			type: 'arearange',
-			lineWidth: 0,
-			linkedTo: ':previous',
-			fillColor: 'rgba(204, 102, 0, 0.1)',
-			zIndex: 0,
-		};
-		series.push(seriesB);
-		series.push(seriesBRange);
-
 		const seriesBData = seriesB.data as unknown[];
-		const seriesBRangeData = seriesBRange.data as unknown[];
 
 		timesB.value.forEach((time) => {
 			const value = time[statistic];
+			labelMap[time.time] = time.label;
 			if (value !== undefined) {
-				seriesBData.push({ x: time.time, y: field.toNumber(value), filter: time.label, tooltip: field.toText(value) });
-				if (statistic === 'avg') {
-					seriesBRangeData.push([time.time, field.toNumber(time['min']), field.toNumber(time['max'])]);
-				}
+				seriesBData.push([time.time, field.toNumber(value)]);
 			} else {
-				seriesBData.push({ x: time.time, y: null });
-				if (statistic === 'avg') {
-					seriesBRangeData.push([time.time, null, null]);
-				}
+				seriesBData.push([time.time, null]);
 			}
 		});
+		allSeries.push(seriesB);
+
+		if (statistic === 'avg') {
+			const seriesBRangeLower: Record<string, unknown> = {
+				name: 'range-lower-B',
+				type: 'line',
+				data: [] as unknown[],
+				lineStyle: { opacity: 0 },
+				areaStyle: { opacity: 0 },
+				symbol: 'none',
+				stack: 'range-b',
+				z: 1,
+				silent: true,
+			};
+			const seriesBRange: Record<string, unknown> = {
+				name: 'range-upper-B',
+				type: 'line',
+				data: [] as unknown[],
+				lineStyle: { opacity: 0 },
+				areaStyle: { color: 'rgba(204, 102, 0, 0.1)' },
+				symbol: 'none',
+				stack: 'range-b',
+				z: 1,
+				silent: true,
+			};
+			const bRangeLowerData = seriesBRangeLower.data as unknown[];
+			const bRangeUpperData = seriesBRange.data as unknown[];
+			timesB.value.forEach((time) => {
+				const value = time[statistic];
+				if (value !== undefined) {
+					bRangeLowerData.push([time.time, field.toNumber(time['min'])]);
+					bRangeUpperData.push([time.time, field.toNumber(time['max']) - field.toNumber(time['min'])]);
+				} else {
+					bRangeLowerData.push([time.time, null]);
+					bRangeUpperData.push([time.time, null]);
+				}
+			});
+			allSeries.push(seriesBRangeLower, seriesBRange);
+		}
 	}
 
 	if (times.value!.length > 1 && props.settings.regression === 'linear') {
 		const regression = statistics.regression(toXY(times.value!));
 		if (regression) {
-			series.push({
+			allSeries.push({
 				type: 'line',
 				data: regression.data,
-				color: 'rgb(119, 152, 191)',
-				dashStyle: 'Dot',
-				lineWidth: 2,
-				enableMouseTracking: false,
-				marker: { enabled: false },
+				lineStyle: { type: 'dotted', width: 2, color: 'rgb(119, 152, 191)' },
+				itemStyle: { color: 'rgb(119, 152, 191)' },
+				symbol: 'none',
+				silent: true,
 			});
 		}
 	}
@@ -554,23 +519,117 @@ function draw() {
 	if (timesB.value && timesB.value.length > 1 && props.settings.regression === 'linear') {
 		const regressionB = statistics.regression(toXY(timesB.value));
 		if (regressionB) {
-			series.push({
+			allSeries.push({
 				type: 'line',
 				data: regressionB.data,
-				color: 'rgb(204, 102, 0)',
-				dashStyle: 'Dot',
-				lineWidth: 2,
-				enableMouseTracking: false,
-				marker: { enabled: false },
+				lineStyle: { type: 'dotted', width: 2, color: 'rgb(204, 102, 0)' },
+				itemStyle: { color: 'rgb(204, 102, 0)' },
+				symbol: 'none',
+				silent: true,
 			});
 		}
 	}
 
-	field.formatAxis(options.yAxis as Record<string, unknown>);
+	chartHeight.value = props.settings.placement === 'top' ? 150 : undefined;
+
+	const options: Record<string, unknown> = {
+		animation: false,
+		grid: { left: 50, right: 20, top: 10, bottom: 30 },
+		xAxis: {
+			type: 'time',
+			splitNumber: 10,
+			axisLabel: { hideOverlap: true },
+			axisLine: { lineStyle: { color: '#ccc' } },
+			axisTick: { lineStyle: { color: '#ccc' } },
+			minInterval: interval.minTickInterval,
+			splitLine: { show: false },
+		},
+		yAxis: {
+			type: 'value',
+			splitNumber: 4,
+			axisLine: { show: false },
+			axisTick: { show: true, lineStyle: { color: '#ccc' } },
+			axisLabel: { formatter: compactNumber },
+			splitLine: { show: false },
+			min: field.minValue,
+			max: field.maxValue,
+		},
+		tooltip: {
+			trigger: 'item',
+			formatter: (params: { value: unknown[] }) => {
+				if (!params?.value) return '';
+				const v = params.value[1];
+				return `<b>${labelMap[params.value[0] as number] ?? ''}</b>: ${field.toText(v)}`;
+			},
+		},
+		dataZoom: [{ type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: true, moveOnMouseMove: false, moveOnMouseWheel: false }],
+		toolbox: { show: false, feature: { brush: { type: ['lineX'] } } },
+		brush: {
+			xAxisIndex: 0,
+			brushType: 'lineX',
+			throttleType: 'fixRate',
+			throttleDelay: 0,
+		},
+		series: allSeries,
+		legend: { show: false },
+	};
+
 	chartOptions.value = options;
 }
 
-const chartRef = ref<InstanceType<typeof HighchartsChart> | null>(null);
+const chartRef = ref<InstanceType<typeof EChartsChart> | null>(null);
+
+function onChartReady(instance: ECharts) {
+	const drillDown = interval !== Interval.VALUES[Interval.VALUES.length - 1];
+	if (drillDown) {
+		instance.on('click', (params: unknown) => {
+			const p = params as Record<string, unknown>;
+			const value = p.value as unknown[] | undefined;
+			if (value) {
+				const time = value[0] as number;
+				const label = times.value?.find((t) => t.time === time)?.label ?? timesB.value?.find((t) => t.time === time)?.label;
+				if (label) filterByValue(label);
+			}
+		});
+	}
+	instance.dispatchAction({
+		type: 'takeGlobalCursor',
+		key: 'brush',
+		brushOption: { brushType: 'lineX', brushMode: 'single' },
+	});
+	let pendingRange: number[] | null = null;
+	instance.on('brushSelected', (params: unknown) => {
+		const p = params as Record<string, unknown>;
+		const batch = p.batch as Array<{ areas: Array<{ coordRange: number[] }> }> | undefined;
+		if (!batch?.length || !batch[0].areas?.length) {
+			pendingRange = null;
+			return;
+		}
+		pendingRange = batch[0].areas[0].coordRange;
+	});
+	instance.on('brushEnd', () => {
+		if (!pendingRange || !times.value) return;
+		let from: string | null = null;
+		let to: string | null = null;
+		for (const time of times.value) {
+			if (time.time >= pendingRange[0] && time.time <= pendingRange[1]) {
+				from = from || time.label;
+				to = time.label;
+			}
+		}
+		pendingRange = null;
+		if (from !== null && to !== null) {
+			const value = from === to ? from : '[' + from + '..' + to + ']';
+			filterByValue(value);
+		}
+		// Re-activate brush for next selection
+		instance.dispatchAction({
+			type: 'takeGlobalCursor',
+			key: 'brush',
+			brushOption: { brushType: 'lineX', brushMode: 'single' },
+		});
+	});
+}
 
 function downloadCSV() {
 	if (!times.value?.length) return;
@@ -632,8 +691,8 @@ onMounted(() => dashboard.register(registration));
 			</div>
 		</div>
 
-		<HighchartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :playable="true" />
-		<HighchartsChart v-if="effectSizeOptions" :options="effectSizeOptions" />
+		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
+		<EChartsChart v-if="effectSizeOptions" :options="effectSizeOptions" />
 		<p v-if="times === null" class="none">Loading...</p>
 		<p v-else-if="times.length === 0 && timesB.length === 0" class="none">None</p>
 

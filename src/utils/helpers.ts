@@ -14,6 +14,15 @@ export function deepExtend<T extends Record<string, unknown>>(target: T, ...sour
 	return target;
 }
 
+export function compactNumber(value: number | string): string {
+	const n = typeof value === 'string' ? Number(value) : value;
+	if (!Number.isFinite(n)) return String(value);
+	const abs = Math.abs(n);
+	if (abs >= 1_000_000) return `${+(n / 1_000_000).toPrecision(3)}M`;
+	if (abs >= 1_000) return `${+(n / 1_000).toPrecision(3)}k`;
+	return String(n);
+}
+
 export function param(obj: Record<string, unknown>, traditional?: boolean): string {
 	const params = new URLSearchParams();
 	for (const key of Object.keys(obj)) {
