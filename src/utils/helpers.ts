@@ -23,6 +23,23 @@ export function compactNumber(value: number | string): string {
 	return String(n);
 }
 
+export function compactDuration(value: number | string): string {
+	const ms = typeof value === 'string' ? Number(value) : value;
+	if (!Number.isFinite(ms)) return String(value);
+	const parts: string[] = [];
+	const totalSec = Math.floor(ms / 1000);
+	const d = Math.floor(totalSec / 86400);
+	const h = Math.floor((totalSec % 86400) / 3600);
+	const m = Math.floor((totalSec % 3600) / 60);
+	const s = totalSec % 60;
+	if (d) parts.push(d + 'd');
+	if (h) parts.push(h + 'h');
+	if (m) parts.push(m + 'min');
+	if (s && parts.length < 2) parts.push(s + 's');
+	if (parts.length === 0) parts.push(ms + 'ms');
+	return parts.slice(0, 2).join(' ');
+}
+
 export function param(obj: Record<string, unknown>, traditional?: boolean): string {
 	const params = new URLSearchParams();
 	for (const key of Object.keys(obj)) {

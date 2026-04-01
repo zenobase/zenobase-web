@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, nextTick, onMounted, ref } from 'vue';
 import type { FieldInfo, ScatterPlotParams, SearchResult } from '../../types/search';
-import { compactNumber } from '../../utils/helpers';
+import { compactDuration, compactNumber } from '../../utils/helpers';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
@@ -92,6 +92,8 @@ function draw() {
 
 	const xField = findField(props.settings.field_x);
 	const yField = findField(props.settings.field_y);
+	const isDurationX = props.settings.field_x.startsWith('duration');
+	const isDurationY = props.settings.field_y.startsWith('duration');
 
 	const allSeries: Record<string, unknown>[] = [
 		{
@@ -154,7 +156,7 @@ function draw() {
 			splitNumber: 8,
 			axisLine: { show: false, onZero: false },
 			axisTick: { show: true, lineStyle: { color: '#ccc' }, alignWithLabel: true },
-			axisLabel: { formatter: compactNumber },
+			axisLabel: { formatter: isDurationX ? compactDuration : compactNumber },
 			splitLine: { show: false },
 			min: xField.minValue,
 			max: xField.maxValue,
@@ -167,7 +169,7 @@ function draw() {
 			splitNumber: 8,
 			axisLine: { show: false, onZero: false },
 			axisTick: { show: true, lineStyle: { color: '#ccc' }, alignWithLabel: true },
-			axisLabel: { formatter: compactNumber },
+			axisLabel: { formatter: isDurationY ? compactDuration : compactNumber },
 			splitLine: { show: false },
 			min: yField.minValue,
 			max: yField.maxValue,
@@ -178,11 +180,11 @@ function draw() {
 				if (!params?.value) return '';
 				return (
 					'<b>x</b>: ' +
-					(xField.toText(params.value[0]) || params.value[0]) +
+					(isDurationX ? compactDuration(params.value[0]) : xField.toText(params.value[0]) || params.value[0]) +
 					(props.settings.unit_x || '') +
 					', ' +
 					'<b>y</b>: ' +
-					(yField.toText(params.value[1]) || params.value[1]) +
+					(isDurationY ? compactDuration(params.value[1]) : yField.toText(params.value[1]) || params.value[1]) +
 					(props.settings.unit_y || '')
 				);
 			},

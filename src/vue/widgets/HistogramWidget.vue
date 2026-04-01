@@ -2,7 +2,7 @@
 import type { ECharts } from 'echarts/core';
 import { inject, nextTick, onMounted, ref } from 'vue';
 import type { HistogramInterval, HistogramParams, SearchResult } from '../../types/search';
-import { compactNumber } from '../../utils/helpers';
+import { compactDuration, compactNumber } from '../../utils/helpers';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 // biome-ignore lint/style/useImportType: Vue component used in template
 import EChartsChart from './EChartsChart.vue';
@@ -30,6 +30,7 @@ function fieldToText(value: unknown): string {
 		const obj = value as { '@value': number; unit?: string };
 		return obj.unit ? obj['@value'] + ' ' + obj.unit : String(obj['@value']);
 	}
+	if (props.settings.field.startsWith('duration') && typeof value === 'number') return compactDuration(value);
 	return String(value ?? '');
 }
 

@@ -2,7 +2,7 @@
 import type { ECharts } from 'echarts/core';
 import { inject, nextTick, onMounted, ref } from 'vue';
 import type { FieldInfo, SearchResult, TimeEntry, TimelineParams } from '../../types/search';
-import { compactNumber } from '../../utils/helpers';
+import { compactDuration, compactNumber } from '../../utils/helpers';
 import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
@@ -358,6 +358,7 @@ function draw() {
 	const statistic = props.settings.statistic || 'count';
 	const type = statistic === 'count' || statistic === 'sum' ? 'bar' : 'line';
 	const field = findField(props.settings.field);
+	const isDuration = props.settings.field.startsWith('duration');
 
 	const canDrillDown = interval !== Interval.VALUES[Interval.VALUES.length - 1];
 
@@ -549,7 +550,7 @@ function draw() {
 			splitNumber: 4,
 			axisLine: { show: false },
 			axisTick: { show: true, lineStyle: { color: '#ccc' } },
-			axisLabel: { formatter: compactNumber },
+			axisLabel: { formatter: isDuration ? compactDuration : compactNumber },
 			splitLine: { show: false },
 			min: field.minValue,
 			max: field.maxValue,
@@ -559,7 +560,7 @@ function draw() {
 			formatter: (params: { value: unknown[] }) => {
 				if (!params?.value) return '';
 				const v = params.value[1];
-				return `<b>${labelMap[params.value[0] as number] ?? ''}</b>: ${field.toText(v)}`;
+				return `<b>${labelMap[params.value[0] as number] ?? ''}</b>: ${isDuration ? compactDuration(v as number) : field.toText(v)}`;
 			},
 		},
 		dataZoom: [{ type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: true, moveOnMouseMove: false, moveOnMouseWheel: false }],

@@ -287,7 +287,11 @@ function close() {
 }
 
 function save() {
-	emit('save', JSON.parse(JSON.stringify(draft.value)) as WidgetSettings);
+	const settings = JSON.parse(JSON.stringify(draft.value)) as WidgetSettings;
+	if (props.widgetType === 'histogram' && settings.field?.startsWith('duration') && settings.interval) {
+		settings.interval = String(Number(settings.interval) * 3_600_000);
+	}
+	emit('save', settings);
 	close();
 }
 
@@ -301,6 +305,9 @@ watch(
 	(open) => {
 		if (open) {
 			draft.value = JSON.parse(JSON.stringify(props.settings)) as WidgetSettings;
+			if (props.widgetType === 'histogram' && draft.value.field?.startsWith('duration') && draft.value.interval) {
+				draft.value.interval = String(Number(draft.value.interval) / 3_600_000);
+			}
 			if (props.widgetType === 'timeline' && !draft.value.interval) {
 				draft.value.interval = 'month';
 			}
@@ -375,6 +382,7 @@ watch(
 							<option v-for="f in numericFieldNames" :key="f" :value="f">{{ f }}</option>
 						</select>
 						by <input class="input-mini" type="text" v-model="draft.interval" />
+						<span v-if="draft.field?.startsWith('duration')">{{ ' ' }}hours</span>
 						<select v-if="currentUnits.length" class="input-small" v-model="draft.unit">
 							<option v-for="u in currentUnits" :key="u" :value="u">{{ u }}</option>
 						</select>
