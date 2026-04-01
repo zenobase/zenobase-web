@@ -323,66 +323,6 @@
 	},
 	{
 		"category" : "Activities",
-		"source" : "RunKeeper",
-		"task" : "runkeeper-activities",
-		"widgets" : [
-			{
-				"id" : "timeline",
-				"type" : "timeline",
-				"label" : "Distance (mi)",
-				"placement" : "top",
-				"field" : "distance",
-				"unit" : "mi",
-				"statistic" : "sum",
-				"interval" : "month"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"order" : "-timestamp",
-				"limit" : 10,
-				"singleton" : true
-			},
-			{
-				"id" : "tags",
-				"type" : "count",
-				"label" : "Type",
-				"placement" : "left",
-				"field" : "tag",
-				"limit" : 5,
-				"order" : "-count"
-			},
-			{
-				"id" : "map",
-				"type" : "map",
-				"label" : "Map",
-				"placement" : "right"
-			},
-			{
-				"id" : "histogram",
-				"type" : "histogram",
-				"label" : "Distances",
-				"placement" : "right",
-				"field" : "distance",
-				"unit" : "mi",
-				"interval" : 5
-			},
-			{
-				"id" : "polar",
-				"type" : "polar",
-				"label" : "Day of Week",
-				"placement" : "right",
-				"value_field" : "timestamp",
-				"unit" : null,
-				"statistic" : "count",
-				"interval" : "day_of_week"
-			}
-		]
-	},
-	{
-		"category" : "Activities",
 		"source" : "Strava",
 		"task" : "strava-activities",
 		"widgets" : [
@@ -2717,50 +2657,6 @@
 		"category" : "Weight",
 		"source" : "MapMyFitness",
 		"task" : "mapmyfitness-weight",
-		"widgets" : [
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"singleton" : true,
-				"limit" : 10,
-				"order" : "-timestamp"
-			},
-			{
-				"id" : "weight",
-				"type" : "timeline",
-				"label" : "Weight (lb)",
-				"placement" : "right",
-				"field" : "weight",
-				"statistic" : "avg",
-				"interval" : "week",
-				"unit" : "lb",
-				"regression" : "linear"
-			},
-			{
-				"id" : "scatterplot_weight_percentage",
-				"type" : "scatterplot",
-				"label" : "Weight-Fat",
-				"placement" : "right",
-				"label_x" : "weight",
-				"field_x" : "weight",
-				"unit_x" : "lb",
-				"statistic_x" : "avg",
-				"label_y" : "fat%",
-				"field_y" : "percentage",
-				"unit_y" : null,
-				"statistic_y" : "avg",
-				"key_field" : "timestamp",
-				"interval" : "day",
-				"regression" : "linear"
-			}
-		]
-	},
-	{
-		"category" : "Weight",
-		"source" : "RunKeeper",
-		"task" : "runkeeper-weight",
 		"widgets" : [
 			{
 				"id" : "latest",

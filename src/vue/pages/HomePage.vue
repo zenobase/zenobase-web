@@ -51,7 +51,7 @@ const examples = [
 	{
 		image: '/img/home/map_200x200.png',
 		question: 'Where do I go hiking this time of the year?',
-		description: 'Explore activities from services like MapMyFitness, RunKeeper, Strava, or add your own data.',
+		description: 'Explore activities from services like MapMyFitness, Strava, or add your own data.',
 		link: '/#/buckets/u07qih0a27/',
 		linkText: 'Live dashboard',
 		align: 'right',

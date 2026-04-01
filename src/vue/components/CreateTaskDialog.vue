@@ -498,27 +498,6 @@ const types: TaskType[] = [
 		],
 	},
 	{
-		id: 'runkeeper-activities',
-		description: 'Creates an event for each activity.',
-		url: 'https://runkeeper.com/',
-		fields: [
-			{ key: 'unit', label: 'Unit', type: 'select', default: 'km', required: true, options: 'units:distance' },
-			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-12' },
-		],
-	},
-	{
-		id: 'runkeeper-weight',
-		description: 'Creates an event for each body weight measurement.',
-		url: 'https://runkeeper.com/',
-		fields: [
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'Body', required: true },
-			{ key: 'unit', label: 'Unit', type: 'select', default: 'lb', required: true, options: 'units:weight' },
-			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-12' },
-		],
-	},
-	{
 		id: 'sleepcloud',
 		description: 'Creates an event for each period of sleep.',
 		url: 'https://sites.google.com/site/sleepasandroid/sleepcloud',
