@@ -150,6 +150,7 @@ function draw() {
 		grid: { left: 60, right: 20, top: 10, bottom: 40, containLabel: false },
 		xAxis: {
 			type: 'value',
+			scale: true,
 			name: buildLabel(props.settings.label_x, props.settings.statistic_x, props.settings.field_x, props.settings.unit_x),
 			nameLocation: 'middle',
 			nameGap: 25,
@@ -163,6 +164,7 @@ function draw() {
 		},
 		yAxis: {
 			type: 'value',
+			scale: true,
 			name: buildLabel(props.settings.label_y, props.settings.statistic_y, props.settings.field_y, props.settings.unit_y),
 			nameLocation: 'middle',
 			nameGap: 40,
