@@ -346,22 +346,6 @@ const types: TaskType[] = [
 		],
 	},
 	{
-		id: 'reporter-questions',
-		description: 'Creates an event for each question answered.',
-		url: 'http://www.reporter-app.com/',
-		fields: [
-			{
-				key: 'folder',
-				label: 'Folder',
-				type: 'text',
-				default: 'Apps/Reporter-App',
-				required: true,
-				htmlHelp:
-					'The name of the Dropbox folder the data is being exported to. Before proceeding, please add a configuration file to that folder, <a href="https://blog.zenobase.com/post/77238240850" target="_blank">as described here</a>.',
-			},
-		],
-	},
-	{
 		id: 'rescuetime-productivity',
 		description: 'Creates an event for every hour the computer was used.',
 		url: 'https://www.rescuetime.com/',
