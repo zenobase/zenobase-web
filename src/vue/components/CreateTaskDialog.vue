@@ -66,19 +66,6 @@ const types: TaskType[] = [
 		fields: [{ key: 'tag', label: 'Tag', type: 'text', default: 'demo', required: true }],
 	},
 	{
-		id: 'beeminder',
-		description: 'Updates a goal with event counts or value totals for each day.',
-		url: 'https://www.beeminder.com/',
-		fields: [
-			{ key: 'goal', label: 'Goal', type: 'text', default: null, required: true, help: 'The name of an existing goal in Beeminder.' },
-			{ key: 'field', label: 'Field', type: 'select', default: null, options: 'numeric-fields', help: 'Instead of reporting events counts, report values from this field.' },
-			{ key: 'unit', label: 'Unit', type: 'select', default: null, options: 'dynamic-units' },
-			{ key: 'filter', label: 'Filter', type: 'text', default: null, placeholder: 'e.g. tag:xyz', help: 'Report only values from events that match this constraint.' },
-			{ key: 'key_field', label: 'Timestamp', type: 'select', default: 'timestamp', options: 'timestamp-subfields', help: 'How to handle events with multiple timestamps that span days.' },
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-0' },
-		],
-	},
-	{
 		id: 'fitbit-activities',
 		description: 'Creates an event for each activity.',
 		url: 'https://www.fitbit.com/',
@@ -572,11 +559,6 @@ function getSelectOptions(field: SettingsField): FieldOption[] {
 	if (field.options === 'timezone') return timezones.map((tz) => ({ value: tz, label: tz }));
 	if (field.options === 'numeric-fields') return getNumericFieldNames().map((name) => ({ value: name, label: name }));
 	if (field.options === 'timestamp-subfields') return TIMESTAMP_SUBFIELDS.map((sf) => ({ value: sf.value, label: sf.label }));
-	if (field.options === 'dynamic-units') {
-		const fieldName = settings.value.field as string;
-		if (!fieldName) return [];
-		return getUnitsForField(fieldName).map((u) => ({ value: u, label: u }));
-	}
 	if (typeof field.options === 'string' && field.options.startsWith('units:')) {
 		const fieldName = field.options.substring(6);
 		return getUnitsForField(fieldName).map((u) => ({ value: u, label: u }));
@@ -604,29 +586,10 @@ function init() {
 	initSettings(types[0]);
 }
 
-const beeminderDynamicUnits = computed(() => {
-	if (selectedType.value.id !== 'beeminder') return [];
-	const fieldName = settings.value.field as string;
-	if (!fieldName) return [];
-	return getUnitsForField(fieldName);
-});
-
 watch(
 	() => selectedType.value,
 	(newType) => {
 		initSettings(newType);
-	},
-);
-
-watch(
-	() => settings.value.field,
-	() => {
-		if (selectedType.value.id === 'beeminder') {
-			const units = beeminderDynamicUnits.value;
-			if (units.length > 0 && !units.includes(settings.value.unit as string)) {
-				settings.value.unit = null;
-			}
-		}
 	},
 );
 
