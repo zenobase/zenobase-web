@@ -194,8 +194,15 @@ export function formatEventHtml(event: ZenoEvent, excludeFields?: Set<string>, f
 		if (value === undefined || value === null) continue;
 		value = unwrap(value);
 		const toHtml = fieldOverrides?.[field.name] ?? field.toHtml;
-		const html = toHtml(value);
-		if (html) parts.push(html);
+		if (Array.isArray(value)) {
+			for (const item of value) {
+				const html = toHtml(item);
+				if (html) parts.push(html);
+			}
+		} else {
+			const html = toHtml(value);
+			if (html) parts.push(html);
+		}
 	}
 	return parts.join(' &nbsp; ');
 }
