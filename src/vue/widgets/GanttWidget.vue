@@ -79,6 +79,7 @@ function formatAge(dateStr: string): string {
 }
 
 function formatDuration(ms: number): string {
+	if (ms === 0) return '0';
 	if (ms < 1000) return `${ms}ms`;
 	const seconds = Math.floor(ms / 1000);
 	if (seconds < 60) return `${seconds}s`;

@@ -36,7 +36,7 @@ export function compactDuration(value: number | string): string {
 	if (h) parts.push(h + 'h');
 	if (m) parts.push(m + 'min');
 	if (s && parts.length < 2) parts.push(s + 's');
-	if (parts.length === 0) parts.push(ms + 'ms');
+	if (parts.length === 0) parts.push(ms === 0 ? '0' : ms + 'ms');
 	return parts.slice(0, 2).join(' ');
 }
 
