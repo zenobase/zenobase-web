@@ -105,28 +105,26 @@ watch(
 </script>
 
 <template>
-	<div id="oauth-view" class="container-fluid">
+	<div id="oauth-view">
 		<form>
-			<div v-if="message" class="alert alert-block alert-error">{{ message }}</div>
+			<v-alert v-if="message" type="error" variant="tonal">{{ message }}</v-alert>
 			<div v-if="!auth.user.value">
 				<p>Please sign in to authorize this application.</p>
 			</div>
 			<div v-else>
-				<div class="control-group">
-					<label class="control-label" for="oauth-bucket">Grant <strong>{{ clientId }}</strong> access to:</label>
+				<div class="mb-4">
+					<label for="oauth-bucket">Grant <strong>{{ clientId }}</strong> access to:</label>
 				</div>
-				<div class="control-group">
-					<div class="controls">
-						<select v-model="selectedBucket">
-							<option value="" disabled>Select a bucket</option>
-							<option v-for="b in buckets" :key="b['@id']" :value="b['@id']">{{ b.label }}</option>
-						</select>
-					</div>
+				<div class="mb-4">
+					<select v-model="selectedBucket">
+						<option value="" disabled>Select a bucket</option>
+						<option v-for="b in buckets" :key="b['@id']" :value="b['@id']">{{ b.label }}</option>
+					</select>
 				</div>
 				<div>
-					<button id="oauth-allow" type="button" class="btn btn-primary" :disabled="!valid" @click="allow">Allow</button>
+					<v-btn id="oauth-allow" color="primary" :disabled="!valid" @click="allow">Allow</v-btn>
 					{{ ' ' }}
-					<button id="oauth-deny" type="button" class="btn" @click="deny('access_denied', 'user did not grant access')">Deny</button>
+					<v-btn id="oauth-deny" variant="outlined" @click="deny('access_denied', 'user did not grant access')">Deny</v-btn>
 				</div>
 			</div>
 		</form>

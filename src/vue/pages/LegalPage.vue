@@ -22,21 +22,21 @@ watch(() => route.params.section, scrollToSection);
 </script>
 
 <template>
-	<div id="legal" class="container-fluid">
-		<h1>Legal <small>v2013-07-01</small></h1>
+	<div id="legal">
+		<h1>Legal Notice <small>v2026-04-01</small></h1>
 
 		<br />
 
-		<div class="well">
-			<div class="row-fluid">
-				<div class="span3">
+		<v-sheet class="pa-4" border rounded>
+			<v-row>
+				<v-col cols="3">
 					<ul class="nav nav-list">
 						<li><router-link to="/legal/terms">Terms of Service</router-link></li>
 						<li><router-link to="/legal/privacy">Privacy Policy</router-link></li>
 					</ul>
-				</div>
-			</div>
-		</div>
+				</v-col>
+			</v-row>
+		</v-sheet>
 
 		<section id="legal-terms">
 			<h3>Terms of Service</h3>

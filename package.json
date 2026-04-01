@@ -19,7 +19,6 @@
     "@types/papaparse": "^5.5.2",
     "@vue/test-utils": "^2.4.6",
     "jsdom": "^29.0.1",
-    "less": "^4.6.4",
     "typescript": "^6.0.2",
     "vite": "^8.0.1",
     "vite-plugin-vuetify": "^2.1.3",

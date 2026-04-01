@@ -6,6 +6,7 @@ import { compactDuration, compactNumber } from '../../utils/helpers';
 import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { BRAND_BLUE_RGB } from '../plugins/vuetify';
 // biome-ignore lint/style/useImportType: Vue component used in template
 import EChartsChart from './EChartsChart.vue';
 
@@ -370,13 +371,13 @@ function draw() {
 		z: 2,
 		...(type === 'bar'
 			? {
-					itemStyle: { color: 'rgba(47, 126, 216, 0.4)', borderWidth: 0, borderRadius: 5 },
+					itemStyle: { color: `rgba(${BRAND_BLUE_RGB}, 0.4)`, borderWidth: 0, borderRadius: 5 },
 				}
 			: {
-					lineStyle: { color: 'rgb(47, 126, 216)', width: 2 },
+					lineStyle: { color: `rgb(${BRAND_BLUE_RGB})`, width: 2 },
 					symbol: 'circle',
 					symbolSize: 8,
-					itemStyle: { color: '#fff', borderColor: 'rgb(47, 126, 216)', borderWidth: 2 },
+					itemStyle: { color: '#fff', borderColor: `rgb(${BRAND_BLUE_RGB})`, borderWidth: 2 },
 				}),
 	};
 
@@ -385,7 +386,7 @@ function draw() {
 		type: 'line',
 		data: [] as unknown[],
 		lineStyle: { opacity: 0 },
-		areaStyle: { color: 'rgba(47, 126, 216, 0.1)' },
+		areaStyle: { color: `rgba(${BRAND_BLUE_RGB}, 0.1)` },
 		symbol: 'none',
 		stack: 'range-a',
 		z: 1,
@@ -665,40 +666,41 @@ onMounted(() => dashboard.register(registration));
 
 <template>
 	<div>
-		<div class="row-fluid" v-show="times?.length || timesB?.length">
-			<div class="pull-right dropdown">
-				<a class="xbtn dropdown-toggle" data-toggle="dropdown" title="Filter"><i class="fa fa-filter" /><b class="caret" /></a>
-				<ul class="dropdown-menu" role="menu">
-					<li role="presentation"><a role="menuitem" @click="filters.thisYear()">this year</a></li>
-					<li role="presentation"><a role="menuitem" @click="filters.lastYear()">last year</a></li>
-					<li class="divider" />
-					<li role="presentation"><a role="menuitem" @click="filters.thisMonth()">this month</a></li>
-					<li role="presentation"><a role="menuitem" @click="filters.lastMonth()">last month</a></li>
-					<li role="presentation"><a role="menuitem" @click="filters.lastMonths(3)">last 3 months</a></li>
-					<li class="divider" />
-					<li role="presentation"><a role="menuitem" @click="filters.thisWeek()">this week</a></li>
-					<li role="presentation"><a role="menuitem" @click="filters.lastWeek()">last week</a></li>
-					<li class="divider" />
-					<li role="presentation"><a role="menuitem" @click="filters.today()">today</a></li>
-					<li role="presentation"><a role="menuitem" @click="filters.yesterday()">yesterday</a></li>
-					<li role="presentation"><a role="menuitem" @click="filters.lastHours(24)">last 24 hours</a></li>
-					<li class="divider" />
-					<li role="presentation"><a role="menuitem" @click="filters.select(0)">select {{ interval.name }}s</a></li>
-					<li role="presentation"><a role="menuitem" @click="filters.select(-1)">select previous {{ interval.name }}s</a></li>
-					<li role="presentation"><a role="menuitem" @click="filters.select(1)">select following {{ interval.name }}s</a></li>
-				</ul>
-				<a class="xbtn" title="Download" @click="downloadCSV"><i class="fa fa-file-text" /></a>
-				<a class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><i class="fa fa-camera" /></a>
+		<v-row v-show="times?.length || timesB?.length">
+			<v-spacer />
+			<div class="d-flex ga-1">
+				<v-menu>
+					<template #activator="{ props: menuProps }">
+						<v-btn variant="text" size="small" class="xbtn" title="Filter" v-bind="menuProps"><v-icon icon="mdi-filter" size="small" /><v-icon icon="mdi-menu-down" size="small" /></v-btn>
+					</template>
+					<v-list>
+						<v-list-item @click="filters.thisYear()">this year</v-list-item>
+						<v-list-item @click="filters.lastYear()">last year</v-list-item>
+						<v-divider />
+						<v-list-item @click="filters.thisMonth()">this month</v-list-item>
+						<v-list-item @click="filters.lastMonth()">last month</v-list-item>
+						<v-list-item @click="filters.lastMonths(3)">last 3 months</v-list-item>
+						<v-divider />
+						<v-list-item @click="filters.thisWeek()">this week</v-list-item>
+						<v-list-item @click="filters.lastWeek()">last week</v-list-item>
+						<v-divider />
+						<v-list-item @click="filters.today()">today</v-list-item>
+						<v-list-item @click="filters.yesterday()">yesterday</v-list-item>
+						<v-list-item @click="filters.lastHours(24)">last 24 hours</v-list-item>
+						<v-divider />
+						<v-list-item @click="filters.select(0)">select {{ interval.name }}s</v-list-item>
+						<v-list-item @click="filters.select(-1)">select previous {{ interval.name }}s</v-list-item>
+						<v-list-item @click="filters.select(1)">select following {{ interval.name }}s</v-list-item>
+					</v-list>
+				</v-menu>
+				<v-btn variant="text" size="small" class="xbtn" title="Download" @click="downloadCSV"><v-icon icon="mdi-file-document-outline" size="small" /></v-btn>
+				<v-btn variant="text" size="small" class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><v-icon icon="mdi-camera" size="small" /></v-btn>
 			</div>
-		</div>
+		</v-row>
 
 		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
 		<EChartsChart v-if="effectSizeOptions" :options="effectSizeOptions" />
 		<p v-if="times === null" class="none">Loading...</p>
 		<p v-else-if="times.length === 0 && timesB.length === 0" class="none">None</p>
-
-		<div class="btn-toolbar">
-			<div class="btn-group" />
-		</div>
 	</div>
 </template>

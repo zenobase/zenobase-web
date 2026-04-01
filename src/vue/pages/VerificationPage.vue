@@ -26,7 +26,7 @@ onMounted(async () => {
 </script>
 
 <template>
-	<div class="container-fluid">
+	<div>
 		Verifying...
 	</div>
 </template>

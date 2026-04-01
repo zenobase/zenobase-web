@@ -58,6 +58,10 @@ const exportFile = computed(() => `${props.bucketId}.${media.value}`);
 
 function submit() {
 	alertApi.clear();
+	const a = document.createElement('a');
+	a.href = exportUrl.value;
+	a.download = exportFile.value;
+	a.click();
 	close();
 }
 
@@ -82,28 +86,21 @@ watch(
 </script>
 
 <template>
-	<div v-if="visible" class="modal-backdrop fade in" @click="close()" />
-	<div class="modal" :class="{ hide: !visible, in: visible, fade: true }" :style="visible ? { display: 'block', top: '10%' } : {}">
-		<form class="modal-form">
-			<div class="modal-header">
-				<a class="close" @click="close()">&times;</a>
-				<h4>Export</h4>
-			</div>
-			<div class="modal-body">
-				<div class="alert alert-info" v-if="infoMessage">{{ infoMessage }}</div>
-				<div class="control-group">
-					<label class="radio">
-						<input type="radio" name="media" value="json" v-model="media" /> as <strong>json</strong>
-					</label>
-					<label class="radio" :class="{ muted: total > CSV_LIMIT }">
-						<input type="radio" name="media" value="csv" v-model="media" :disabled="total > CSV_LIMIT" /> as <strong>csv</strong>
-					</label>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<a class="btn btn-primary" :href="exportUrl" :download="exportFile" @click="submit()">Export</a>
-				<a class="btn" @click="close()">Cancel</a>
-			</div>
-		</form>
-	</div>
+	<v-dialog v-model="visible" max-width="500" @update:model-value="!$event && close()">
+		<v-card>
+			<v-card-title>Export</v-card-title>
+			<v-card-text>
+				<v-alert v-if="infoMessage" type="info" variant="tonal" class="mb-4">{{ infoMessage }}</v-alert>
+				<v-radio-group v-model="media">
+					<v-radio label="as json" value="json" />
+					<v-radio label="as csv" value="csv" :disabled="total > CSV_LIMIT" />
+				</v-radio-group>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer />
+				<v-btn color="primary" @click="submit()">Export</v-btn>
+				<v-btn variant="text" @click="close()">Cancel</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
 </template>

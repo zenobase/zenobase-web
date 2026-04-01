@@ -1,8 +1,8 @@
 <template>
-	<div class="container-fluid">
-		<div class="alert alert-block alert-error">
+	<div>
+		<v-alert type="error" variant="tonal">
 			<h4>Not Found</h4>
 			<p>This page doesn't exist.</p>
-		</div>
+		</v-alert>
 	</div>
 </template>

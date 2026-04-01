@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { inject } from 'vue';
+import { inject, type Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
+import { FIELD_REGISTRY } from '../utils/eventFormatter';
 
 const router = useRouter();
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
+const showSignIn = inject<Ref<boolean>>('showSignIn')!;
 
 async function start() {
 	alertApi.clear();
@@ -27,87 +29,148 @@ async function start() {
 	}
 }
 
-const examples = [
-	{
-		image: '/img/home/histogram_200x200.png',
-		question: "What's the ideal room temperature for sleeping?",
-		description: 'Combine data from an indoor weather station (Netatmo) with sleep data (Fitbit, Withings or SleepCloud).',
-		align: 'left',
-	},
-	{
-		image: '/img/home/scatterplot_200x200.png',
-		question: 'Does the phase of the moon affect my sleep?',
-		description: '<a href="https://blog.zenobase.com/post/81497604762">Correlate</a> sleep data (Fitbit, Withings or SleepCloud) with environmental data.',
-		link: 'https://youtu.be/b2q8CLRAPrM',
-		linkText: 'Watch screencast',
-		align: 'right',
-	},
-	{
-		image: '/img/home/polar_200x200.png',
-		question: 'What days of the week do I spend more time working at home than at work?',
-		description: 'Combine time-tracking (RescueTime) and location data (Foursquare).',
-		align: 'left',
-	},
-	{
-		image: '/img/home/map_200x200.png',
-		question: 'Where do I go hiking this time of the year?',
-		description: 'Explore activities from services like MapMyFitness, Strava, or add your own data.',
-		link: '/#/buckets/u07qih0a27/',
-		linkText: 'Live dashboard',
-		align: 'right',
-	},
-	{
-		image: '/img/home/timeline_200x100.png',
-		imageWidth: 200,
-		imageHeight: 100,
-		question: 'What affects my resting heart rate more, swimming or working out?',
-		description: 'A/B test your resting heart rate (Withings) using location data (Foursquare).',
-		link: 'https://youtu.be/X_X-9oyBLE8',
-		linkText: 'Watch screencast',
-		align: 'left',
-	},
+const excludeFields = new Set(['source', 'author', 'moon', 'percentage']);
+
+const sampleValues: Record<string, unknown> = {
+	timestamp: '2015-10-21T12:00:00Z',
+	tag: 'Experiment',
+	resource: { title: 'Quantified Self', url: 'https://quantifiedself.com/' },
+	note: 'Slept well',
+	distance: { '@value': 22, unit: 'mi' },
+	'distance/volume': { '@value': 32, unit: 'mpg' },
+	height: { '@value': 6500, unit: 'ft' },
+	weight: { '@value': 85.5, unit: 'kg' },
+	percentage: 100,
+	volume: { '@value': 500, unit: 'mL' },
+	concentration: { '@value': 80, unit: 'mg/dL' },
+	pressure: { '@value': 30.05, unit: 'inHg' },
+	velocity: { '@value': 88, unit: 'mph' },
+	pace: { '@value': 1200, unit: 's/km' },
+	duration: 27000000,
+	frequency: { '@value': 55, unit: 'bpm' },
+	bits: { '@value': 1.5, unit: 'GB' },
+	count: 42,
+	energy: { '@value': 600, unit: 'kcal' },
+	light: { '@value': 500, unit: 'lx' },
+	temperature: { '@value': 36.7, unit: 'C' },
+	rating: 80,
+	currency: 1.0,
+	humidity: 40,
+	sound: { '@value': 110, unit: 'dB' },
+	location: { lat: 47.62, lon: -122.349 },
+};
+
+const fieldExamples = FIELD_REGISTRY.filter((f) => !excludeFields.has(f.name)).map((f) => ({
+	name: f.name,
+	html: f.toHtml(sampleValues[f.name]),
+}));
+
+const widgets = [
+	{ type: 'map', label: 'Visualize' },
+	{ type: 'stats', label: 'Analyze' },
+	{ type: 'comparison', label: 'Compare' },
 ];
+
+const dataTypes = ['Activities', 'Sleep', 'Steps', 'Heart Rate', 'Weight', 'Food', 'Other'];
+
+const integrations: Record<string, string[]> = {
+	Fitbit: ['x', 'x', 'x', 'x', 'x', 'x', ''],
+	Foursquare: ['', '', '', '', '', '', 'x'],
+	Goodreads: ['', '', '', '', '', '', 'x'],
+	'Google Fit': ['x', 'x', '', 'x', 'x', 'x', ''],
+	Hexoskin: ['x', 'x', '', '', '', '', ''],
+	'Last.fm': ['', '', '', '', '', '', 'x'],
+	MapMyFitness: ['x', 'x', '', '', 'x', '', ''],
+	Netatmo: ['', '', '', '', '', '', 'x'],
+	Oura: ['', 'x', 'x', 'x', '', '', ''],
+	RescueTime: ['', '', '', '', '', '', 'x'],
+	SleepCloud: ['', 'x', '', '', '', '', ''],
+	Strava: ['x', '', '', '', '', '', ''],
+	'Trakt.tv': ['', '', '', '', '', '', 'x'],
+	WakaTime: ['', '', '', '', '', '', 'x'],
+	Withings: ['', 'x', 'x', 'x', 'x', '', ''],
+};
 </script>
 
 <template>
-	<div id="home-view" class="container-fluid">
-		<div class="hero-unit">
-			<h1>Got data? Get answers.</h1>
-			<p class="lead">Store, aggregate and visualize your data.</p>
-			<p v-if="!auth.user.value">
-				<a class="btn btn-large btn-primary" @click="start()">Get Started &raquo;</a>
-			</p>
-			<p v-else>
-				<router-link class="btn btn-large btn-primary" :to="`/users/${auth.user.value.name || 'guest'}`">My Data &raquo;</router-link>
-			</p>
-			<p class="social">
-				<a href="https://www.linkedin.com/company/2676455" title="LinkedIn"><i class="fa fa-white fa-linkedin-square" /></a>
-				{{ ' ' }}
-				<a href="https://blog.zenobase.com/" title="Blog"><i class="fa fa-white fa-tumblr-square" /></a>
-				{{ ' ' }}
-				<a href="https://github.com/zenobase" title="GitHub"><i class="fa fa-white fa-github-square" /></a>
-			</p>
+	<div id="home-view">
+		<!-- Hero -->
+		<v-sheet class="hero-unit text-center">
+			<div class="hero-overlay">
+				<div class="hero-content">
+					<img src="/img/logo_560x144.png" alt="Zenobase" width="280" height="72" class="hero-logo" />
+					<h1 class="hero-title">Got data? Get answers.</h1>
+					<p class="hero-subtitle">Capture and analyze your personal data.</p>
+					<div class="hero-cta">
+						<v-btn v-if="!auth.user.value" size="large" variant="outlined" class="hero-btn" @click="start()">
+							Get Started
+							<v-icon end icon="mdi-arrow-right" />
+						</v-btn>
+						<v-btn v-else size="large" variant="outlined" class="hero-btn" :to="`/users/${auth.user.value.name || 'guest'}`">
+							My Data
+							<v-icon end icon="mdi-arrow-right" />
+						</v-btn>
+						<div v-if="!auth.user.value" class="mt-3 text-body-2">
+							or <a @click="showSignIn = true">sign in</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</v-sheet>
+
+		<!-- Data Model -->
+		<div class="landing-section">
+			<div class="section-header">
+				<h2>Flexible time series data model</h2>
+				<p class="section-desc">Combine any number of unit-aware fields.</p>
+			</div>
+			<div class="field-cloud">
+				<span v-for="field in fieldExamples" :key="field.name" :title="field.name" class="field-cloud-item" v-html="field.html" />
+			</div>
 		</div>
 
-		<div id="home-examples">
-			<ul class="media-list">
-				<template v-for="(example, i) in examples" :key="i">
-					<li class="media" />
-					<li class="media">
-						<a v-if="example.link" :class="example.align === 'right' ? 'pull-right' : 'pull-left'" :href="example.link" :title="example.linkText">
-							<img class="media-object" :width="example.imageWidth || 200" :height="example.imageHeight || 200" :src="example.image" alt="" />
-						</a>
-						<a v-else :class="example.align === 'right' ? 'pull-right' : 'pull-left'" style="cursor: default;">
-							<img class="media-object" :width="example.imageWidth || 200" :height="example.imageHeight || 200" :src="example.image" alt="" />
-						</a>
-						<div class="media-body lead">
-							<p><strong>{{ example.question }}</strong></p>
-							<p v-html="example.description" />
-							<p v-if="example.link"><a :href="example.link">{{ example.linkText }} &raquo;</a></p>
-						</div>
-					</li>
-				</template>
-			</ul>
+		<!-- Widgets -->
+		<div class="landing-section landing-section--tinted">
+			<div class="section-header">
+				<h2>Customizable dashboard</h2>
+				<p class="section-desc">Analyze your data in a customizable dashboard.</p>
+			</div>
+			<v-carousel hide-delimiters height="auto" show-arrows="hover" class="widget-carousel">
+				<v-carousel-item v-for="widget in widgets" :key="widget.type">
+					<div class="widget-slide">
+						<img :src="`/img/home/${widget.type}.png`" :alt="widget.label" class="widget-thumbnail" />
+						<div class="widget-label">{{ widget.label }}</div>
+					</div>
+				</v-carousel-item>
+			</v-carousel>
+		</div>
+
+		<!-- Integrations -->
+		<div class="landing-section">
+			<div class="section-header">
+				<h2>Connect your data sources</h2>
+				<p class="section-desc">Pull data from supported services, or import your own data.</p>
+			</div>
+			<div class="integration-matrix">
+				<v-table density="compact">
+					<thead>
+						<tr>
+							<th></th>
+							<th v-for="dt in dataTypes" :key="dt" class="text-center integration-header">
+								<span>{{ dt }}</span>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="(types, name) in integrations" :key="name">
+							<td class="font-weight-medium text-no-wrap">{{ name }}</td>
+							<td v-for="(value, i) in types" :key="i" class="text-center">
+								<v-icon v-if="value === 'x'" icon="mdi-check" size="small" color="primary" />
+							</td>
+						</tr>
+					</tbody>
+				</v-table>
+			</div>
 		</div>
 	</div>
 </template>

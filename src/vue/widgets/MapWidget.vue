@@ -64,7 +64,7 @@ function createFilterControl(): HTMLElement {
 	control.className = 'map-control';
 	parent.appendChild(control);
 	const label = document.createElement('i');
-	label.className = 'fa fa-filter';
+	label.className = 'mdi mdi-filter';
 	control.appendChild(label);
 	control.addEventListener('click', () => {
 		if (map) {

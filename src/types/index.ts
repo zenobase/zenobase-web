@@ -82,6 +82,22 @@ export interface Constraint {
 	subfield?: string | null;
 }
 
+export type WidgetType = 'count' | 'list' | 'gantt' | 'ratings' | 'histogram' | 'scoreboard' | 'timeline' | 'polar' | 'scatterplot' | 'map' | 'heatmap';
+
+export const WIDGET_TITLES: Record<WidgetType, string> = {
+	count: 'Count Widget',
+	list: 'List Widget',
+	gantt: 'Frequency Widget',
+	ratings: 'Ratings Widget',
+	histogram: 'Histogram Widget',
+	scoreboard: 'Scoreboard Widget',
+	timeline: 'Timeline Widget',
+	polar: 'Polar Chart Widget',
+	scatterplot: 'Scatter Plot Widget',
+	map: 'Map Widget',
+	heatmap: 'Heatmap Widget',
+};
+
 export interface WidgetSettings {
 	id: string;
 	type: string;
@@ -91,6 +107,27 @@ export interface WidgetSettings {
 	limit?: number;
 	order?: string;
 	filter?: string;
+	key_field?: string;
+	value_field?: string;
+	unit?: string | null;
+	interval?: string | number | null;
+	statistic?: string;
+	statistics?: string[];
+	regression?: string;
+	mark?: string;
+	scale?: string;
+	tempo?: number;
+	label_x?: string;
+	label_y?: string;
+	field_x?: string;
+	field_y?: string;
+	unit_x?: string | null;
+	unit_y?: string | null;
+	statistic_x?: string;
+	statistic_y?: string;
+	filter_x?: string;
+	filter_y?: string;
+	lag?: number;
 	[key: string]: unknown;
 }
 

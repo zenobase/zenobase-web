@@ -62,52 +62,28 @@ async function submit() {
 </script>
 
 <template>
-	<div v-if="model" class="modal-backdrop fade in" @click="model = false" />
-	<div class="modal" :class="{ hide: !model, in: model, fade: true }" :style="model ? { display: 'block', top: '10%' } : {}">
-		<form class="modal-form" @submit.prevent="submit()">
-			<div class="modal-header">
-				<a class="close" @click="model = false">&times;</a>
-				<h4>Sign up</h4>
-			</div>
-			<div class="modal-body">
-				<div v-if="message" class="alert alert-error">{{ message }}</div>
-				<div class="control-group">
-					<label class="control-label" for="sign-up-username">Username (4-16 lowercase letters and numbers)</label>
-					<div class="controls">
-						<div class="input-append">
-							<input id="sign-up-username" type="text" class="input-large" required minlength="4" maxlength="16" pattern="[a-z0-9]+" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus v-model="username" />
-							<span class="add-on">
-								<i v-if="username && usernameRules.every(r => r(username) === true)" class="fa fa-check" title="valid" />
-								<i v-else class="fa fa-exclamation" title="not valid" />
-							</span>
-						</div>
-					</div>
-				</div>
-				<div class="control-group">
-					<label class="control-label" for="sign-up-password">Password (min 8 characters)</label>
-					<div class="controls">
-						<input id="sign-up-password" type="password" class="input-large" required minlength="8" v-model="password" />
-					</div>
-				</div>
-				<div class="control-group">
-					<label class="control-label" for="sign-up-password-confirm">Password (repeat)</label>
-					<div class="controls">
-						<input id="sign-up-password-confirm" type="password" class="input-large" required minlength="8" v-model="passwordConfirmed" />
-					</div>
-				</div>
-				<div class="control-group">
-					<label class="control-label" for="sign-up-email">Email</label>
-					<div class="controls">
-						<input id="sign-up-email" type="email" class="input-large" required v-model="email" />
-						<p class="help-block">We'll email you a confirmation, and use this address if you ever need to reset your password.</p>
-					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="submit" class="btn btn-primary" :disabled="loading">Sign up</button>
-				{{ ' ' }}
-				<button type="button" class="btn" @click="model = false">Cancel</button>
-			</div>
-		</form>
-	</div>
+	<v-dialog v-model="model" max-width="500">
+		<v-card>
+			<v-card-title>Sign up</v-card-title>
+			<v-form @submit.prevent="submit()">
+				<v-card-text>
+					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+					<v-text-field label="Username (4-16 lowercase letters and numbers)" v-model="username" :rules="usernameRules" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus>
+						<template #append-inner>
+							<v-icon v-if="username && usernameRules.every(r => r(username) === true)" icon="mdi-check" color="success" />
+							<v-icon v-else icon="mdi-exclamation" color="warning" />
+						</template>
+					</v-text-field>
+					<v-text-field label="Password (min 8 characters)" type="password" v-model="password" :rules="passwordRules" required />
+					<v-text-field label="Password (repeat)" type="password" v-model="passwordConfirmed" required />
+					<v-text-field label="Email" type="email" v-model="email" :rules="emailRules" required hint="We'll email you a confirmation, and use this address if you ever need to reset your password." persistent-hint />
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn type="submit" color="primary" :disabled="loading">Sign up</v-btn>
+					<v-btn variant="text" @click="model = false">Cancel</v-btn>
+				</v-card-actions>
+			</v-form>
+		</v-card>
+	</v-dialog>
 </template>

@@ -43,22 +43,31 @@ async function submit() {
 </script>
 
 <template>
-	<div id="password-reset-view" class="container-fluid">
+	<div id="password-reset-view">
 		<form novalidate @submit.prevent="submit()">
-			<div v-if="message" class="alert alert-block alert-error">{{ message }}</div>
-			<div class="control-group">
-				<label class="control-label" for="password-reset-password">Password (min 8 characters)</label>
-				<div class="controls">
-					<input id="password-reset-password" type="password" class="large" autofocus required minlength="8" v-model="password" />
-				</div>
+			<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+			<div class="mb-4">
+				<v-text-field
+					id="password-reset-password"
+					type="password"
+					label="Password (min 8 characters)"
+					autofocus
+					required
+					:rules="[(v: string) => v.length >= 8 || 'Min 8 characters']"
+					v-model="password"
+				/>
 			</div>
-			<div class="control-group">
-				<label class="control-label" for="password-reset-password-confirm">Confirm Password</label>
-				<div class="controls">
-					<input id="password-reset-password-confirm" type="password" class="large" required minlength="8" v-model="passwordConfirmed" />
-				</div>
+			<div class="mb-4">
+				<v-text-field
+					id="password-reset-password-confirm"
+					type="password"
+					label="Confirm Password"
+					required
+					:rules="[(v: string) => v.length >= 8 || 'Min 8 characters']"
+					v-model="passwordConfirmed"
+				/>
 			</div>
-			<button id="password-reset-button" type="submit" class="btn btn-primary" :disabled="!password || !passwordConfirmed || loading">Reset Password</button>
+			<v-btn id="password-reset-button" type="submit" color="primary" :disabled="!password || !passwordConfirmed || loading">Reset Password</v-btn>
 		</form>
 	</div>
 </template>

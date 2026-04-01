@@ -3,6 +3,7 @@ import type { ECharts } from 'echarts/core';
 import { inject, nextTick, onMounted, ref } from 'vue';
 import type { FieldInfo, PolarEntry, PolarParams, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { BRAND_BLUE_RGB } from '../plugins/vuetify';
 // biome-ignore lint/style/useImportType: Vue component used in template
 import EChartsChart from './EChartsChart.vue';
 
@@ -108,7 +109,7 @@ function draw() {
 			name: statistic,
 			barGap: '-100%',
 			barCategoryGap: '0%',
-			itemStyle: { color: 'rgba(47, 126, 216, 0.4)', borderColor: 'rgba(47, 126, 216, 0.2)', borderWidth: 1 },
+			itemStyle: { color: `rgba(${BRAND_BLUE_RGB}, 0.4)`, borderColor: `rgba(${BRAND_BLUE_RGB}, 0.2)`, borderWidth: 1 },
 		},
 	];
 
@@ -229,37 +230,42 @@ onMounted(() => dashboard.register(registration));
 
 <template>
 	<div>
-		<div class="row-fluid" v-show="times?.length || timesB?.length">
-			<div class="dropdown pull-right">
-				<a class="xbtn dropdown-toggle" data-toggle="dropdown" title="Filter"><i class="fa fa-filter" /><b class="caret" /></a>
-				<ul class="dropdown-menu" role="menu">
-					<li role="presentation" v-if="settings.interval === 'month_of_year'"><a role="menuitem" @click="filterByValue('[1..3]')">Jan - Mar</a></li>
-					<li role="presentation" v-if="settings.interval === 'month_of_year'"><a role="menuitem" @click="filterByValue('[4..6]')">Apr - Jun</a></li>
-					<li role="presentation" v-if="settings.interval === 'month_of_year'"><a role="menuitem" @click="filterByValue('[7..9]')">Jul - Sep</a></li>
-					<li role="presentation" v-if="settings.interval === 'month_of_year'"><a role="menuitem" @click="filterByValue('[10..12]')">Oct - Dec</a></li>
-					<li class="divider" v-if="settings.interval === 'month_of_year'" />
-					<li role="presentation" v-if="settings.interval === 'month_of_year'"><a role="menuitem" @click="filterByValue('[4..9]')">Apr - Sep</a></li>
-					<li role="presentation" v-if="settings.interval === 'month_of_year'"><a role="menuitem" @click="filterByValue('[4..9]', true)">Oct - Mar</a></li>
-					<li role="presentation" v-if="settings.interval === 'day_of_month'"><a role="menuitem" @click="filterByValue('[1..16)')">1st - 15th</a></li>
-					<li role="presentation" v-if="settings.interval === 'day_of_month'"><a role="menuitem" @click="filterByValue('[16..*)')">16th - 31st</a></li>
-					<li role="presentation" v-if="settings.interval === 'day_of_week'"><a role="menuitem" @click="filterByValue('[1..5]')">Mon - Fri</a></li>
-					<li role="presentation" v-if="settings.interval === 'day_of_week'"><a role="menuitem" @click="filterByValue('[6..7]')">Sat - Sun</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[0..12)')">0h - 12h</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[12..*)')">12h - 24h</a></li>
-					<li class="divider" v-if="settings.interval === 'hour_of_day'" />
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[0..3)')">0h - 3h</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[3..6)')">3h - 6h</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[6..9)')">6h - 9h</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[9..12)')">9h - 12h</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[12..15)')">12h - 15h</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[15..18)')">15h - 18h</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[18..21)')">18h - 21h</a></li>
-					<li role="presentation" v-if="settings.interval === 'hour_of_day'"><a role="menuitem" @click="filterByValue('[21..*)')">21h - 24h</a></li>
-				</ul>
-				<a class="xbtn" title="Download" @click="downloadCSV"><i class="fa fa-file-text" /></a>
-				<a class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><i class="fa fa-camera" /></a>
+		<v-row v-show="times?.length || timesB?.length">
+			<v-spacer />
+			<div class="d-flex ga-1">
+				<v-menu>
+					<template #activator="{ props: menuProps }">
+						<v-btn variant="text" size="small" class="xbtn" title="Filter" v-bind="menuProps"><v-icon icon="mdi-filter" size="small" /><v-icon icon="mdi-menu-down" size="small" /></v-btn>
+					</template>
+					<v-list>
+						<v-list-item v-if="settings.interval === 'month_of_year'" @click="filterByValue('[1..3]')">Jan - Mar</v-list-item>
+						<v-list-item v-if="settings.interval === 'month_of_year'" @click="filterByValue('[4..6]')">Apr - Jun</v-list-item>
+						<v-list-item v-if="settings.interval === 'month_of_year'" @click="filterByValue('[7..9]')">Jul - Sep</v-list-item>
+						<v-list-item v-if="settings.interval === 'month_of_year'" @click="filterByValue('[10..12]')">Oct - Dec</v-list-item>
+						<v-divider v-if="settings.interval === 'month_of_year'" />
+						<v-list-item v-if="settings.interval === 'month_of_year'" @click="filterByValue('[4..9]')">Apr - Sep</v-list-item>
+						<v-list-item v-if="settings.interval === 'month_of_year'" @click="filterByValue('[4..9]', true)">Oct - Mar</v-list-item>
+						<v-list-item v-if="settings.interval === 'day_of_month'" @click="filterByValue('[1..16)')">1st - 15th</v-list-item>
+						<v-list-item v-if="settings.interval === 'day_of_month'" @click="filterByValue('[16..*)')">16th - 31st</v-list-item>
+						<v-list-item v-if="settings.interval === 'day_of_week'" @click="filterByValue('[1..5]')">Mon - Fri</v-list-item>
+						<v-list-item v-if="settings.interval === 'day_of_week'" @click="filterByValue('[6..7]')">Sat - Sun</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[0..12)')">0h - 12h</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[12..*)')">12h - 24h</v-list-item>
+						<v-divider v-if="settings.interval === 'hour_of_day'" />
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[0..3)')">0h - 3h</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[3..6)')">3h - 6h</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[6..9)')">6h - 9h</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[9..12)')">9h - 12h</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[12..15)')">12h - 15h</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[15..18)')">15h - 18h</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[18..21)')">18h - 21h</v-list-item>
+						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[21..*)')">21h - 24h</v-list-item>
+					</v-list>
+				</v-menu>
+				<v-btn variant="text" size="small" class="xbtn" title="Download" @click="downloadCSV"><v-icon icon="mdi-file-document-outline" size="small" /></v-btn>
+				<v-btn variant="text" size="small" class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><v-icon icon="mdi-camera" size="small" /></v-btn>
 			</div>
-		</div>
+		</v-row>
 		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
 		<p v-if="times === null" class="none">Loading...</p>
 		<p v-else-if="times.length === 0 && timesB.length === 0" class="none">None</p>

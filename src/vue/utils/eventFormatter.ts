@@ -1,4 +1,4 @@
-import type { GeoPoint, ResourceRef, UnitValue, ZenoEvent } from '../../types';
+import type { ResourceRef, UnitValue, ZenoEvent } from '../../types';
 import { getUserName } from './userNames';
 
 function esc(value: unknown): string {
@@ -35,9 +35,7 @@ function formatRelativeTime(isoStr: string): string {
 	if (diff < 60000) return 'just now';
 	if (diff >= 79200000) {
 		const d = new Date(isoStr);
-		const mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
-		const pad = (n: number) => (n < 10 ? '0' + n : String(n));
-		return `${mo} ${d.getDate()}, ${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+		return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 	}
 	const minutes = Math.floor(diff / 60000);
 	if (minutes < 60) return minutes + ' minutes ago';
@@ -47,139 +45,110 @@ function formatRelativeTime(isoStr: string): string {
 
 function ratingStarsHtml(value: number): string {
 	const stars = Math.round((value || 0) / 20);
-	let html = '<span class="nowrap" title="' + value + '%">';
+	let html = '<span class="text-no-wrap" title="' + value + '%">';
 	for (let i = 0; i < 5; ++i) {
-		html += '<i class="fa ' + (stars > i ? 'fa-star' : 'fa-star-o') + '"></i>';
+		html += '<i class="mdi ' + (stars > i ? 'mdi-star' : 'mdi-star-outline') + '"></i>';
 	}
 	html += '</span>';
 	return html;
+}
+
+function formatPace(value: unknown): string {
+	if (typeof value === 'object' && value !== null && '@value' in value) {
+		const obj = value as UnitValue;
+		const unit = obj.unit || '';
+		if (!unit.startsWith('s/')) return textWithUnit(value);
+		const totalSec = Number(obj['@value']);
+		const min = Math.floor(totalSec / 60);
+		const sec = Math.round(totalSec % 60);
+		return min + "'" + sec + '"/' + unit.substring(2);
+	}
+	return String(value);
 }
 
 function locationText(value: { lat: number; lon: number }): string {
 	return Math.round(Number(value['lat']) * 1000) / 1000 + ', ' + Math.round(Number(value['lon']) * 1000) / 1000;
 }
 
+function ic(icon: string, title: string): string {
+	return '<i class="mdi ' + icon + '" title="' + title + '"></i>';
+}
+
+type ToHtmlFn = (value: unknown, icon: string, title: string) => string;
 type FieldDef = { name: string; icon: string; title: string; toHtml: (value: unknown) => string };
 
+function field(name: string, icon: string, title: string, toHtml: ToHtmlFn): FieldDef {
+	return { name, icon, title, toHtml: (v) => toHtml(v, icon, title) };
+}
+
+function simple(name: string, icon: string, title: string, format: (v: unknown) => string): FieldDef {
+	return field(name, icon, title, (v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' ' + format(v) + '</span>');
+}
+
 export const FIELD_REGISTRY: FieldDef[] = [
-	{
-		name: 'tag',
-		icon: 'fa-tag',
-		title: 'Tag',
-		toHtml: (v) => '<span class="nowrap"><i class="fa fa-tag" title="Tag"></i> ' + esc(v) + '</span>',
-	},
-	{
-		name: 'resource',
-		icon: 'fa-bookmark',
-		title: 'Resource',
-		toHtml: (v) => {
-			const obj = v as ResourceRef;
-			if (!obj || !obj.title) return '';
-			return (
-				'<span><i class="fa fa-bookmark" title="Resource"></i>&nbsp;<a href="/to?url=' +
-				esc(obj.url) +
-				'" target="_blank" rel="nofollow noopener noreferrer">' +
-				esc(obj['title']) +
-				'</a></span>'
-			);
-		},
-	},
-	{ name: 'distance', icon: 'fa-arrows-h', title: 'Distance', toHtml: (v) => '<span class="nowrap"><i class="fa fa-arrows-h" title="Distance"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'height', icon: 'fa-arrows-v', title: 'Height', toHtml: (v) => '<span class="nowrap"><i class="fa fa-arrows-v" title="Height"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{
-		name: 'weight',
-		icon: 'fa-caret-square-o-down',
-		title: 'Weight',
-		toHtml: (v) => '<span class="nowrap"><i class="fa fa-caret-square-o-down" title="Weight"></i> ' + esc(textWithUnit(v)) + '</span>',
-	},
-	{
-		name: 'percentage',
-		icon: 'fa-th',
-		title: 'Percentage',
-		toHtml: (v) => {
-			const n = Number(v);
-			return '<span class="nowrap"><i class="fa fa-th" title="Percentage"></i> <abbr title="' + n + '%">' + Math.round(n) + '%</abbr></span>';
-		},
-	},
-	{ name: 'moon', icon: 'fa-moon-o', title: 'Moon', toHtml: (v) => '<span class="nowrap"><i class="fa fa-moon-o" title="Moon"></i> ' + v + '%</span>' },
-	{ name: 'volume', icon: 'fa-flask', title: 'Volume', toHtml: (v) => '<span class="nowrap"><i class="fa fa-flask" title="Volume"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'concentration', icon: 'fa-tint', title: 'Concentration', toHtml: (v) => '<span class="nowrap"><i class="fa fa-tint" title="Concentration"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{
-		name: 'distance/volume',
-		icon: 'fa-flask',
-		title: 'Distance/Volume',
-		toHtml: (v) => '<span class="nowrap"><i class="fa fa-flask" title="Distance/Volume"></i> ' + esc(textWithUnit(v)) + '</span>',
-	},
-	{ name: 'humidity', icon: 'fa-tint', title: 'Humidity', toHtml: (v) => '<span class="nowrap"><i class="fa fa-tint" title="Humidity"></i> ' + v + '%</span>' },
-	{ name: 'pressure', icon: 'fa-arrows-alt', title: 'Pressure', toHtml: (v) => '<span class="nowrap"><i class="fa fa-arrows-alt" title="Pressure"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'sound', icon: 'fa-volume-up', title: 'Sound Level', toHtml: (v) => '<span class="nowrap"><i class="fa fa-volume-up" title="Sound Level"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{
-		name: 'location',
-		icon: 'fa-map-marker',
-		title: 'Location',
-		toHtml: (v) => {
-			const obj = v as { lat: number; lon: number };
-			if (!obj || !('lat' in obj)) return '';
-			const text = locationText(obj);
-			return '<span class="nowrap"><i class="fa fa-map-marker" title="Location"></i> ' + esc(text) + '</span>';
-		},
-	},
-	{
-		name: 'timestamp',
-		icon: 'fa-calendar-o',
-		title: 'Timestamp',
-		toHtml: (v) => '<span class="nowrap"><i class="fa fa-calendar-o" title="Timestamp"></i> <abbr title="' + esc(v) + '">' + esc(formatRelativeTime(String(v))) + '</abbr></span>',
-	},
-	{ name: 'velocity', icon: 'fa-tachometer', title: 'Velocity', toHtml: (v) => '<span class="nowrap"><i class="fa fa-tachometer" title="Velocity"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'pace', icon: 'fa-clock-o', title: 'Pace', toHtml: (v) => '<span class="nowrap"><i class="fa fa-clock-o" title="Pace"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{
-		name: 'duration',
-		icon: 'fa-clock-o',
-		title: 'Duration',
-		toHtml: (v) => {
-			const ms = typeof v === 'number' ? v : typeof v === 'object' && v !== null && '@value' in v ? Number((v as UnitValue)['@value']) : 0;
-			return '<span class="nowrap"><i class="fa fa-clock-o" title="Duration"></i> <abbr>' + esc(formatDuration(ms)) + '</abbr></span>';
-		},
-	},
-	{ name: 'frequency', icon: 'fa-heart', title: 'Frequency', toHtml: (v) => '<span class="nowrap"><i class="fa fa-heart" title="Frequency"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'bits', icon: 'fa-hdd-o', title: 'Bits', toHtml: (v) => '<span class="nowrap"><i class="fa fa-hdd-o" title="Bits"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'count', icon: 'fa-th', title: 'Count', toHtml: (v) => '<span class="nowrap"><i class="fa fa-th" title="Count"></i> ' + Number(v).toLocaleString() + '</span>' },
-	{ name: 'energy', icon: 'fa-fire', title: 'Energy', toHtml: (v) => '<span class="nowrap"><i class="fa fa-fire" title="Energy"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'light', icon: 'fa-sun-o', title: 'Light', toHtml: (v) => '<span class="nowrap"><i class="fa fa-sun-o" title="Light"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'temperature', icon: 'fa-fire', title: 'Temperature', toHtml: (v) => '<span class="nowrap"><i class="fa fa-fire" title="Temperature"></i> ' + esc(textWithUnit(v)) + '</span>' },
-	{ name: 'rating', icon: 'fa-star', title: 'Rating', toHtml: (v) => ratingStarsHtml(Number(v)) },
-	{
-		name: 'currency',
-		icon: 'fa-money',
-		title: 'Currency',
-		toHtml: (v) => '<span class="nowrap"><i class="fa fa-money" title="Currency"></i> ' + Number(v).toFixed(2) + '</span>',
-	},
-	{ name: 'note', icon: 'fa-comment-o', title: 'Note', toHtml: (v) => '<span><i class="fa fa-comment-o" title="Note"></i>&nbsp;' + esc(v) + '</span>' },
-	{
-		name: 'author',
-		icon: 'fa-user',
-		title: 'User',
-		toHtml: (v) => '<span class="nowrap"><i class="fa fa-user" title="User"></i> ' + esc(getUserName(String(v))) + '</span>',
-	},
-	{
-		name: 'source',
-		icon: 'fa-external-link',
-		title: 'Source',
-		toHtml: (v) => {
-			const obj = v as ResourceRef;
-			if (!obj || !obj.title) return '';
-			return (
-				'<span class="nowrap"><i class="fa fa-external-link" title="Source"></i> <a href="/to?url=' +
-				esc(obj.url) +
-				'" target="_blank" rel="nofollow noopener noreferrer">' +
-				esc(obj.title) +
-				'</a></span>'
-			);
-		},
-	},
+	simple('tag', 'mdi-tag', 'Tag', (v) => esc(v)),
+	field('resource', 'mdi-bookmark', 'Resource', (v, i, t) => {
+		const obj = v as ResourceRef;
+		if (!obj || !obj.title) return '';
+		return '<span>' + ic(i, t) + '&nbsp;<a href="/to?url=' + esc(obj.url) + '" target="_blank" rel="nofollow noopener noreferrer">' + esc(obj['title']) + '</a></span>';
+	}),
+	simple('distance', 'mdi-arrow-left-right', 'Distance', (v) => esc(textWithUnit(v))),
+	simple('height', 'mdi-arrow-up-down', 'Height', (v) => esc(textWithUnit(v))),
+	simple('weight', 'mdi-weight', 'Weight', (v) => esc(textWithUnit(v))),
+	field('percentage', 'mdi-view-grid', 'Percentage', (v, i, t) => {
+		const n = Number(v);
+		return '<span class="text-no-wrap">' + ic(i, t) + ' <abbr title="' + n + '%">' + Math.round(n) + '%</abbr></span>';
+	}),
+	simple('moon', 'mdi-moon-waning-crescent', 'Moon', (v) => v + '%'),
+	simple('volume', 'mdi-cup', 'Volume', (v) => esc(textWithUnit(v))),
+	simple('concentration', 'mdi-water', 'Concentration', (v) => esc(textWithUnit(v))),
+	simple('distance/volume', 'mdi-gas-station', 'Distance/Volume', (v) => esc(textWithUnit(v))),
+	simple('humidity', 'mdi-water', 'Humidity', (v) => v + '%'),
+	simple('pressure', 'mdi-arrow-expand-all', 'Pressure', (v) => esc(textWithUnit(v))),
+	simple('sound', 'mdi-volume-high', 'Sound Level', (v) => esc(textWithUnit(v))),
+	field('location', 'mdi-map-marker', 'Location', (v, i, t) => {
+		const obj = v as { lat: number; lon: number };
+		if (!obj || !('lat' in obj)) return '';
+		const text = locationText(obj);
+		return '<span class="text-no-wrap">' + ic(i, t) + ' ' + esc(text) + '</span>';
+	}),
+	field(
+		'timestamp',
+		'mdi-calendar-outline',
+		'Timestamp',
+		(v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' <abbr title="' + esc(v) + '">' + esc(formatRelativeTime(String(v))) + '</abbr></span>',
+	),
+	simple('velocity', 'mdi-speedometer', 'Velocity', (v) => esc(textWithUnit(v))),
+	simple('pace', 'mdi-timer-outline', 'Pace', (v) => esc(formatPace(v))),
+	field('duration', 'mdi-clock-outline', 'Duration', (v, i, t) => {
+		const ms = typeof v === 'number' ? v : typeof v === 'object' && v !== null && '@value' in v ? Number((v as UnitValue)['@value']) : 0;
+		return '<span class="text-no-wrap">' + ic(i, t) + ' <abbr>' + esc(formatDuration(ms)) + '</abbr></span>';
+	}),
+	simple('frequency', 'mdi-heart', 'Frequency', (v) => esc(textWithUnit(v))),
+	simple('bits', 'mdi-database', 'Bits', (v) => esc(textWithUnit(v))),
+	simple('count', 'mdi-counter', 'Count', (v) => Number(v).toLocaleString()),
+	simple('energy', 'mdi-fire', 'Energy', (v) => esc(textWithUnit(v))),
+	simple('light', 'mdi-white-balance-sunny', 'Light', (v) => esc(textWithUnit(v))),
+	simple('temperature', 'mdi-fire', 'Temperature', (v) => esc(textWithUnit(v))),
+	{ name: 'rating', icon: 'mdi-star', title: 'Rating', toHtml: (v) => ratingStarsHtml(Number(v)) },
+	simple('currency', 'mdi-currency-usd', 'Currency', (v) => Number(v).toFixed(2)),
+	field('note', 'mdi-comment-outline', 'Note', (v, i, t) => '<span>' + ic(i, t) + '&nbsp;' + esc(v) + '</span>'),
+	field('author', 'mdi-account', 'User', (v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' ' + esc(getUserName(String(v))) + '</span>'),
+	field('source', 'mdi-open-in-new', 'Source', (v, i, t) => {
+		const obj = v as ResourceRef;
+		if (!obj || !obj.title) return '';
+		return '<span class="text-no-wrap">' + ic(i, t) + ' <a href="/to?url=' + esc(obj.url) + '" target="_blank" rel="nofollow noopener noreferrer">' + esc(obj.title) + '</a></span>';
+	}),
 ];
 
 export { esc, formatDuration, formatRelativeTime, locationText, ratingStarsHtml, textWithUnit };
+
+export function getFieldIcon(fieldName: string): string {
+	const dot = fieldName.indexOf('.');
+	const baseName = dot !== -1 ? fieldName.substring(0, dot) : fieldName;
+	const entry = FIELD_REGISTRY.find((f) => f.name === baseName);
+	return entry?.icon ?? 'mdi-filter';
+}
 
 function unwrap(value: unknown): unknown {
 	if (Array.isArray(value) && value.length === 1) return value[0];

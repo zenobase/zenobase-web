@@ -500,55 +500,68 @@ function blurOnEnter(event: KeyboardEvent) {
 		(event.target as HTMLInputElement).blur();
 	}
 }
+
+// --- Active tab tracking for v-tabs ---
+const mainTab = ref('widget-journal');
+const sideTab = ref('widget-scheduler');
 </script>
 
 <template>
-	<div id="admin-dashboard" class="container-fluid">
+	<div id="admin-dashboard">
 
-		<div class="row-fluid page-titlebar">
-			<p class="pull-left page-title">
-				<span class="page-title-text">Admin</span>
-				{{ ' ' }}
-				<span v-if="status" class="badge page-title-decoration" title="Cluster Health"
-					:class="{ 'badge-success': status.health === 'green', 'badge-warning': status.health === 'yellow', 'badge-important': status.health === 'red' }"
-				>{{ status.data_nodes }}</span>
-				{{ ' ' }}
-				<a class="page-title-decoration" @click="refreshAll()" title="Refresh"><i class="fa fa-refresh" :class="outstanding > 0 && 'fa-spin'"></i></a>
-				{{ ' ' }}
-				<a v-if="status?.read_only" class="page-title-decoration" @click="setReadOnly(false)" title="in read-only mode"><i class="fa fa-lock"></i></a>
-				<a v-if="status && !status.read_only" class="page-title-decoration" @click="setReadOnly(true)" title="in normal mode"><i class="fa fa-unlock"></i></a>
-			</p>
-			<ul class="nav nav-pills" v-if="constraint">
-				<li class="active">
-					<a @click="setConstraint(null)"><i class="fa fa-white fa-user"></i> <span>{{ formatUsername(constraint) }}</span> <i class="fa fa-times fa-white"></i></a>
-				</li>
-			</ul>
+		<Teleport to="#page-toolbar">
+			<span class="text-subtitle-1 font-weight-bold mr-1">Admin</span>
+			<v-btn icon size="small" variant="text" @click="refreshAll()" title="Refresh">
+				<v-icon icon="mdi-refresh" :class="outstanding > 0 && 'mdi-spin'" />
+			</v-btn>
+			<v-btn v-if="status?.read_only" icon size="small" variant="text" @click="setReadOnly(false)" title="in read-only mode">
+				<v-icon icon="mdi-lock" />
+			</v-btn>
+			<v-btn v-if="status && !status.read_only" icon size="small" variant="text" @click="setReadOnly(true)" title="in normal mode">
+				<v-icon icon="mdi-lock-open" />
+			</v-btn>
+		</Teleport>
+
+		<div class="d-flex align-center flex-wrap ga-1 mb-2" v-if="constraint">
+			<v-chip color="primary" variant="outlined" size="default" class="font-weight-bold" @click="setConstraint(null)">
+				<v-icon icon="mdi-account" start />
+				{{ formatUsername(constraint) }}
+				<v-icon icon="mdi-close" end size="x-small" />
+			</v-chip>
 		</div>
 
-		<div class="row-fluid">
+		<v-row>
 
-			<div class="span8">
+			<v-col cols="8">
 
-				<ul class="nav nav-tabs">
-					<li class="active"><a href="#widget-journal" target="_self" data-toggle="tab">History</a></li>
-					<li><a href="#widget-buckets" target="_self" data-toggle="tab">Buckets</a></li>
-					<li><a href="#widget-users" target="_self" data-toggle="tab">Users</a></li>
-					<li><a href="#widget-authorizations" target="_self" data-toggle="tab">Authorizations</a></li>
-					<li><a href="#widget-credentials" target="_self" data-toggle="tab">Credentials</a></li>
-					<li><a href="#widget-tasks" target="_self" data-toggle="tab">Tasks</a></li>
-				</ul>
+				<v-tabs v-model="mainTab">
+					<v-tab value="widget-journal">History</v-tab>
+					<v-tab value="widget-buckets">Buckets</v-tab>
+					<v-tab value="widget-users">Users</v-tab>
+					<v-tab value="widget-authorizations">Authorizations</v-tab>
+					<v-tab value="widget-credentials">Credentials</v-tab>
+					<v-tab value="widget-tasks">Tasks</v-tab>
+				</v-tabs>
 
-				<div class="tab-content">
+				<v-tabs-window v-model="mainTab" class="mt-4">
 
 					<!-- Journal -->
-					<div id="widget-journal" class="tab-pane active">
-						<form class="form-search" v-if="!constraint">
-							<div class="input-append">
-								<input type="text" class="search-query input-xlarge" v-model="journal.filter" @keydown="blurOnEnter" @blur="refreshJournal({ offset: 0 })" placeholder="@id, @type.name" />
-								<button class="btn" @click="journal.filter = null; refreshJournal({ offset: 0 })" :disabled="!journal.filter"><i class="fa fa-close"></i></button>
-							</div>
-						</form>
-						<table class="table">
+					<v-tabs-window-item value="widget-journal" :transition="false" :reverse-transition="false">
+						<div v-if="!constraint" class="mb-2">
+							<v-text-field
+								prepend-inner-icon="mdi-magnify"
+								v-model="journal.filter"
+								@keydown="blurOnEnter"
+								@blur="refreshJournal({ offset: 0 })"
+								placeholder="@id, @type.name"
+								variant="plain"
+								density="compact"
+								hide-details
+								clearable
+								@click:clear="journal.filter = null; refreshJournal({ offset: 0 })"
+							/>
+						</div>
+						<v-table>
 							<thead>
 								<tr>
 									<th style="width: 0">Command</th>
@@ -568,14 +581,14 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td>
 										<span>{{ command.label }}</span>
 									</td>
-									<td style="white-space: nowrap">
+									<td class="text-no-wrap">
 										<abbr :title="String(command.timestamp)">{{ formatAge(command.timestamp as string) }}</abbr>
 									</td>
 									<td style="text-align: right">
 										<span v-if="command.cost">{{ formatNumber(command.cost as number) }}</span>
 									</td>
 									<td style="text-align: right">
-										<a class="action" @click="undo(command['@id'] as string)" title="Undo"><i class="fa fa-step-backward"></i></a>
+										<a class="action" @click="undo(command['@id'] as string)" title="Undo"><v-icon icon="mdi-step-backward" /></a>
 									</td>
 								</tr>
 								<tr v-if="journal.commands === null">
@@ -585,27 +598,31 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td colspan="6"><i>None</i></td>
 								</tr>
 							</tbody>
-						</table>
-						<div class="btn-toolbar" v-if="journal.commands && journal.commands.length">
-							<div class="btn-group pull-right">
-								<button class="btn" title="Previous" @click="refreshJournal({ offset: journal.offset - journal.limit })" :disabled="journal.offset <= 0"><i class="fa fa-chevron-left"></i></button>
-								<button class="btn" title="Next" @click="refreshJournal({ offset: journal.offset + journal.limit })" :disabled="journal.offset + journal.limit >= journal.total"><i class="fa fa-chevron-right"></i></button>
-							</div>
-							<div class="btn-group pull-right">
-								<button class="btn disabled zeno-paging"><b>{{ journal.offset + 1 }}</b> &ndash; <b>{{ journal.offset + journal.commands.length }}</b> of <b>{{ formatNumber(journal.total) }}</b></button>
-							</div>
+						</v-table>
+						<div class="d-flex align-center justify-end" v-if="journal.commands && journal.commands.length">
+							<v-btn icon variant="text" title="Previous" @click="refreshJournal({ offset: journal.offset - journal.limit })" :disabled="journal.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ journal.offset + 1 }}</b>&ndash;<b>{{ journal.offset + journal.commands.length }}</b> of <b>{{ formatNumber(journal.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" @click="refreshJournal({ offset: journal.offset + journal.limit })" :disabled="journal.offset + journal.limit >= journal.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</div>
+					</v-tabs-window-item>
 
 					<!-- Buckets -->
-					<div id="widget-buckets" class="tab-pane">
-						<form class="form-search" v-if="!constraint">
-							<div class="input-append">
-								<input type="text" class="search-query input-xlarge" v-model="buckets.filter" @keydown="blurOnEnter" @blur="refreshBuckets({ offset: 0 })" placeholder="@id, refresh" />
-								<button class="btn" @click="buckets.filter = null; refreshBuckets({ offset: 0 })" :disabled="!buckets.filter"><i class="fa fa-close"></i></button>
-							</div>
-						</form>
-						<table class="table">
+					<v-tabs-window-item value="widget-buckets" :transition="false" :reverse-transition="false">
+						<div v-if="!constraint" class="mb-2">
+							<v-text-field
+								prepend-inner-icon="mdi-magnify"
+								v-model="buckets.filter"
+								@keydown="blurOnEnter"
+								@blur="refreshBuckets({ offset: 0 })"
+								placeholder="@id, refresh"
+								variant="plain"
+								density="compact"
+								hide-details
+								clearable
+								@click:clear="buckets.filter = null; refreshBuckets({ offset: 0 })"
+							/>
+						</div>
+						<v-table>
 							<thead>
 								<tr>
 									<th style="width: 0">Bucket</th>
@@ -623,7 +640,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td>
 										<a @click="setConstraint(getOwner(bucket))">{{ formatUsername(getOwner(bucket)) }}</a>
 									</td>
-									<td style="white-space: nowrap">
+									<td class="text-no-wrap">
 										<abbr :title="String(bucket.created)">{{ formatAge(bucket.created as string) }}</abbr>
 									</td>
 									<td style="text-align: right">
@@ -631,7 +648,7 @@ function blurOnEnter(event: KeyboardEvent) {
 										<span v-else>{{ formatNumber(bucket.size as number) }}</span>
 									</td>
 									<td style="text-align: right">
-										<a class="action" @click="removeBucket(bucket['@id'] as string)" title="Delete"><i class="fa fa-trash-o"></i></a>
+										<a class="action" @click="removeBucket(bucket['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
 									</td>
 								</tr>
 								<tr v-if="buckets.items && buckets.items.length">
@@ -648,30 +665,33 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
-						</table>
-						<div class="btn-toolbar" v-if="buckets.items && buckets.items.length">
-							<div class="btn-group pull-left">
-								<a class="btn" :href="`/buckets/?code=${api.getToken()}`" title="Download"><i class="fa fa-download"></i></a>
-							</div>
-							<div class="btn-group pull-right">
-								<button class="btn" title="Previous" @click="refreshBuckets({ offset: buckets.offset - buckets.limit })" :disabled="buckets.offset <= 0"><i class="fa fa-chevron-left"></i></button>
-								<button class="btn" title="Next" @click="refreshBuckets({ offset: buckets.offset + buckets.limit })" :disabled="buckets.offset + buckets.limit >= buckets.total"><i class="fa fa-chevron-right"></i></button>
-							</div>
-							<div class="btn-group pull-right">
-								<button class="btn disabled zeno-paging"><b>{{ buckets.offset + 1 }}</b> &ndash; <b>{{ buckets.offset + buckets.items.length }}</b> of <b>{{ formatNumber(buckets.total) }}</b></button>
-							</div>
+						</v-table>
+						<div class="d-flex align-center" v-if="buckets.items && buckets.items.length">
+							<v-btn icon variant="text" :href="`/buckets/?code=${api.getToken()}`" title="Download"><v-icon icon="mdi-download" /></v-btn>
+							<v-spacer />
+							<v-btn icon variant="text" title="Previous" @click="refreshBuckets({ offset: buckets.offset - buckets.limit })" :disabled="buckets.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ buckets.offset + 1 }}</b>&ndash;<b>{{ buckets.offset + buckets.items.length }}</b> of <b>{{ formatNumber(buckets.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" @click="refreshBuckets({ offset: buckets.offset + buckets.limit })" :disabled="buckets.offset + buckets.limit >= buckets.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</div>
+					</v-tabs-window-item>
 
 					<!-- Users -->
-					<div id="widget-users" class="tab-pane">
-						<form class="form-search" v-if="!constraint">
-							<div class="input-append">
-								<input type="text" class="search-query input-xlarge" v-model="users.filter" @keydown="blurOnEnter" @blur="refreshUsers({ offset: 0 })" placeholder="@id, name, email, verified, suspended, quota" />
-								<button class="btn" @click="users.filter = null; refreshUsers({ offset: 0 })" :disabled="!users.filter"><i class="fa fa-close"></i></button>
-							</div>
-						</form>
-						<table class="table">
+					<v-tabs-window-item value="widget-users" :transition="false" :reverse-transition="false">
+						<div v-if="!constraint" class="mb-2">
+							<v-text-field
+								prepend-inner-icon="mdi-magnify"
+								v-model="users.filter"
+								@keydown="blurOnEnter"
+								@blur="refreshUsers({ offset: 0 })"
+								placeholder="@id, name, email, verified, suspended, quota"
+								variant="plain"
+								density="compact"
+								hide-details
+								clearable
+								@click:clear="users.filter = null; refreshUsers({ offset: 0 })"
+							/>
+						</div>
+						<v-table>
 							<thead>
 								<tr>
 									<th style="width: 0">User</th>
@@ -690,20 +710,20 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td>
 										<a :href="`mailto:${user.email}`">{{ user.email }}</a>
 										{{ ' ' }}
-										<a v-if="!user.optedout" title="Opt Out" @click="optoutUser(user)"><i class="fa fa-envelope"></i></a>
-										<a v-if="user.optedout" title="Opt In" @click="optinUser(user)"><i class="fa fa-envelope-o"></i></a>
-										<a v-if="!user.verified" title="Resend Verification" @click="reverifyUser(user)"><i class="fa fa-send-o"></i></a>
+										<a v-if="!user.optedout" title="Opt Out" @click="optoutUser(user)"><v-icon icon="mdi-email" /></a>
+										<a v-if="user.optedout" title="Opt In" @click="optinUser(user)"><v-icon icon="mdi-email-outline" /></a>
+										<a v-if="!user.verified" title="Resend Verification" @click="reverifyUser(user)"><v-icon icon="mdi-send" /></a>
 									</td>
-									<td style="white-space: nowrap">
+									<td class="text-no-wrap">
 										<abbr :title="String(user.created)">{{ formatAge(user.created as string) }}</abbr>
 									</td>
-									<td style="text-align: right; white-space: nowrap">
-										<a class="action" @click="openEditQuota(user)" title="Edit Quota"><i class="fa fa-pencil"></i></a>
+									<td style="text-align: right" class="text-no-wrap">
+										<a class="action" @click="openEditQuota(user)" title="Edit Quota"><v-icon icon="mdi-pencil" /></a>
 										<span>{{ formatNumber(user.quota as number) }}</span>
 									</td>
 									<td style="text-align: right">
-										<a v-if="!user.suspended && !user.superuser" class="action" @click="suspendUser(user.name as string)" title="Suspend"><i class="fa fa-ban"></i></a>
-										<a v-if="user.suspended" class="action" @click="removeUser(user.name as string)" title="Delete"><i class="fa fa-trash-o"></i></a>
+										<a v-if="!user.suspended && !user.superuser" class="action" @click="suspendUser(user.name as string)" title="Suspend"><v-icon icon="mdi-cancel" /></a>
+										<a v-if="user.suspended" class="action" @click="removeUser(user.name as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
 									</td>
 								</tr>
 								<tr v-if="users.items === null">
@@ -713,56 +733,57 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
-						</table>
-						<div class="btn-toolbar" v-if="users.items && users.items.length">
-							<div class="btn-group pull-left">
-								<a class="btn" :href="`/users/?code=${api.getToken()}`" title="Download"><i class="fa fa-download"></i></a>
-							</div>
-							<div class="btn-group pull-right">
-								<button class="btn" title="Previous" @click="refreshUsers({ offset: users.offset - users.limit })" :disabled="users.offset <= 0"><i class="fa fa-chevron-left"></i></button>
-								<button class="btn" title="Next" @click="refreshUsers({ offset: users.offset + users.limit })" :disabled="users.offset + users.limit >= users.total"><i class="fa fa-chevron-right"></i></button>
-							</div>
-							<div class="btn-group pull-right">
-								<button class="btn disabled zeno-paging"><b>{{ users.offset + 1 }}</b> &ndash; <b>{{ users.offset + users.items.length }}</b> of <b>{{ formatNumber(users.total) }}</b></button>
-							</div>
+						</v-table>
+						<div class="d-flex align-center" v-if="users.items && users.items.length">
+							<v-btn icon variant="text" :href="`/users/?code=${api.getToken()}`" title="Download"><v-icon icon="mdi-download" /></v-btn>
+							<v-spacer />
+							<v-btn icon variant="text" title="Previous" @click="refreshUsers({ offset: users.offset - users.limit })" :disabled="users.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ users.offset + 1 }}</b>&ndash;<b>{{ users.offset + users.items.length }}</b> of <b>{{ formatNumber(users.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" @click="refreshUsers({ offset: users.offset + users.limit })" :disabled="users.offset + users.limit >= users.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
 
 						<!-- Edit Quota Dialog -->
-						<div v-if="showEditQuota" class="modal-backdrop fade in" @click="showEditQuota = false" />
-						<div class="modal" :class="{ hide: !showEditQuota }" :style="showEditQuota ? { display: 'block', top: '10%' } : {}">
-							<form class="modal-form" @submit.prevent="saveQuota()">
-								<fieldset :disabled="quota.usedOld === null">
-									<div class="modal-header">
-										<a class="close" @click="showEditQuota = false">&times;</a>
-										<h4>Quota - {{ quota.user?.name }}</h4>
-									</div>
-									<div class="modal-body">
-										<div v-if="quota.message" id="edit-quota-message" class="alert alert-error">
+						<v-dialog v-model="showEditQuota" max-width="400">
+							<v-card>
+								<v-card-title>Quota - {{ quota.user?.name }}</v-card-title>
+								<form @submit.prevent="saveQuota()">
+									<v-card-text>
+										<v-alert v-if="quota.message" id="edit-quota-message" type="error" variant="tonal" class="mb-4">
 											{{ quota.message }}
+										</v-alert>
+										<div class="d-flex ga-2 align-center">
+											<v-text-field id="used-field" type="number" v-model.number="quota.usedNew" label="Used this month" :disabled="quota.usedOld === null" />
+											<span>/</span>
+											<v-text-field id="limit-field" type="number" min="0" v-model.number="quota.limit" label="Limit per month" :disabled="quota.usedOld === null" />
 										</div>
-										<div class="control-group">
-											<input id="used-field" type="number" v-model.number="quota.usedNew" title="Used this month" /> /
-											<input id="limit-field" type="number" min="0" v-model.number="quota.limit" title="Limit per month" />
-										</div>
-									</div>
-									<div class="modal-footer">
-										<button id="save-quota-button" type="submit" class="btn btn-primary">Save</button>
-										<button type="reset" class="btn" @click="showEditQuota = false">Cancel</button>
-									</div>
-								</fieldset>
-							</form>
-						</div>
-					</div>
+									</v-card-text>
+									<v-card-actions>
+										<v-spacer />
+										<v-btn id="save-quota-button" type="submit" color="primary" :disabled="quota.usedOld === null">Save</v-btn>
+										<v-btn variant="text" @click="showEditQuota = false">Cancel</v-btn>
+									</v-card-actions>
+								</form>
+							</v-card>
+						</v-dialog>
+					</v-tabs-window-item>
 
 					<!-- Authorizations -->
-					<div id="widget-authorizations" class="tab-pane">
-						<form class="form-search" v-if="!constraint">
-							<div class="input-append">
-								<input type="text" class="search-query input-xlarge" v-model="authorizations.filter" @keydown="blurOnEnter" @blur="refreshAuthorizations({ offset: 0 })" placeholder="@id, client, scope" />
-								<button class="btn" @click="authorizations.filter = null; refreshAuthorizations({ offset: 0 })" :disabled="!authorizations.filter"><i class="fa fa-close"></i></button>
-							</div>
-						</form>
-						<table class="table">
+					<v-tabs-window-item value="widget-authorizations" :transition="false" :reverse-transition="false">
+						<div v-if="!constraint" class="mb-2">
+							<v-text-field
+								prepend-inner-icon="mdi-magnify"
+								v-model="authorizations.filter"
+								@keydown="blurOnEnter"
+								@blur="refreshAuthorizations({ offset: 0 })"
+								placeholder="@id, client, scope"
+								variant="plain"
+								density="compact"
+								hide-details
+								clearable
+								@click:clear="authorizations.filter = null; refreshAuthorizations({ offset: 0 })"
+							/>
+						</div>
+						<v-table>
 							<thead>
 								<tr>
 									<th style="width: 0">Authorization</th>
@@ -779,7 +800,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td>
 										<a @click="setConstraint(auth.principal as string)">{{ formatUsername(auth.principal as string) }}</a>
 									</td>
-									<td style="white-space: nowrap">
+									<td class="text-no-wrap">
 										<abbr :title="String(auth.created)">{{ formatAge(auth.created as string) }}</abbr>
 									</td>
 									<td>
@@ -787,7 +808,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									</td>
 									<td>{{ auth.scope }}</td>
 									<td style="text-align: right">
-										<a class="action" @click="removeAuthorization(auth['@id'] as string)" title="Delete"><i class="fa fa-trash-o"></i></a>
+										<a class="action" @click="removeAuthorization(auth['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
 									</td>
 								</tr>
 								<tr v-if="authorizations.items === null">
@@ -797,27 +818,31 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td colspan="6"><i>None</i></td>
 								</tr>
 							</tbody>
-						</table>
-						<div class="btn-toolbar" v-if="authorizations.items && authorizations.items.length">
-							<div class="btn-group pull-right">
-								<button class="btn" title="Previous" @click="refreshAuthorizations({ offset: authorizations.offset - authorizations.limit })" :disabled="authorizations.offset <= 0"><i class="fa fa-chevron-left"></i></button>
-								<button class="btn" title="Next" @click="refreshAuthorizations({ offset: authorizations.offset + authorizations.limit })" :disabled="authorizations.offset + authorizations.limit >= authorizations.total"><i class="fa fa-chevron-right"></i></button>
-							</div>
-							<div class="btn-group pull-right">
-								<button class="btn disabled zeno-paging"><b>{{ authorizations.offset + 1 }}</b> &ndash; <b>{{ authorizations.offset + authorizations.items.length }}</b> of <b>{{ formatNumber(authorizations.total) }}</b></button>
-							</div>
+						</v-table>
+						<div class="d-flex align-center justify-end" v-if="authorizations.items && authorizations.items.length">
+							<v-btn icon variant="text" title="Previous" @click="refreshAuthorizations({ offset: authorizations.offset - authorizations.limit })" :disabled="authorizations.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ authorizations.offset + 1 }}</b>&ndash;<b>{{ authorizations.offset + authorizations.items.length }}</b> of <b>{{ formatNumber(authorizations.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" @click="refreshAuthorizations({ offset: authorizations.offset + authorizations.limit })" :disabled="authorizations.offset + authorizations.limit >= authorizations.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</div>
+					</v-tabs-window-item>
 
 					<!-- Credentials -->
-					<div id="widget-credentials" class="tab-pane">
-						<form class="form-search" v-if="!constraint">
-							<div class="input-append">
-								<input type="text" class="search-query input-xlarge" v-model="credentials.filter" @keydown="blurOnEnter" @blur="refreshCredentials({ offset: 0 })" placeholder="@id, type, authorizationUrl" />
-								<button class="btn" @click="credentials.filter = null; refreshCredentials({ offset: 0 })" :disabled="!credentials.filter"><i class="fa fa-close"></i></button>
-							</div>
-						</form>
-						<table class="table">
+					<v-tabs-window-item value="widget-credentials" :transition="false" :reverse-transition="false">
+						<div v-if="!constraint" class="mb-2">
+							<v-text-field
+								prepend-inner-icon="mdi-magnify"
+								v-model="credentials.filter"
+								@keydown="blurOnEnter"
+								@blur="refreshCredentials({ offset: 0 })"
+								placeholder="@id, type, authorizationUrl"
+								variant="plain"
+								density="compact"
+								hide-details
+								clearable
+								@click:clear="credentials.filter = null; refreshCredentials({ offset: 0 })"
+							/>
+						</div>
+						<v-table>
 							<thead>
 								<tr>
 									<th style="width: 0">Credentials</th>
@@ -833,10 +858,10 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td>{{ credential['@id'] }}</td>
 									<td><a @click="setConstraint(credential.principal as string)">{{ formatUsername(credential.principal as string) }}</a></td>
 									<td>{{ credential.type }}</td>
-									<td style="white-space: nowrap"><abbr :title="String(credential.created)">{{ formatAge(credential.created as string) }}</abbr></td>
+									<td class="text-no-wrap"><abbr :title="String(credential.created)">{{ formatAge(credential.created as string) }}</abbr></td>
 									<td style="text-align: center">{{ !credential.authorizationUrl }}</td>
 									<td style="text-align: right">
-										<a class="action" @click="removeCredential(credential['@id'] as string)" title="Delete"><i class="fa fa-trash-o"></i></a>
+										<a class="action" @click="removeCredential(credential['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
 									</td>
 								</tr>
 								<tr v-if="credentials.items === null">
@@ -846,27 +871,31 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td colspan="6"><i>None</i></td>
 								</tr>
 							</tbody>
-						</table>
-						<div class="btn-toolbar" v-if="credentials.items && credentials.items.length">
-							<div class="btn-group pull-right">
-								<button class="btn" title="Previous" @click="refreshCredentials({ offset: credentials.offset - credentials.limit })" :disabled="credentials.offset <= 0"><i class="fa fa-chevron-left"></i></button>
-								<button class="btn" title="Next" @click="refreshCredentials({ offset: credentials.offset + credentials.limit })" :disabled="credentials.offset + credentials.limit >= credentials.total"><i class="fa fa-chevron-right"></i></button>
-							</div>
-							<div class="btn-group pull-right">
-								<button class="btn disabled zeno-paging"><b>{{ credentials.offset + 1 }}</b> &ndash; <b>{{ credentials.offset + credentials.items.length }}</b> of <b>{{ formatNumber(credentials.total) }}</b></button>
-							</div>
+						</v-table>
+						<div class="d-flex align-center justify-end" v-if="credentials.items && credentials.items.length">
+							<v-btn icon variant="text" title="Previous" @click="refreshCredentials({ offset: credentials.offset - credentials.limit })" :disabled="credentials.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ credentials.offset + 1 }}</b>&ndash;<b>{{ credentials.offset + credentials.items.length }}</b> of <b>{{ formatNumber(credentials.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" @click="refreshCredentials({ offset: credentials.offset + credentials.limit })" :disabled="credentials.offset + credentials.limit >= credentials.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</div>
+					</v-tabs-window-item>
 
 					<!-- Tasks -->
-					<div id="widget-tasks" class="tab-pane">
-						<form class="form-search" v-if="!constraint">
-							<div class="input-append">
-								<input type="text" class="search-query input-xlarge" v-model="tasks.filter" @keydown="blurOnEnter" @blur="refreshTasks({ offset: 0 })" placeholder="@id, type, status, bucket, completed" />
-								<button class="btn" @click="tasks.filter = null; refreshTasks({ offset: 0 })" :disabled="!tasks.filter"><i class="fa fa-close"></i></button>
-							</div>
-						</form>
-						<table class="table">
+					<v-tabs-window-item value="widget-tasks" :transition="false" :reverse-transition="false">
+						<div v-if="!constraint" class="mb-2">
+							<v-text-field
+								prepend-inner-icon="mdi-magnify"
+								v-model="tasks.filter"
+								@keydown="blurOnEnter"
+								@blur="refreshTasks({ offset: 0 })"
+								placeholder="@id, type, status, bucket, completed"
+								variant="plain"
+								density="compact"
+								hide-details
+								clearable
+								@click:clear="tasks.filter = null; refreshTasks({ offset: 0 })"
+							/>
+						</div>
+						<v-table>
 							<thead>
 								<tr>
 									<th style="width: 0">Task</th>
@@ -885,16 +914,16 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td><a @click="setConstraint(task.principal as string)">{{ formatUsername(task.principal as string) }}</a></td>
 									<td>{{ task.bucket }}</td>
 									<td>{{ task.type }}</td>
-									<td style="white-space: nowrap">
+									<td class="text-no-wrap">
 										<abbr :title="String(task.created)">{{ formatAge(task.created as string) }}</abbr>
 									</td>
-									<td style="white-space: nowrap">
+									<td class="text-no-wrap">
 										<abbr :title="String(task.completed)">{{ formatAge(task.completed as string) }}</abbr>
 									</td>
 									<td>{{ task.status }}</td>
-									<td style="white-space: nowrap; text-align: right">
-										<a class="action" @click="runTask(task['@id'] as string)"><i class="fa fa-refresh" :class="tasks.running[task['@id'] as string] && 'fa-spin'" title="Run"></i></a>
-										<a class="action" @click="removeTask(task['@id'] as string)" title="Delete"><i class="fa fa-trash-o"></i></a>
+									<td class="text-no-wrap" style="text-align: right">
+										<a class="action" @click="runTask(task['@id'] as string)"><v-icon icon="mdi-refresh" :class="tasks.running[task['@id'] as string] && 'mdi-spin'" title="Run" /></a>
+										<a class="action" @click="removeTask(task['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
 									</td>
 								</tr>
 								<tr v-if="tasks.items === null">
@@ -904,33 +933,29 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td colspan="8"><i>None</i></td>
 								</tr>
 							</tbody>
-						</table>
-						<div class="btn-toolbar" v-if="tasks.items && tasks.items.length">
-							<div class="btn-group pull-right">
-								<button class="btn" title="Previous" @click="refreshTasks({ offset: tasks.offset - tasks.limit })" :disabled="tasks.offset <= 0"><i class="fa fa-chevron-left"></i></button>
-								<button class="btn" title="Next" @click="refreshTasks({ offset: tasks.offset + tasks.limit })" :disabled="tasks.offset + tasks.limit >= tasks.total"><i class="fa fa-chevron-right"></i></button>
-							</div>
-							<div class="btn-group pull-right">
-								<button class="btn disabled zeno-paging"><b>{{ tasks.offset + 1 }}</b> &ndash; <b>{{ tasks.offset + tasks.items.length }}</b> of <b>{{ formatNumber(tasks.total) }}</b></button>
-							</div>
+						</v-table>
+						<div class="d-flex align-center justify-end" v-if="tasks.items && tasks.items.length">
+							<v-btn icon variant="text" title="Previous" @click="refreshTasks({ offset: tasks.offset - tasks.limit })" :disabled="tasks.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ tasks.offset + 1 }}</b>&ndash;<b>{{ tasks.offset + tasks.items.length }}</b> of <b>{{ formatNumber(tasks.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" @click="refreshTasks({ offset: tasks.offset + tasks.limit })" :disabled="tasks.offset + tasks.limit >= tasks.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</div>
+					</v-tabs-window-item>
 
-				</div>
-			</div>
+				</v-tabs-window>
+			</v-col>
 
-			<div class="span4">
+			<v-col cols="4">
 
-				<ul class="nav nav-tabs">
-					<li class="active"><a href="#widget-scheduler" target="_self" data-toggle="tab">Scheduler</a></li>
-					<li><a href="#widget-snapshots" target="_self" data-toggle="tab">Snapshots</a></li>
-				</ul>
+				<v-tabs v-model="sideTab">
+					<v-tab value="widget-scheduler">Scheduler</v-tab>
+					<v-tab value="widget-snapshots">Snapshots</v-tab>
+				</v-tabs>
 
-				<div class="tab-content">
+				<v-tabs-window v-model="sideTab" class="mt-4">
 
 					<!-- Scheduler -->
-					<div id="widget-scheduler" class="tab-pane active">
-						<table class="table">
+					<v-tabs-window-item value="widget-scheduler" :transition="false" :reverse-transition="false">
+						<v-table>
 							<thead>
 								<tr>
 									<th style="width: 99%">Job</th>
@@ -951,18 +976,16 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td colspan="3"><i>None</i></td>
 								</tr>
 							</tbody>
-						</table>
-						<div class="btn-toolbar">
-							<div class="btn-group pull-left">
-								<button v-if="status && !status.scheduler_disabled" class="btn" @click="disableScheduler(true)" title="Pause"><i class="fa fa-pause"></i></button>
-								<button v-if="status?.scheduler_disabled" class="btn" @click="disableScheduler(false)" title="Resume"><i class="fa fa-play"></i></button>
-							</div>
+						</v-table>
+						<div class="d-flex align-center">
+							<v-btn v-if="status && !status.scheduler_disabled" icon variant="text" @click="disableScheduler(true)" title="Pause"><v-icon icon="mdi-pause" /></v-btn>
+							<v-btn v-if="status?.scheduler_disabled" icon variant="text" @click="disableScheduler(false)" title="Resume"><v-icon icon="mdi-play" /></v-btn>
 						</div>
-					</div>
+					</v-tabs-window-item>
 
 					<!-- Snapshots -->
-					<div id="widget-snapshots" class="tab-pane">
-						<table class="table">
+					<v-tabs-window-item value="widget-snapshots" :transition="false" :reverse-transition="false">
+						<v-table>
 							<thead>
 								<tr>
 									<th style="width: 0">Snapshot</th>
@@ -976,12 +999,12 @@ function blurOnEnter(event: KeyboardEvent) {
 								<tr v-for="snapshot in snapshots.items" :key="snapshot['@id'] as string">
 									<td>{{ snapshot['@id'] }}</td>
 									<td>{{ snapshot.state }}</td>
-									<td style="white-space: nowrap">
+									<td class="text-no-wrap">
 										<abbr :title="String(snapshot.created)">{{ formatAge(snapshot.created as string) }}</abbr>
 									</td>
 									<td style="text-align: right">{{ formatDuration(snapshot.duration as number) }}</td>
 									<td style="text-align: right">
-										<a class="action" @click="removeSnapshot(snapshot['@id'] as string)" title="Delete"><i class="fa fa-trash-o"></i></a>
+										<a class="action" @click="removeSnapshot(snapshot['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
 									</td>
 								</tr>
 								<tr v-if="snapshots.items === null">
@@ -991,25 +1014,20 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
-						</table>
-						<div class="btn-toolbar">
-							<div class="btn-group pull-left">
-								<button class="btn" @click="createSnapshot()" :disabled="snapshots.snapshotting" title="Snapshot"><i class="fa fa-camera"></i></button>
-							</div>
-							<div class="btn-group pull-right" v-if="snapshots.items && snapshots.items.length">
-								<button class="btn" title="Previous" @click="refreshSnapshots({ offset: snapshots.offset - snapshots.limit })" :disabled="snapshots.offset <= 0"><i class="fa fa-chevron-left"></i></button>
-								<button class="btn" title="Next" @click="refreshSnapshots({ offset: snapshots.offset + snapshots.limit })" :disabled="snapshots.offset + snapshots.limit >= snapshots.total"><i class="fa fa-chevron-right"></i></button>
-							</div>
-							<div class="btn-group pull-right" v-if="snapshots.items && snapshots.items.length">
-								<button class="btn disabled zeno-paging"><b>{{ snapshots.offset + 1 }}</b> &ndash; <b>{{ snapshots.offset + snapshots.items.length }}</b> of <b>{{ formatNumber(snapshots.total) }}</b></button>
-							</div>
+						</v-table>
+						<div class="d-flex align-center">
+							<v-btn icon variant="text" @click="createSnapshot()" :disabled="snapshots.snapshotting" title="Snapshot"><v-icon icon="mdi-camera" /></v-btn>
+							<v-spacer />
+							<v-btn icon variant="text" title="Previous" v-if="snapshots.items && snapshots.items.length" @click="refreshSnapshots({ offset: snapshots.offset - snapshots.limit })" :disabled="snapshots.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)" v-if="snapshots.items && snapshots.items.length"><b>{{ snapshots.offset + 1 }}</b>&ndash;<b>{{ snapshots.offset + snapshots.items.length }}</b> of <b>{{ formatNumber(snapshots.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" v-if="snapshots.items && snapshots.items.length" @click="refreshSnapshots({ offset: snapshots.offset + snapshots.limit })" :disabled="snapshots.offset + snapshots.limit >= snapshots.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</div>
+					</v-tabs-window-item>
 
-				</div>
+				</v-tabs-window>
 
-			</div>
+			</v-col>
 
-		</div>
+		</v-row>
 	</div>
 </template>

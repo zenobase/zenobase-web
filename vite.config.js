@@ -3,10 +3,12 @@ import { sentryVitePlugin } from '@sentry/vite-plugin';
 
 import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
+import vuetify from 'vite-plugin-vuetify';
 
 export default defineConfig({
 	plugins: [
 		vue(),
+		vuetify({ autoImport: true }),
 		sentryVitePlugin({
 			org: 'zenobase',
 			project: 'zenobase-web',
@@ -16,6 +18,11 @@ export default defineConfig({
 		globals: true,
 		environment: 'jsdom',
 		setupFiles: ['./src/vue/__tests__/setup.ts'],
+		server: {
+			deps: {
+				inline: ['vuetify'],
+			},
+		},
 	},
 	build: {
 		cssMinify: false,
@@ -50,11 +57,5 @@ export default defineConfig({
 			'/og': 'http://localhost:9000',
 		},
 	},
-	css: {
-		preprocessorOptions: {
-			less: {
-				math: 'always',
-			},
-		},
-	},
+	css: {},
 });

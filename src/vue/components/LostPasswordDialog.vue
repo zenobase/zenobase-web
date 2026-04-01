@@ -43,33 +43,21 @@ async function submit() {
 </script>
 
 <template>
-	<div v-if="model" class="modal-backdrop fade in" @click="model = false" />
-	<div class="modal" :class="{ hide: !model, in: model, fade: true }" :style="model ? { display: 'block', top: '10%' } : {}">
-		<form class="modal-form" @submit.prevent="submit()">
-			<div class="modal-header">
-				<a class="close" @click="model = false">&times;</a>
-				<h4>Reset Password</h4>
-			</div>
-			<div class="modal-body">
-				<div v-if="message" class="alert alert-error">{{ message }}</div>
-				<div class="control-group">
-					<label class="control-label" for="lost-password-username">Username</label>
-					<div class="controls">
-						<input id="lost-password-username" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus v-model="username" />
-					</div>
-				</div>
-				<div class="control-group">
-					<label class="control-label" for="lost-password-email">Email</label>
-					<div class="controls">
-						<input id="lost-password-email" type="email" required v-model="email" />
-					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="submit" class="btn btn-primary" :disabled="!username || !email || loading">Reset</button>
-				{{ ' ' }}
-				<button type="button" class="btn" @click="model = false">Cancel</button>
-			</div>
-		</form>
-	</div>
+	<v-dialog v-model="model" max-width="500">
+		<v-card>
+			<v-card-title>Reset Password</v-card-title>
+			<v-form @submit.prevent="submit()">
+				<v-card-text>
+					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+					<v-text-field label="Username" v-model="username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus />
+					<v-text-field label="Email" type="email" v-model="email" required />
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn type="submit" color="primary" :disabled="!username || !email || loading">Reset</v-btn>
+					<v-btn variant="text" @click="model = false">Cancel</v-btn>
+				</v-card-actions>
+			</v-form>
+		</v-card>
+	</v-dialog>
 </template>

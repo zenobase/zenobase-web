@@ -13,6 +13,7 @@ export interface DashboardApi {
 	constraints: Ref<Constraint[]>;
 	constraintsB: Ref<Constraint[]>;
 	total: Ref<number>;
+	totalB: Ref<number | null>;
 	search: (params: BaseWidgetParams[]) => Promise<SearchResult>;
 	register: (widget: WidgetRegistration) => void;
 	reduceExpectedWidgetCount: () => void;
@@ -45,6 +46,7 @@ export function useDashboard(
 	const constraints = ref<Constraint[]>([]);
 	const constraintsB = ref<Constraint[]>([]);
 	const total = ref(0);
+	const totalB = ref<number | null>(null);
 	const expectedWidgetCount = shallowRef(0);
 	let registeredCount = 0;
 
@@ -122,10 +124,12 @@ export function useDashboard(
 			(responses) => {
 				total.value = (responses[0]['total'] as number) ?? 0;
 				const resultB = responses.length > 1 ? responses[1] : undefined;
+				totalB.value = resultB ? ((resultB['total'] as number) ?? 0) : null;
 				for (const w of widgets) w.update(responses[0], resultB);
 			},
 			() => {
 				total.value = -1;
+				totalB.value = null;
 			},
 		);
 	}
@@ -156,6 +160,7 @@ export function useDashboard(
 		constraints.value = [];
 		constraintsB.value = [];
 		total.value = 0;
+		totalB.value = null;
 	}
 
 	function addConstraint(field: string, value: string, replace = false, negated = false) {
@@ -240,6 +245,7 @@ export function useDashboard(
 		constraints,
 		constraintsB,
 		total,
+		totalB,
 		search,
 		register,
 		reduceExpectedWidgetCount,

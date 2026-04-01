@@ -83,44 +83,6 @@ export function getNumericAndTimestampFieldNames(): string[] {
 	return [TIMESTAMP_FIELD.name, ...getNumericFieldNames()];
 }
 
-const FIELD_ICONS: Record<string, string> = {
-	tag: 'fa-tag',
-	resource: 'fa-bookmark',
-	distance: 'fa-arrows-h',
-	'distance/volume': 'fa-arrows-h',
-	height: 'fa-arrows-v',
-	weight: 'fa-caret-square-o-down',
-	percentage: 'fa-th',
-	moon: 'fa-moon-o',
-	volume: 'fa-flask',
-	concentration: 'fa-tint',
-	humidity: 'fa-tint',
-	pressure: 'fa-arrows-alt',
-	sound: 'fa-volume-up',
-	location: 'fa-map-marker',
-	timestamp: 'fa-calendar-o',
-	velocity: 'fa-tachometer',
-	pace: 'fa-clock-o',
-	duration: 'fa-clock-o',
-	frequency: 'fa-heart',
-	bits: 'fa-hdd-o',
-	count: 'fa-th',
-	energy: 'fa-fire',
-	light: 'fa-sun-o',
-	temperature: 'fa-fire',
-	rating: 'fa-star',
-	currency: 'fa-money',
-	note: 'fa-comment-o',
-	author: 'fa-user',
-	source: 'fa-external-link',
-};
-
-export function getFieldIcon(fieldName: string): string {
-	const dot = fieldName.indexOf('.');
-	const baseName = dot !== -1 ? fieldName.substring(0, dot) : fieldName;
-	return FIELD_ICONS[baseName] ?? 'fa-filter';
-}
-
 export function getStatisticsForField(fieldName: string): string[] {
 	return fieldName === 'timestamp' ? ['count'] : ['sum', 'avg', 'min', 'max'];
 }

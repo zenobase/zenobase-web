@@ -7,6 +7,7 @@ import { param } from '../../utils/helpers';
 import api, { ApiError } from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
+import { formatDuration } from '../utils/eventFormatter';
 
 const route = useRoute();
 const router = useRouter();
@@ -39,6 +40,7 @@ const authzLimit = 10;
 const authzTotal = ref(0);
 
 // Bucket refresh loading state
+const tab = ref('buckets');
 const loadingBuckets = ref<Record<string, boolean>>({});
 
 async function runBucket(bucketId: string) {
@@ -62,12 +64,18 @@ const showSettings = ref(false);
 const settingsEmail = ref('');
 const settingsMessage = ref('');
 const quota = ref<{ used: number; limit: number } | null>(null);
+const emailDirty = computed(() => settingsEmail.value !== ((profile.value as User & { email?: string })?.email || ''));
+const quotaResetLabel = computed(() => {
+	const now = new Date();
+	const nextReset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+	return 'Resets in ' + formatDuration(nextReset.getTime() - now.getTime());
+});
 
 // Create view dialog
 const showCreateView = ref(false);
 const createViewLabel = ref('My View');
 const createViewAliases = ref<Array<{ '@id': string; label: string; filter?: string }>>([]);
-const createViewSelected = ref<{ '@id': string; label: string; aliases?: unknown[] } | null>(null);
+const createViewSelectedId = ref<string | null>(null);
 const createViewFilter = ref('');
 const createViewBuckets = ref<Array<{ '@id': string; label: string; aliases?: unknown[] }>>([]);
 const createViewMessage = ref('');
@@ -86,14 +94,16 @@ const createViewFilterValid = computed(() => {
 });
 
 const listViewBuckets = computed(() => {
-	return createViewBuckets.value.filter((bucket) => !bucket.aliases && !createViewAliases.value.some((alias) => alias['@id'] === bucket['@id']));
+	return createViewBuckets.value
+		.filter((bucket) => !bucket.aliases?.length && !createViewAliases.value.some((alias) => alias['@id'] === bucket['@id']))
+		.map((bucket) => ({ title: bucket.label, value: bucket['@id'] }));
 });
 
 async function openCreateView() {
 	createViewLabel.value = 'My View';
 	createViewMessage.value = '';
 	createViewAliases.value = [];
-	createViewSelected.value = null;
+	createViewSelectedId.value = null;
 	createViewFilter.value = '';
 	showCreateView.value = true;
 	try {
@@ -105,16 +115,17 @@ async function openCreateView() {
 }
 
 function addBucketToView() {
-	if (!createViewSelected.value) return;
+	const bucket = createViewBuckets.value.find((b) => b['@id'] === createViewSelectedId.value);
+	if (!bucket) return;
 	const alias: { '@id': string; label: string; filter?: string } = {
-		'@id': createViewSelected.value['@id'],
-		label: createViewSelected.value.label,
+		'@id': bucket['@id'],
+		label: bucket.label,
 	};
 	if (createViewFilter.value) {
 		alias.filter = createViewFilter.value;
 	}
 	createViewAliases.value = [...createViewAliases.value, alias];
-	createViewSelected.value = null;
+	createViewSelectedId.value = null;
 	createViewFilter.value = '';
 }
 
@@ -155,8 +166,8 @@ interface BucketTemplate {
 	importer?: Record<string, unknown>;
 }
 const templates = ref<BucketTemplate[]>([]);
-const templateSource = ref('');
-const templateCategory = ref('');
+const templateSource = ref<string | null>(null);
+const templateCategory = ref<string | null>(null);
 const selectedTemplate = computed(() => {
 	if (templateSource.value && templateCategory.value) {
 		return templates.value.find((t) => t.source === templateSource.value && t.category === templateCategory.value) || null;
@@ -190,8 +201,8 @@ const createBucketValid = computed(() => (templateSource.value && templateCatego
 async function openCreateBucket() {
 	newBucketLabel.value = 'My Data';
 	createBucketMessage.value = '';
-	templateSource.value = '';
-	templateCategory.value = '';
+	templateSource.value = null;
+	templateCategory.value = null;
 	showCreateBucket.value = true;
 	try {
 		const response = await api.get<BucketTemplate[]>('/dashboard/templates.json');
@@ -418,286 +429,285 @@ watch(
 </script>
 
 <template>
-	<div class="container-fluid">
-		<div v-if="message" class="alert alert-block alert-error">{{ message }}</div>
+	<div>
+		<v-alert v-if="message" type="error" variant="tonal">{{ message }}</v-alert>
 
 		<div v-if="!profile && !message">Loading...</div>
 
 		<div v-if="profile">
-			<!-- Title bar -->
-			<div class="row-fluid page-titlebar">
-				<p class="pull-left page-title">
-					<span class="page-title-text">{{ username }}</span>
-					{{ ' ' }}
-					<a class="page-title-decoration" @click="loadBuckets(); loadCredentials(); loadAuthorizations()" v-if="isSelf" title="Refresh"><i class="fa fa-refresh" /></a>
-				</p>
+			<Teleport to="#page-toolbar">
+				<span class="text-subtitle-1 font-weight-bold mr-1">{{ username }}</span>
+				<v-btn icon size="small" variant="text" @click="loadBuckets(); loadCredentials(); loadAuthorizations()" v-if="isSelf" title="Refresh">
+					<v-icon icon="mdi-refresh" />
+				</v-btn>
+				<v-menu v-if="isSelf">
+					<template v-slot:activator="{ props }">
+						<v-btn icon size="small" variant="text" v-bind="props" title="Create..."><v-icon icon="mdi-plus" /></v-btn>
+					</template>
+					<v-list>
+						<v-list-item @click="openCreateBucket()">Bucket...</v-list-item>
+						<v-list-item @click="openCreateView()">View...</v-list-item>
+					</v-list>
+				</v-menu>
+				<v-btn icon size="small" variant="text" @click="openSettings()" v-if="isSelf && profile.name" title="Settings...">
+					<v-icon icon="mdi-cog" />
+				</v-btn>
+			</Teleport>
 
-				<div class="pull-right page-title dropdown" v-if="isSelf && profile.name">
-					<a class="dropdown-toggle" data-toggle="dropdown" title="More..."> {{ ' ' }} <i class="fa fa-bars" /> {{ ' ' }} <b class="caret" /></a>
-					<ul class="dropdown-menu" role="menu">
-						<li role="presentation">
-							<a role="menuitem" @click="openSettings()">Settings...</a>
-						</li>
-					</ul>
-				</div>
-			</div>
-
-			<div class="alert alert-block alert-info" v-if="!isSelf">
+			<v-alert type="info" variant="tonal" v-if="!isSelf">
 				Sign in as this user for more information.
-			</div>
+			</v-alert>
 
-			<div class="row-fluid" v-if="isSelf">
-				<!-- Buckets -->
-				<div class="span4">
-					<table class="table">
-						<thead>
-							<tr>
-								<th style="width: 100%">Buckets</th>
-								<th style="width: 0px" />
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-if="buckets === null"><td colspan="2"><i>Loading...</i></td></tr>
-							<tr v-else-if="buckets.length === 0"><td colspan="2"><i>None</i></td></tr>
-							<tr v-for="b in buckets" :key="b['@id']" class="bucket-row" :class="{ 'bucket-archived': b.archived, 'bucket-virtual': b.aliases && b.aliases.length }">
-								<td style="white-space: nowrap">
-									<router-link class="bucket-link" :to="`/buckets/${b['@id']}/`">{{ b.label }}</router-link>
-									{{ ' ' }} ({{ b.size?.toLocaleString() }})
-								</td>
-								<td style="text-align: right; white-space: nowrap">
-									<a class="action bucket-refresh-action" @click="runBucket(b['@id'])"><i class="fa fa-refresh" :class="{ 'fa-spin': loadingBuckets[b['@id']] }" title="Refresh" /></a>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<div class="btn-toolbar">
-						<div class="btn-group pull-left">
-							<a class="btn dropdown-toggle" data-toggle="dropdown" title="Create..."><i class="fa fa-plus" /> {{ ' ' }} <span class="caret" /></a>
-							<ul class="dropdown-menu">
-								<li role="presentation"><a role="menuitem" @click="openCreateBucket()">Bucket...</a></li>
-								<li role="presentation"><a role="menuitem" @click="openCreateView()">View...</a></li>
-							</ul>
+			<div v-if="isSelf">
+				<v-tabs v-model="tab">
+					<v-tab value="buckets">Buckets</v-tab>
+					<v-tab value="credentials">Credentials</v-tab>
+					<v-tab value="authorizations">Authorizations</v-tab>
+				</v-tabs>
+				<v-tabs-window v-model="tab" class="mt-4">
+					<v-tabs-window-item value="buckets" :transition="false" :reverse-transition="false">
+						<v-table>
+							<tbody>
+								<tr v-if="buckets === null"><td colspan="2"><i>Loading...</i></td></tr>
+								<tr v-else-if="buckets.length === 0"><td colspan="2"><i>None</i></td></tr>
+								<tr v-for="b in buckets" :key="b['@id']" class="bucket-row" :class="{ 'bucket-archived': b.archived, 'bucket-virtual': b.aliases && b.aliases.length }">
+									<td class="text-no-wrap">
+										<router-link class="bucket-link" :to="`/buckets/${b['@id']}/`">{{ b.label }}</router-link>
+										{{ ' ' }} ({{ b.size?.toLocaleString() }})
+									</td>
+									<td style="text-align: right" class="text-no-wrap">
+										<a class="action bucket-refresh-action" @click="runBucket(b['@id'])"><v-icon icon="mdi-refresh" :class="{ 'mdi-spin': loadingBuckets[b['@id']] }" title="Refresh" /></a>
+									</td>
+								</tr>
+							</tbody>
+						</v-table>
+						<div class="d-flex align-center justify-end">
+							<div class="d-flex align-center" v-if="buckets?.length">
+								<v-btn icon variant="text" title="Previous" :disabled="bucketOffset <= 0" @click="bucketOffset -= bucketLimit; loadBuckets()"><v-icon icon="mdi-chevron-left" /></v-btn>
+								<span style="color: rgba(0,0,0,0.5)">
+									<b>{{ bucketOffset + 1 }}</b>&ndash;<b>{{ bucketOffset + (buckets?.length ?? 0) }}</b> of <b>{{ bucketTotal }}</b>
+									{{ ' ' }}
+									<a v-if="!includeArchived" @click="includeArchived = true; loadBuckets()">excluding</a>
+									<a v-else @click="includeArchived = false; loadBuckets()">including</a>
+									{{ ' ' }} archived
+								</span>
+								<v-btn icon variant="text" title="Next" :disabled="bucketOffset + bucketLimit >= bucketTotal" @click="bucketOffset += bucketLimit; loadBuckets()"><v-icon icon="mdi-chevron-right" /></v-btn>
+							</div>
 						</div>
-						<div class="btn-group pull-right" v-if="buckets?.length">
-							<button class="btn" title="Previous" :disabled="bucketOffset <= 0" @click="bucketOffset -= bucketLimit; loadBuckets()"><i class="fa fa-chevron-left" /></button>
-							<button class="btn" title="Next" :disabled="bucketOffset + bucketLimit >= bucketTotal" @click="bucketOffset += bucketLimit; loadBuckets()"><i class="fa fa-chevron-right" /></button>
-						</div>
-						<div class="btn-group pull-right" v-if="buckets?.length">
-							<button class="btn disabled zeno-paging">
-								<b>{{ bucketOffset + 1 }}</b> &ndash; <b>{{ bucketOffset + (buckets?.length ?? 0) }}</b> of <b>{{ bucketTotal }}</b>
-								{{ ' ' }}
-								<a v-if="!includeArchived" @click="includeArchived = true; loadBuckets()">excluding</a>
-								<a v-else @click="includeArchived = false; loadBuckets()">including</a>
-								{{ ' ' }} archived
-							</button>
-						</div>
-					</div>
-				</div>
+					</v-tabs-window-item>
 
-				<!-- Credentials -->
-				<div class="span4">
-					<table class="table">
-						<thead>
-							<tr>
-								<th>Credentials</th>
-								<th />
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-if="credentials === null"><td colspan="2"><i>Loading...</i></td></tr>
-							<tr v-else-if="credentials.length === 0"><td colspan="2"><i>None</i></td></tr>
-							<tr v-for="c in credentials" :key="c['@id']" class="credentials-row">
-								<td><span :class="{ 'credentials-invalid': c.authorizationUrl }">{{ c.type }}</span></td>
-								<td style="text-align: right">
-									<a class="action credentials-delete-action" @click="deleteCredentials(c['@id'])"><i class="fa fa-trash-o" title="Delete" /></a>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<div class="btn-toolbar" v-if="credentials?.length">
-						<div class="btn-group pull-right">
-							<button class="btn" title="Previous" :disabled="credOffset <= 0" @click="credOffset -= credLimit; loadCredentials()"><i class="fa fa-chevron-left" /></button>
-							<button class="btn" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="credOffset += credLimit; loadCredentials()"><i class="fa fa-chevron-right" /></button>
+					<v-tabs-window-item value="credentials" :transition="false" :reverse-transition="false">
+						<v-table>
+							<tbody>
+								<tr v-if="credentials === null"><td colspan="2"><i>Loading...</i></td></tr>
+								<tr v-else-if="credentials.length === 0"><td colspan="2"><i>None</i></td></tr>
+								<tr v-for="c in credentials" :key="c['@id']" class="credentials-row">
+									<td><span :class="{ 'credentials-invalid': c.authorizationUrl }">{{ c.type }}</span></td>
+									<td style="text-align: right">
+										<a class="action credentials-delete-action" @click="deleteCredentials(c['@id'])"><v-icon icon="mdi-delete-outline" title="Delete" /></a>
+									</td>
+								</tr>
+							</tbody>
+						</v-table>
+						<div class="d-flex align-center justify-end" v-if="credentials?.length">
+							<v-btn icon variant="text" title="Previous" :disabled="credOffset <= 0" @click="credOffset -= credLimit; loadCredentials()"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ credOffset + 1 }}</b>&ndash;<b>{{ credOffset + (credentials?.length ?? 0) }}</b> of <b>{{ credTotal }}</b></span>
+							<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="credOffset += credLimit; loadCredentials()"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-						<div class="btn-group pull-right">
-							<button class="btn disabled zeno-paging"><b>{{ credOffset + 1 }}</b> &ndash; <b>{{ credOffset + (credentials?.length ?? 0) }}</b> of <b>{{ credTotal }}</b></button>
-						</div>
-					</div>
-				</div>
+					</v-tabs-window-item>
 
-				<!-- Authorizations -->
-				<div class="span4">
-					<table class="table">
-						<thead>
-							<tr>
-								<th>Authorizations</th>
-								<th />
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-if="authorizations === null"><td colspan="2"><i>Loading</i></td></tr>
-							<tr v-else-if="authorizations.length === 0"><td colspan="2"><i>None</i></td></tr>
-							<tr v-for="a in authorizations" :key="a['@id']">
-								<td>{{ formatClient(a.client) }} {{ ' ' }} <span v-if="a.scope">({{ bucketLabels[a.scope] || a.scope }})</span><span v-else>(*)</span></td>
-								<td style="text-align: right">
-									<a class="action" @click="revokeAuthorization(a['@id'])" title="Delete"><i class="fa fa-trash-o" /></a>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<div class="btn-toolbar" v-if="authorizations?.length">
-						<div class="btn-group pull-right">
-							<button class="btn" title="Previous" :disabled="authzOffset <= 0" @click="authzOffset -= authzLimit; loadAuthorizations()"><i class="fa fa-chevron-left" /></button>
-							<button class="btn" title="Next" :disabled="authzOffset + authzLimit >= authzTotal" @click="authzOffset += authzLimit; loadAuthorizations()"><i class="fa fa-chevron-right" /></button>
+					<v-tabs-window-item value="authorizations" :transition="false" :reverse-transition="false">
+						<v-table>
+							<tbody>
+								<tr v-if="authorizations === null"><td colspan="2"><i>Loading</i></td></tr>
+								<tr v-else-if="authorizations.length === 0"><td colspan="2"><i>None</i></td></tr>
+								<tr v-for="a in authorizations" :key="a['@id']">
+									<td>{{ formatClient(a.client) }} {{ ' ' }} <span v-if="a.scope">({{ bucketLabels[a.scope] || a.scope }})</span><span v-else>(*)</span></td>
+									<td style="text-align: right">
+										<a class="action" @click="revokeAuthorization(a['@id'])" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
+									</td>
+								</tr>
+							</tbody>
+						</v-table>
+						<div class="d-flex align-center justify-end" v-if="authorizations?.length">
+							<v-btn icon variant="text" title="Previous" :disabled="authzOffset <= 0" @click="authzOffset -= authzLimit; loadAuthorizations()"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ authzOffset + 1 }}</b>&ndash;<b>{{ authzOffset + (authorizations?.length ?? 0) }}</b> of <b>{{ authzTotal }}</b></span>
+							<v-btn icon variant="text" title="Next" :disabled="authzOffset + authzLimit >= authzTotal" @click="authzOffset += authzLimit; loadAuthorizations()"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-						<div class="btn-group pull-right">
-							<button class="btn disabled zeno-paging"><b>{{ authzOffset + 1 }}</b> &ndash; <b>{{ authzOffset + (authorizations?.length ?? 0) }}</b> of <b>{{ authzTotal }}</b></button>
-						</div>
-					</div>
-				</div>
+					</v-tabs-window-item>
+				</v-tabs-window>
 			</div>
 		</div>
 
 		<!-- Account Settings Dialog -->
-		<div class="modal" :class="{ hide: !showSettings, in: showSettings, fade: true }" :style="showSettings ? { display: 'block', top: '10%' } : {}">
-			<form class="modal-form" @submit.prevent="saveSettings()">
-				<div class="modal-header">
-					<a class="close" @click="showSettings = false">&times;</a>
-					<h4>Account Settings</h4>
-				</div>
-				<div class="modal-body">
-					<div class="alert alert-error" v-if="settingsMessage">{{ settingsMessage }}</div>
-					<div class="control-group" v-if="quota">
-						<label class="control-label">Quota</label>
-						<div class="progress" style="margin-bottom: 10px">
-							<div class="bar bar-success" :style="{ width: (quota.used / quota.limit * 100) + '%' }" />
+		<v-dialog v-model="showSettings" max-width="600">
+			<v-card>
+				<form @submit.prevent="saveSettings()">
+					<v-card-title class="mb-2">Account Settings</v-card-title>
+					<v-card-text>
+						<v-alert v-if="settingsMessage" type="error" variant="tonal" class="mb-4">{{ settingsMessage }}</v-alert>
+						<div v-if="quota" class="mb-4">
+							<label>Quota</label>
+							<v-progress-linear :model-value="quota.used / quota.limit * 100" :color="quota.used >= quota.limit ? 'error' : quota.used >= quota.limit * 0.8 ? 'warning' : 'success'" height="10" rounded class="mt-2 mb-2" />
+							<p class="text-body-2">{{ quota.used.toLocaleString() }} / {{ quota.limit.toLocaleString() }} events. {{ quotaResetLabel }}. <a href="mailto:support@zenobase.com">Contact support</a> to increase your quota.</p>
 						</div>
-						<p class="help-block">{{ quota.used.toLocaleString() }} / {{ quota.limit.toLocaleString() }} events. <a href="mailto:support@zenobase.com">Contact support</a> to increase your quota.</p>
-					</div>
-					<div class="control-group">
-						<label class="control-label">User ID</label>
-						<div class="controls">
-							<span class="input-large uneditable-input">{{ profile?.['@id'] }}</span>
+						<div class="mb-4">
+							<label>User ID</label>
+							<div>
+								<span>{{ profile?.['@id'] }}</span>
+							</div>
 						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" for="edit-email">Email</label>
-						<div class="controls">
-							<input type="email" class="input-large" required v-model="settingsEmail" />
-							<p class="help-block">
-								For important, account-related messages.
-								<strong v-if="profile?.verified">Verified.</strong>
-								<strong v-else>Not verified.</strong>
-							</p>
-						</div>
-					</div>
-				</div>
-				<div class="modal-footer">
-					<a class="pull-left" @click="closeAccount()">Close account...</a>
-					<button type="submit" class="btn btn-primary">Save &amp; Verify</button>
-					{{ ' ' }}
-					<button type="button" class="btn" @click="showSettings = false">Cancel</button>
-				</div>
-			</form>
-		</div>
-		<div v-if="showSettings" class="modal-backdrop fade in" @click="showSettings = false" />
+						<v-text-field
+							type="email"
+							label="Email"
+							required
+							v-model="settingsEmail"
+							hint="For important, account-related messages."
+							persistent-hint
+						>
+							<template v-slot:append>
+								<v-icon v-if="profile?.verified && !emailDirty" icon="mdi-check-circle" color="success" title="This email address has been verified" />
+								<v-icon v-else-if="!emailDirty" icon="mdi-alert-circle" color="warning" title="This email address has not been verified" />
+							</template>
+						</v-text-field>
+					</v-card-text>
+					<v-card-actions>
+						<v-btn variant="text" color="error" @click="closeAccount()">Close account...</v-btn>
+						<v-spacer />
+						<v-btn type="submit" color="primary" :disabled="!emailDirty">Save &amp; Verify</v-btn>
+						{{ ' ' }}
+						<v-btn variant="text" @click="showSettings = false">Cancel</v-btn>
+					</v-card-actions>
+				</form>
+			</v-card>
+		</v-dialog>
 
 		<!-- Create Bucket Dialog -->
-		<div v-if="showCreateBucket" class="modal-backdrop fade in" @click="showCreateBucket = false" />
-		<div class="modal" :class="{ hide: !showCreateBucket, in: showCreateBucket, fade: true }" :style="showCreateBucket ? { display: 'block', top: '10%' } : {}">
-			<form class="modal-form" @submit.prevent="createBucket()">
-				<div class="modal-header">
-					<a class="close" @click="showCreateBucket = false">&times;</a>
-					<h4>Create Bucket</h4>
-				</div>
-				<div class="modal-body">
-					<div class="alert alert-error" v-if="createBucketMessage">{{ createBucketMessage }}</div>
-					<div class="control-group">
-						<label for="create-bucket-label"><strong>Label</strong></label>
-						<div class="input-append">
-							<input id="create-bucket-label" type="text" class="input-xlarge" required minlength="1" maxlength="30" v-model="newBucketLabel" />
-							<span class="add-on">
-								<i v-if="!newBucketLabel" class="fa fa-exclamation" title="not valid" />
-								<i v-else class="fa fa-check" title="valid" />
-							</span>
+		<v-dialog v-model="showCreateBucket" max-width="600">
+			<v-card>
+				<form @submit.prevent="createBucket()">
+					<v-card-title class="mb-2">Create Bucket</v-card-title>
+					<v-card-text>
+						<v-alert v-if="createBucketMessage" type="error" variant="tonal" class="mb-4">{{ createBucketMessage }}</v-alert>
+						<div class="mb-4">
+							<v-text-field
+								id="create-bucket-label"
+								label="Label"
+								required
+								minlength="1"
+								maxlength="30"
+								v-model="newBucketLabel"
+							>
+								<template v-slot:append-inner>
+									<v-icon v-if="!newBucketLabel" icon="mdi-exclamation" title="not valid" />
+									<v-icon v-else icon="mdi-check" title="valid" />
+								</template>
+							</v-text-field>
 						</div>
-					</div>
-					<div class="control-group">
-						<label for="bucket-template-select"><strong>Template</strong></label>
-						<select id="bucket-source-select" class="input-medium" v-model="templateSource">
-							<option value="">(Source)</option>
-							<option v-for="source in templateSources" :key="source" :value="source">{{ source }}</option>
-						</select>
+						<div class="mb-4">
+							<label for="bucket-template-select" class="d-block"><strong>Template</strong></label>
+							<p class="text-body-2 mb-2">
+								<i>Choose a template to preconfigure the bucket for a data source.</i>
+							</p>
+							<div class="d-flex ga-2">
+								<v-select
+									id="bucket-source-select"
+									v-model="templateSource"
+									:items="templateSources"
+									label="Source"
+									clearable
+									density="default"
+									hide-details
+								/>
+								<v-select
+						id="bucket-category-select"
+									v-model="templateCategory"
+									:items="templateCategories"
+									label="Category"
+									clearable
+									density="default"
+									hide-details
+								/>
+							</div>
+						</div>
+					</v-card-text>
+					<v-card-actions>
+						<v-spacer />
+						<v-btn id="create-bucket-button" type="submit" color="primary" :disabled="!newBucketLabel || !createBucketValid">Create</v-btn>
 						{{ ' ' }}
-						<select id="bucket-category-select" class="input-medium" v-model="templateCategory">
-							<option value="">(Category)</option>
-							<option v-for="category in templateCategories" :key="category" :value="category">{{ category }}</option>
-						</select>
-						<p class="help-block">
-							<i>Choose a template to preconfigure the bucket for a data source.</i>
-						</p>
-					</div>
-				</div>
-				<div class="modal-footer">
-					<button id="create-bucket-button" type="submit" class="btn btn-primary" :disabled="!newBucketLabel || !createBucketValid">Create</button>
-					{{ ' ' }}
-					<button type="button" class="btn" @click="showCreateBucket = false">Cancel</button>
-				</div>
-			</form>
-		</div>
+						<v-btn variant="text" @click="showCreateBucket = false">Cancel</v-btn>
+					</v-card-actions>
+				</form>
+			</v-card>
+		</v-dialog>
+
 		<!-- Create View Dialog -->
-		<div v-if="showCreateView" class="modal-backdrop fade in" @click="showCreateView = false" />
-		<div class="modal" :class="{ hide: !showCreateView, in: showCreateView, fade: true }" :style="showCreateView ? { display: 'block', top: '10%' } : {}">
-			<form class="modal-form" @submit.prevent="createView()">
-				<div class="modal-header">
-					<a class="close" @click="showCreateView = false">&times;</a>
-					<h4>Create View</h4>
-				</div>
-				<div class="modal-body">
-					<div class="alert alert-error" v-if="createViewMessage">{{ createViewMessage }}</div>
-					<div class="control-group">
-						<label for="create-view-label"><strong>Label</strong></label>
-						<div class="input-append">
-							<input id="create-view-label" type="text" class="input-xlarge" required minlength="1" maxlength="30" v-model="createViewLabel" />
-							<span class="add-on">
-								<i v-if="!createViewLabel" class="fa fa-exclamation" title="not valid" />
-								<i v-else class="fa fa-check" title="valid" />
-							</span>
+		<v-dialog v-model="showCreateView" max-width="600">
+			<v-card>
+				<form @submit.prevent="createView()">
+					<v-card-title class="mb-2">Create View</v-card-title>
+					<v-card-text>
+						<v-alert v-if="createViewMessage" type="error" variant="tonal" class="mb-4">{{ createViewMessage }}</v-alert>
+						<div class="mb-4">
+							<v-text-field
+								id="create-view-label"
+								label="Label"
+								required
+								minlength="1"
+								maxlength="30"
+								v-model="createViewLabel"
+							>
+								<template v-slot:append-inner>
+									<v-icon v-if="!createViewLabel" icon="mdi-exclamation" title="not valid" />
+									<v-icon v-else icon="mdi-check" title="valid" />
+								</template>
+							</v-text-field>
 						</div>
-					</div>
-					<div class="control-group">
-						<ul class="nav nav-pills gray">
-							<li class="active" v-for="alias in createViewAliases" :key="alias['@id']">
-								<a @click="removeBucketFromView(alias['@id'])">
-									<i v-if="alias.filter" class="fa fa-filter fa-white" :title="alias.filter" />
-									{{ alias.label }} <i class="fa fa-times fa-white" />
-								</a>
-							</li>
-						</ul>
-						<div class="form-horizontal">
-							<select id="include-bucket-select" class="input-medium" v-model="createViewSelected">
-								<option :value="null" />
-								<option v-for="bucket in listViewBuckets" :key="bucket['@id']" :value="bucket">{{ bucket.label }}</option>
-							</select>
-							{{ ' ' }}
-							<span class="input-append">
-								<input id="include-bucket-filter" type="text" class="input-medium" v-model="createViewFilter" :disabled="!createViewSelected" placeholder="e.g. tag:xyz" />
-								<span class="add-on">
-									<i v-if="!createViewFilterValid" class="fa fa-exclamation" title="not valid" />
-									<i v-else class="fa fa-check" title="valid" />
-								</span>
-							</span>
-							{{ ' ' }}
-							<button id="include-bucket-button" type="button" class="btn" :disabled="!createViewSelected || !createViewFilterValid" @click="addBucketToView()">Add</button>
+						<div class="mb-4">
+							<v-chip-group v-if="createViewAliases.length">
+								<v-chip v-for="alias in createViewAliases" :key="alias['@id']" size="default" color="primary" @click="removeBucketFromView(alias['@id'])">
+									<v-icon v-if="alias.filter" icon="mdi-filter" :title="alias.filter" class="mr-1" />
+									{{ alias.label }} <v-icon icon="mdi-close" class="ml-1" />
+								</v-chip>
+							</v-chip-group>
+							<p v-else class="text-body-2 mb-2"><i>Select at least one bucket (with an optional filter) to create a view.</i></p>
+							<div class="d-flex ga-2 align-end">
+								<v-select
+									id="include-bucket-select"
+									label="Bucket"
+									v-model="createViewSelectedId"
+									:items="listViewBuckets"
+									clearable
+									density="default"
+									hide-details
+								/>
+								<v-text-field
+									id="include-bucket-filter"
+									type="text"
+									label="Filter"
+									v-model="createViewFilter"
+									:disabled="!createViewSelectedId"
+									placeholder="e.g. tag:xyz"
+									density="default"
+									hide-details
+								>
+									<template v-slot:append-inner>
+										<v-icon v-if="!createViewFilterValid" icon="mdi-exclamation" title="not valid" />
+										<v-icon v-else icon="mdi-check" title="valid" />
+									</template>
+								</v-text-field>
+								<v-btn id="include-bucket-button" variant="outlined" :disabled="!createViewSelectedId || !createViewFilterValid" @click="addBucketToView()">Add</v-btn>
+							</div>
 						</div>
-					</div>
-				</div>
-				<div class="modal-footer">
-					<button id="create-view-button" type="submit" class="btn btn-primary" :disabled="!createViewLabel || createViewAliases.length === 0">Create</button>
-					{{ ' ' }}
-					<button type="button" class="btn" @click="showCreateView = false">Cancel</button>
-				</div>
-			</form>
-		</div>
+					</v-card-text>
+					<v-card-actions>
+						<v-spacer />
+						<v-btn id="create-view-button" type="submit" color="primary" :disabled="!createViewLabel || createViewAliases.length === 0">Create</v-btn>
+						{{ ' ' }}
+						<v-btn variant="text" @click="showCreateView = false">Cancel</v-btn>
+					</v-card-actions>
+				</form>
+			</v-card>
+		</v-dialog>
 	</div>
 </template>

@@ -48,7 +48,7 @@ onMounted(() => dashboard.register(registration));
 
 <template>
 	<div>
-		<table class="table" v-show="ratings?.length">
+		<v-table v-show="ratings?.length">
 			<thead>
 				<tr>
 					<th>Rating</th>
@@ -59,13 +59,13 @@ onMounted(() => dashboard.register(registration));
 				<tr v-for="rating in ratings" :key="rating.from ?? 'null'">
 					<td>
 						<a @click="filterByRating(rating)">
-							<i v-for="i in 5" :key="i" class="fa" :class="toStars(rating.from) >= i ? 'fa-star' : 'fa-star-o'" />
+							<v-icon v-for="i in 5" :key="i" :icon="toStars(rating.from) >= i ? 'mdi-star' : 'mdi-star-outline'" size="small" />
 						</a>
 					</td>
 					<td style="text-align: right">{{ rating.count.toLocaleString() }}</td>
 				</tr>
 			</tbody>
-		</table>
+		</v-table>
 
 		<p v-if="ratings === null" class="none">Loading...</p>
 		<p v-else-if="ratings.length === 0" class="none">None</p>

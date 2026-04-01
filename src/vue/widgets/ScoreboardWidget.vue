@@ -25,8 +25,8 @@ const statistics = computed(() => props.settings.statistics ?? ['count', 'sum', 
 function classesForOrderBy(column: string): string[] {
 	const classes: string[] = [];
 	if (props.settings.order?.includes(column)) {
-		classes.push('fa');
-		classes.push(props.settings.order.charAt(0) === '-' ? 'fa-sort-desc' : 'fa-sort-asc');
+		classes.push('mdi');
+		classes.push(props.settings.order.charAt(0) === '-' ? 'mdi-sort-descending' : 'mdi-sort-ascending');
 	}
 	return classes;
 }
@@ -83,7 +83,7 @@ onMounted(() => dashboard.register(registration));
 
 <template>
 	<div>
-		<table class="table" v-show="terms?.length">
+		<v-table v-show="terms?.length">
 			<thead>
 				<tr>
 					<th style="text-transform: capitalize">{{ settings.key_field }} <i :class="classesForOrderBy('term')" /></th>
@@ -104,7 +104,7 @@ onMounted(() => dashboard.register(registration));
 					<td v-if="selected('avg')" style="text-align: right">{{ formatNumber(term.avg) }}</td>
 				</tr>
 			</tbody>
-		</table>
+		</v-table>
 
 		<p v-if="terms === null" class="none">Loading...</p>
 		<p v-else-if="terms.length === 0" class="none">None</p>

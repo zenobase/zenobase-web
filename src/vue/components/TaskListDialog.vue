@@ -118,8 +118,6 @@ function init() {
 	refresh();
 }
 
-const visible2 = visible;
-
 function close() {
 	visible.value = false;
 	emit('update:modelValue', false);
@@ -141,48 +139,46 @@ watch(
 </script>
 
 <template>
-	<div v-if="visible" class="modal-backdrop fade in" @click="close()" />
-	<div class="modal" :class="{ hide: !visible, in: visible, fade: true }" :style="visible ? { display: 'block', top: '10%' } : {}">
-		<div class="modal-header">
-			<a class="close" @click="close()">&times;</a>
-			<h4 class="alert-heading">Tasks</h4>
-		</div>
-		<div class="modal-body">
-			<div class="alert alert-error" v-if="message">{{ message }}</div>
-			<div class="control-group">
-				<table class="table table-borderless">
-					<tr v-if="tasks === null">
-						<td colspan="3"><i>Loading...</i></td>
-					</tr>
-					<tr v-if="tasks && tasks.length === 0">
-						<td colspan="3"><i>None</i></td>
-					</tr>
-					<tr v-for="task in tasks" :key="task['@id']">
-						<td><abbr :title="formatTooltip(task)">{{ task.type }}</abbr></td>
-						<td>
-							<span v-if="task.status">ran {{ formatAge(task.completed) }}</span>
-						</td>
-						<td style="text-align: right">
-							<a class="action" @click="remove(task['@id'])"><i class="fa fa-trash-o" title="Delete" /></a>
-						</td>
-					</tr>
-				</table>
-				<div class="btn-toolbar">
-					<div class="btn-group pull-left">
-						<button title="Create Task..." class="btn" @click="openCreateTask()"><i class="fa fa-plus" /></button>
-					</div>
-					<div class="btn-group pull-right" v-if="tasks && tasks.length">
-						<button class="btn" title="Previous" @click="prev()" :disabled="!hasPrev()"><i class="fa fa-chevron-left" /></button>
-						<button class="btn" title="Next" @click="next()" :disabled="!hasNext()"><i class="fa fa-chevron-right" /></button>
-					</div>
-					<div class="btn-group pull-right" v-if="tasks && tasks.length">
-						<button class="btn disabled zeno-paging"><b>{{ offset + 1 }}</b> &ndash; <b>{{ offset + tasks.length }}</b> of <b>{{ total }}</b></button>
-					</div>
+	<v-dialog v-model="visible" max-width="600" @update:model-value="!$event && close()">
+		<v-card>
+			<v-card-title>Tasks</v-card-title>
+			<v-card-text>
+				<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+				<v-table>
+					<tbody>
+						<tr v-if="tasks === null">
+							<td colspan="3"><em>Loading...</em></td>
+						</tr>
+						<tr v-if="tasks && tasks.length === 0">
+							<td colspan="3"><em>None</em></td>
+						</tr>
+						<tr v-for="task in tasks" :key="task['@id']">
+							<td><abbr :title="formatTooltip(task)">{{ task.type }}</abbr></td>
+							<td>
+								<span v-if="task.status">ran {{ formatAge(task.completed) }}</span>
+							</td>
+							<td class="text-right">
+								<v-btn variant="text" size="small" class="action" @click="remove(task['@id'])">
+									<v-icon icon="mdi-delete-outline" title="Delete" />
+								</v-btn>
+							</td>
+						</tr>
+					</tbody>
+				</v-table>
+				<div class="d-flex align-center mt-2">
+					<v-btn variant="text" size="small" title="Create Task..." @click="openCreateTask()">
+						<v-icon icon="mdi-plus" />
+					</v-btn>
+					<v-spacer />
+					<v-btn v-if="tasks && tasks.length" icon variant="text" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" /></v-btn>
+					<span v-if="tasks && tasks.length" style="color: rgba(0,0,0,0.5)"><b>{{ offset + 1 }}</b>&ndash;<b>{{ offset + tasks.length }}</b> of <b>{{ total }}</b></span>
+					<v-btn v-if="tasks && tasks.length" icon variant="text" title="Next" :disabled="!hasNext()" @click="next()"><v-icon icon="mdi-chevron-right" /></v-btn>
 				</div>
-			</div>
-		</div>
-		<div class="modal-footer">
-			<button class="btn" @click="close()">Close</button>
-		</div>
-	</div>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer />
+				<v-btn variant="text" @click="close()">Close</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
 </template>

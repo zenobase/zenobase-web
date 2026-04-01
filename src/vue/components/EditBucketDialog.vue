@@ -26,10 +26,8 @@ const message = ref('');
 const newBucket = ref<Bucket | null>(null);
 const isView = ref(false);
 
-// User name cache for displaying permissions
 const userNames = ref<Record<string, string>>({});
 
-// Aliases management
 const availableBuckets = ref<Array<{ '@id': string; label: string; aliases?: unknown[] }>>([]);
 const selectedBucket = ref<{ '@id': string; label: string } | null>(null);
 const aliasFilter = ref<string | null>(null);
@@ -201,81 +199,64 @@ watch(
 </script>
 
 <template>
-	<div v-if="visible" class="modal-backdrop fade in" @click="close()" />
-	<div class="modal" :class="{ hide: !visible, in: visible, fade: true }" :style="visible ? { display: 'block', top: '10%' } : {}">
-		<form class="modal-form" @submit.prevent="save()">
-			<div class="modal-header">
-				<a class="close" @click="close()">&times;</a>
-				<h4>Bucket Settings</h4>
-			</div>
-			<div class="modal-body" v-if="newBucket">
-				<div class="alert alert-error" v-if="message">{{ message }}</div>
-				<div class="control-group">
-					<label><strong>Label</strong></label>
-					<div class="input-append">
-						<input type="text" class="input-xlarge" required minlength="1" maxlength="30" v-model="newBucket.label" />
+	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
+		<v-card>
+			<v-card-title>Bucket Settings</v-card-title>
+			<v-form @submit.prevent="save()">
+				<v-card-text v-if="newBucket">
+					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+					<v-text-field label="Label" v-model="newBucket.label" required />
+					<v-textarea label="Description" rows="2" v-model="newBucket.description" />
+
+					<div class="text-subtitle-2 mb-2">Permissions</div>
+					<div class="d-flex flex-wrap ga-2 mb-4 align-center">
+						<v-chip v-for="role in newBucket.roles" :key="role.principal" :closable="role.principal === '*'" @click:close="unpublish()">
+							<v-icon v-if="role.principal === '*'" icon="mdi-earth" size="small" start />
+							<v-icon v-else icon="mdi-account" size="small" start />
+							<template v-if="role.principal === '*'">anyone with a link can view</template>
+							<template v-else><strong>{{ formatUsername(role.principal) }}</strong>&nbsp;is&nbsp;{{ role.role }}</template>
+						</v-chip>
+						<v-btn v-if="auth.user.value?.verified && !isPublished()" icon size="small" variant="text" title="Add..." @click="publish()">
+							<v-icon icon="mdi-plus" />
+						</v-btn>
 					</div>
-				</div>
-				<div class="control-group">
-					<label><strong>Description</strong></label>
-					<textarea class="input-xlarge" rows="2" v-model="newBucket.description" />
-				</div>
-				<div class="control-group">
-					<label><strong>Permissions</strong></label>
-					<ul class="nav nav-pills gray">
-						<li class="active" v-for="role in newBucket.roles" :key="role.principal">
-							<a v-if="role.principal === '*'" @click="unpublish()"><i class="fa fa-globe fa-white" /> <strong>anyone</strong> with a link can view <i class="fa fa-times fa-white" title="Revoke" /></a>
-							<a v-else style="cursor: default"><i class="fa fa-user fa-white" /> <strong>{{ formatUsername(role.principal) }}</strong> is {{ role.role }}</a>
-						</li>
-						<li v-if="auth.user.value?.verified && !isPublished()">
-							<a title="Add..." @click="publish()"><i class="fa fa-plus" /></a>
-						</li>
-					</ul>
-					<p class="help-block" v-if="!auth.user.value?.verified">
-						<i>You can make this dashboard public after signing up and verifying your email address.</i>
-					</p>
-				</div>
-				<div class="control-group" v-if="!isView">
-					<label><strong>Tasks</strong></label>
-					<label class="radio">
-						<input type="radio" v-model="newBucket.refresh" :value="true" :disabled="!auth.user.value?.quota" /> automatic refreshing (contact support to enable)
-					</label>
-					<label class="radio">
-						<input type="radio" v-model="newBucket.refresh" :value="false" :disabled="!auth.user.value?.quota" /> manual refreshing only
-					</label>
-				</div>
-				<div class="control-group" v-if="isView" style="clear: both">
-					<label><strong>Aliases</strong></label>
-					<ul class="nav nav-pills gray">
-						<li class="active" v-for="alias in newBucket.aliases" :key="alias['@id']">
-							<a @click="removeAlias(alias['@id'])">
-								<i v-if="alias.filter" class="fa fa-filter fa-white" :title="alias.filter" />
-								{{ alias['@id'] }} <i class="fa fa-times fa-white" />
-							</a>
-						</li>
-					</ul>
-					<div class="form-horizontal">
-						<select class="input-medium" v-model="selectedBucket">
-							<option :value="null" disabled />
-							<option v-for="bucket in selectableBuckets" :key="bucket['@id']" :value="bucket">{{ bucket.label }}</option>
-						</select>
-						<span class="input-append">
-							<input type="text" class="input-medium" v-model="aliasFilter" placeholder="e.g. tag:xyz" />
-						</span>
-						<button type="button" class="btn" :disabled="!selectedBucket" @click="addAlias()">Add</button>
+					<div v-if="!auth.user.value?.verified" class="text-body-2 font-italic mb-4">
+						You can make this dashboard public after signing up and verifying your email address.
 					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<span class="pull-left">
+
+					<template v-if="!isView">
+						<div class="text-subtitle-2 mb-2">Tasks</div>
+						<v-radio-group v-model="newBucket.refresh" :disabled="!auth.user.value?.quota">
+							<v-radio label="automatic refreshing (contact support to enable)" :value="true" />
+							<v-radio label="manual refreshing only" :value="false" />
+						</v-radio-group>
+					</template>
+
+					<template v-if="isView">
+						<div class="text-subtitle-2 mb-2">Aliases</div>
+						<div class="d-flex flex-wrap ga-2 mb-4">
+							<v-chip v-for="alias in newBucket.aliases" :key="alias['@id']" closable @click:close="removeAlias(alias['@id'])">
+								<v-icon v-if="alias.filter" icon="mdi-filter" size="small" start :title="alias.filter" />
+								{{ alias['@id'] }}
+							</v-chip>
+						</div>
+						<div class="d-flex ga-2 align-center">
+							<v-select :items="selectableBuckets" item-title="label" item-value="@id" return-object v-model="selectedBucket" label="Bucket" style="max-width: 200px" />
+							<v-text-field v-model="aliasFilter" placeholder="e.g. tag:xyz" label="Filter" style="max-width: 200px" />
+							<v-btn :disabled="!selectedBucket" @click="addAlias()">Add</v-btn>
+						</div>
+					</template>
+				</v-card-text>
+				<v-card-actions class="ps-4">
 					<a v-if="!bucket.archived" @click="archiveBucket(true)">Archive</a>
 					<a v-if="bucket.archived" @click="archiveBucket(false)">Un-archive</a>
 					{{ ' ' }} or {{ ' ' }}
-					<a @click="deleteBucket()">delete</a> this bucket
-				</span>
-				<button type="submit" class="btn btn-primary" :disabled="!isFormValid">Update</button>
-				<button type="button" class="btn" @click="close()">Cancel</button>
-			</div>
-		</form>
-	</div>
+					<a @click="deleteBucket()">delete</a> {{ ' ' }} this bucket
+					<v-spacer />
+					<v-btn type="submit" color="primary" :disabled="!isFormValid">Update</v-btn>
+					<v-btn variant="text" @click="close()">Cancel</v-btn>
+				</v-card-actions>
+			</v-form>
+		</v-card>
+	</v-dialog>
 </template>

@@ -17,29 +17,31 @@ async function signOut() {
 </script>
 
 <template>
-	<div>
-		<header class="container-fluid">
-			<a href="/#/"><img src="/img/logo.png" alt="Zenobase" width="159" height="25" /></a>
-			<div class="pull-right ng-cloak">
-				<p v-if="auth.user.value?.name">
-					<i class="fa fa-user" />
-					{{ ' ' }}
-					<a :href="`/#/users/${auth.user.value.name}`">{{ auth.user.value.name }}</a>
-					{{ ' ' }} | {{ ' ' }}
-					<a @click="signOut()">Sign out</a>
-				</p>
-				<p v-else-if="!auth.loading.value">
-					<a @click="showSignIn = true">Sign in</a>
-				</p>
+	<v-app>
+		<v-app-bar density="compact" color="surface" flat>
+			<router-link to="/" class="d-flex align-center ml-3 mr-3">
+				<img src="/img/logo_120x120.png" alt="Zenobase" width="28" height="28" />
+			</router-link>
+			<div id="page-toolbar" class="d-flex align-center flex-wrap ga-1" style="flex: 1; min-width: 0" />
+			<v-spacer />
+			<div class="d-flex align-center ga-1 mr-3 text-body-2" v-if="auth.user.value?.name">
+				<v-icon icon="mdi-account" size="small" class="text-medium-emphasis" />
+				<a :href="`/#/users/${auth.user.value.name}`">{{ auth.user.value.name }}</a>
+				<span class="text-medium-emphasis">|</span>
+				<a class="text-medium-emphasis" @click="signOut()">Sign out</a>
 			</div>
-		</header>
+			<div class="mr-3" v-else-if="!auth.loading.value">
+				<a @click="showSignIn = true">Sign in</a>
+			</div>
+		</v-app-bar>
 
-		<RouterView />
+		<v-main>
+			<v-container fluid class="pa-4 pt-2">
+				<RouterView />
+			</v-container>
 
-		<footer class="container-fluid">
-			&copy; 2012&ndash;{{ new Date().getFullYear() }} Zenobase LLC
-		</footer>
+		</v-main>
 
 		<SignInDialog v-model="showSignIn" />
-	</div>
+	</v-app>
 </template>

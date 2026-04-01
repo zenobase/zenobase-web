@@ -1,13 +1,17 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
+import { createVuetify } from 'vuetify';
 import { type DashboardApi, dashboardKey } from '../../composables/useDashboard';
 import CountWidget from '../CountWidget.vue';
+
+const vuetify = createVuetify();
 
 function createMockDashboard(searchResult: Record<string, unknown> = {}): DashboardApi {
 	return {
 		constraints: { value: [] } as unknown as DashboardApi['constraints'],
 		constraintsB: { value: [] } as unknown as DashboardApi['constraintsB'],
 		total: { value: 0 } as unknown as DashboardApi['total'],
+		totalB: { value: null } as unknown as DashboardApi['totalB'],
 		search: vi.fn().mockResolvedValue(searchResult),
 		register: vi.fn(),
 		refresh: vi.fn(),
@@ -32,7 +36,7 @@ describe('CountWidget', () => {
 		const dashboard = createMockDashboard();
 		mount(CountWidget, {
 			props: { settings },
-			global: { provide: { [dashboardKey as symbol]: dashboard } },
+			global: { plugins: [vuetify], provide: { [dashboardKey as symbol]: dashboard } },
 		});
 		expect(dashboard.register).toHaveBeenCalledOnce();
 	});
@@ -41,7 +45,7 @@ describe('CountWidget', () => {
 		const dashboard = createMockDashboard();
 		const wrapper = mount(CountWidget, {
 			props: { settings },
-			global: { provide: { [dashboardKey as symbol]: dashboard } },
+			global: { plugins: [vuetify], provide: { [dashboardKey as symbol]: dashboard } },
 		});
 		expect(wrapper.find('.none').text()).toBe('Loading...');
 	});
@@ -50,7 +54,7 @@ describe('CountWidget', () => {
 		const dashboard = createMockDashboard();
 		const wrapper = mount(CountWidget, {
 			props: { settings },
-			global: { provide: { [dashboardKey as symbol]: dashboard } },
+			global: { plugins: [vuetify], provide: { [dashboardKey as symbol]: dashboard } },
 		});
 
 		const registration = (dashboard.register as ReturnType<typeof vi.fn>).mock.calls[0][0];
@@ -66,7 +70,7 @@ describe('CountWidget', () => {
 		const dashboard = createMockDashboard();
 		const wrapper = mount(CountWidget, {
 			props: { settings },
-			global: { provide: { [dashboardKey as symbol]: dashboard } },
+			global: { plugins: [vuetify], provide: { [dashboardKey as symbol]: dashboard } },
 		});
 
 		const registration = (dashboard.register as ReturnType<typeof vi.fn>).mock.calls[0][0];
@@ -81,7 +85,7 @@ describe('CountWidget', () => {
 		const dashboard = createMockDashboard();
 		const wrapper = mount(CountWidget, {
 			props: { settings },
-			global: { provide: { [dashboardKey as symbol]: dashboard } },
+			global: { plugins: [vuetify], provide: { [dashboardKey as symbol]: dashboard } },
 		});
 
 		const registration = (dashboard.register as ReturnType<typeof vi.fn>).mock.calls[0][0];
@@ -95,7 +99,7 @@ describe('CountWidget', () => {
 		const dashboard = createMockDashboard();
 		const wrapper = mount(CountWidget, {
 			props: { settings: { ...settings, limit: 2 } },
-			global: { provide: { [dashboardKey as symbol]: dashboard } },
+			global: { plugins: [vuetify], provide: { [dashboardKey as symbol]: dashboard } },
 		});
 
 		const registration = (dashboard.register as ReturnType<typeof vi.fn>).mock.calls[0][0];

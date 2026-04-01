@@ -4,8 +4,8 @@ import type { ZenoEvent } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { loadGoogleMaps } from '../composables/useGoogleMaps';
-import { formatDuration, formatRelativeTime, locationText } from '../utils/eventFormatter';
-import { getFieldIcon, getNumericFieldNames, getTextFieldNames, getUnitsForField } from '../utils/fieldRegistry';
+import { formatDuration, formatRelativeTime, getFieldIcon, locationText } from '../utils/eventFormatter';
+import { getNumericFieldNames, getTextFieldNames, getUnitsForField } from '../utils/fieldRegistry';
 
 let maps: typeof google.maps;
 
@@ -18,6 +18,7 @@ const props = defineProps<{
 const emit = defineEmits<{
 	'update:modelValue': [value: boolean];
 	saved: [];
+	deleted: [eventId: string];
 }>();
 
 const alertApi = inject<AlertApi>(alertKey)!;
@@ -29,7 +30,6 @@ const newField = ref('');
 
 const EDITABLE_FIELDS = [...getTextFieldNames().filter((f) => f !== 'author' && f !== 'source'), 'location', 'timestamp', ...getNumericFieldNames()].sort();
 
-// Field-specific input state
 const newValue = ref('');
 const newNumValue = ref<number | null>(null);
 const newUnit = ref('');
@@ -48,15 +48,12 @@ const newDate = ref('');
 const newTime = ref('');
 const newTimezone = ref('');
 
-// Template refs
 const locationSearchEl = ref<HTMLInputElement | null>(null);
 const locationMapEl = ref<HTMLElement | null>(null);
 
-// Map state
 let map: google.maps.Map | null = null;
 let marker: google.maps.Marker | null = null;
 
-// Tags cache
 const tags = ref<string[]>([]);
 
 const isNew = ref(true);
@@ -358,7 +355,6 @@ async function fetchResourceTitle() {
 			newTitle.value = response.data.title;
 		}
 	} catch {
-		// ignore fetch errors
 	} finally {
 		resourceLoading.value = false;
 	}
@@ -373,7 +369,6 @@ async function refreshResourceTitle() {
 			newTitle.value = response.data.title;
 		}
 	} catch {
-		// ignore fetch errors
 	} finally {
 		resourceLoading.value = false;
 	}
@@ -459,7 +454,6 @@ function geolocate() {
 	});
 }
 
-// Watch field changes to initialize field-specific UI
 watch(newField, (field) => {
 	resetInputs();
 	if (field === 'tag' && tags.value.length === 0) {
@@ -494,204 +488,142 @@ watch(
 </script>
 
 <template>
-	<div v-if="visible" class="modal-backdrop fade in" @click="close()" />
-	<div ref="modalEl" class="modal" :class="{ hide: !visible, in: visible, fade: true }" :style="visible ? { display: 'block', top: '10%' } : {}">
-		<div class="modal-header">
-			<a class="close" @click="close()">&times;</a>
-			<h4>Event</h4>
-		</div>
-		<div class="modal-body">
-			<div class="alert alert-error" v-if="message">{{ message }}</div>
+	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
+		<v-card>
+			<v-card-title>Event</v-card-title>
+			<v-card-text>
+				<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
 
-			<div class="control-group">
-				<label class="control-label">Field</label>
-				<select class="input-large" v-model="newField">
-					<option value="" />
-					<option v-for="f in EDITABLE_FIELDS" :key="f" :value="f">{{ f }}</option>
-				</select>
-			</div>
+				<v-select label="Field" :items="EDITABLE_FIELDS" v-model="newField" clearable style="max-width: 300px" />
 
-			<div class="well well-small" v-if="newField">
-				<a class="close" @click="resetField()">&times;</a>
+				<v-card v-if="newField" class="mb-4" variant="outlined">
+					<v-card-text>
 
-				<!-- Tag: text with typeahead -->
-				<template v-if="fieldCategory === 'tag'">
-					<div class="control-group">
-						<label class="control-label">Value</label>
-						<input type="text" v-model="newValue" list="tag-suggestions" @keyup.enter="addEntry()" />
-					<datalist id="tag-suggestions">
-						<option v-for="t in tags" :key="t" :value="t" />
-					</datalist>
-					</div>
-				</template>
+					<!-- Tag -->
+					<template v-if="fieldCategory === 'tag'">
+						<v-text-field label="Value" v-model="newValue" list="tag-suggestions" @keyup.enter="addEntry()" style="max-width: 200px" />
+						<datalist id="tag-suggestions">
+							<option v-for="t in tags" :key="t" :value="t" />
+						</datalist>
+					</template>
 
-				<!-- Note: textarea -->
-				<template v-else-if="fieldCategory === 'note'">
-					<div class="control-group">
-						<label class="control-label">Value</label>
-						<textarea v-model="newValue"></textarea>
-					</div>
-				</template>
+					<!-- Note -->
+					<template v-else-if="fieldCategory === 'note'">
+						<v-textarea label="Value" v-model="newValue" />
+					</template>
 
-				<!-- Simple text: author, source -->
-				<template v-else-if="fieldCategory === 'text'">
-					<div class="control-group">
-						<label class="control-label">Value</label>
-						<input type="text" v-model="newValue" @keyup.enter="addEntry()" />
-					</div>
-				</template>
+					<!-- Simple text -->
+					<template v-else-if="fieldCategory === 'text'">
+						<v-text-field label="Value" v-model="newValue" @keyup.enter="addEntry()" />
+					</template>
 
-				<!-- Resource: URL + Title -->
-				<template v-else-if="fieldCategory === 'resource'">
-					<div class="control-group">
-						<label class="control-label">URL</label>
-						<input type="text" v-model="newUrl" @blur="fetchResourceTitle()" />
-					</div>
-					<div class="control-group">
-						<label class="control-label">Title</label>
-						<div class="input-append">
-							<input type="text" v-model="newTitle" :disabled="resourceLoading" />
-							<a class="add-on" @click="refreshResourceTitle()" style="cursor: pointer"><i class="fa fa-refresh" :class="{ 'fa-spin': resourceLoading }"></i></a>
+					<!-- Resource -->
+					<template v-else-if="fieldCategory === 'resource'">
+						<v-text-field label="URL" v-model="newUrl" @blur="fetchResourceTitle()" />
+						<v-text-field label="Title" v-model="newTitle" :disabled="resourceLoading">
+							<template #append-inner>
+								<v-icon :icon="resourceLoading ? 'mdi-loading mdi-spin' : 'mdi-refresh'" style="cursor: pointer" @click="refreshResourceTitle()" />
+							</template>
+						</v-text-field>
+					</template>
+
+					<!-- Timestamp -->
+					<template v-else-if="fieldCategory === 'timestamp'">
+						<div class="d-flex ga-2">
+							<v-text-field type="date" v-model="newDate" style="flex: 0 0 auto" />
+							<v-text-field type="time" v-model="newTime" style="flex: 0 0 auto" />
+							<v-select :items="TIMEZONE_OFFSETS" v-model="newTimezone" style="flex: 0 0 auto" />
 						</div>
-					</div>
-				</template>
+					</template>
 
-				<!-- Timestamp: date + time + timezone -->
-				<template v-else-if="fieldCategory === 'timestamp'">
-					<div class="control-group">
-						<input type="date" v-model="newDate" class="input-small" />
-						<input type="text" v-model="newTime" class="input-mini" placeholder="HH:MM" />
-						<select v-model="newTimezone" class="input-small">
-							<option value="" />
-							<option v-for="tz in TIMEZONE_OFFSETS" :key="tz" :value="tz">{{ tz }}</option>
-						</select>
-					</div>
-				</template>
+					<!-- Location -->
+					<template v-else-if="fieldCategory === 'location'">
+						<input ref="locationSearchEl" type="text" class="v-field__input" style="width: 100%; border: 1px solid #ccc; padding: 8px; border-radius: 4px; margin-bottom: 8px" @input="onLocationSearchInput()" />
+						<div ref="locationMapEl" style="height: 200px; margin-bottom: 10px"></div>
+					</template>
 
-				<!-- Location: map + search -->
-				<template v-else-if="fieldCategory === 'location'">
-					<div class="control-group">
-						<input ref="locationSearchEl" type="text" class="search-query" @input="onLocationSearchInput()" />
-					</div>
-					<div ref="locationMapEl" style="height: 200px; margin-bottom: 10px"></div>
-				</template>
+					<!-- Numeric with units -->
+					<template v-else-if="fieldCategory === 'unit'">
+						<div class="d-flex ga-2">
+							<v-text-field label="Value" type="number" step="any" v-model.number="newNumValue" @keyup.enter="addEntry()" style="max-width: 200px" />
+							<v-select label="Unit" :items="fieldUnits" v-model="newUnit" style="flex: 0 0 auto" />
+						</div>
+					</template>
 
-				<!-- Numeric with units -->
-				<template v-else-if="fieldCategory === 'unit'">
-					<div class="control-group">
-						<label class="control-label">Value</label>
-						<input type="number" step="any" v-model.number="newNumValue" @keyup.enter="addEntry()" />
-					</div>
-					<div class="control-group">
-						<label class="control-label">Unit</label>
-						<select v-model="newUnit">
-							<option value="" />
-							<option v-for="u in fieldUnits" :key="u" :value="u">{{ u }}</option>
-						</select>
-					</div>
-				</template>
+					<!-- Duration -->
+					<template v-else-if="fieldCategory === 'duration'">
+						<div class="d-flex ga-2">
+							<v-text-field type="number" v-model.number="newDays" suffix="d" style="max-width: 100px" />
+							<v-text-field type="number" min="0" max="23" v-model.number="newHours" suffix="h" style="max-width: 100px" />
+							<v-text-field type="number" min="0" max="59" v-model.number="newMinutes" suffix="min" style="max-width: 100px" />
+							<v-text-field type="number" min="0" max="59" v-model.number="newSeconds" suffix="s" style="max-width: 100px" />
+						</div>
+					</template>
 
-				<!-- Duration: days/hours/minutes/seconds -->
-				<template v-else-if="fieldCategory === 'duration'">
-					<div class="control-group input-append">
-						<input type="number" v-model.number="newDays" class="input-mini" />
-						<span class="add-on"><strong>d</strong></span>
-					</div>
-					<div class="control-group input-append">
-						<input type="number" min="0" max="23" v-model.number="newHours" class="input-mini" />
-						<span class="add-on"><strong>h</strong></span>
-					</div>
-					<div class="control-group input-append">
-						<input type="number" min="0" max="59" v-model.number="newMinutes" class="input-mini" />
-						<span class="add-on"><strong>min</strong></span>
-					</div>
-					<div class="control-group input-append">
-						<input type="number" min="0" max="59" v-model.number="newSeconds" class="input-mini" />
-						<span class="add-on"><strong>s</strong></span>
-					</div>
-				</template>
+					<!-- Pace -->
+					<template v-else-if="fieldCategory === 'pace'">
+						<div class="d-flex ga-2 align-center">
+							<v-text-field type="number" min="0" v-model.number="newMinutes" suffix="'" style="max-width: 100px" />
+							<v-text-field type="number" min="0" max="59" v-model.number="newSeconds" suffix="&quot;" style="max-width: 100px" />
+							<span>/</span>
+							<v-select :items="fieldUnits" v-model="newUnit" style="max-width: 120px" />
+						</div>
+					</template>
 
-				<!-- Pace: minutes/seconds + unit -->
-				<template v-else-if="fieldCategory === 'pace'">
-					<div class="control-group input-append">
-						<input type="number" min="0" v-model.number="newMinutes" class="input-mini" />
-						<span class="add-on" title="minutes"><strong>'</strong></span>
-					</div>
-					<div class="control-group input-append">
-						<input type="number" min="0" max="59" v-model.number="newSeconds" class="input-mini" />
-						<span class="add-on" title="seconds"><strong>"</strong></span>
-					</div>
-					<div class="control-group input-prepend">
-						<span class="add-on" title="per"><strong>/</strong></span>
-						<select v-model="newUnit" class="input-small">
-							<option value="" />
-							<option v-for="u in fieldUnits" :key="u" :value="u">{{ u }}</option>
-						</select>
-					</div>
-				</template>
+					<!-- Count -->
+					<template v-else-if="fieldCategory === 'count'">
+						<v-text-field label="Value" type="number" v-model.number="newNumValue" @keyup.enter="addEntry()" style="max-width: 200px" />
+					</template>
 
-				<!-- Count: integer -->
-				<template v-else-if="fieldCategory === 'count'">
-					<div class="control-group">
-						<label class="control-label">Value</label>
-						<input type="number" v-model.number="newNumValue" @keyup.enter="addEntry()" />
-					</div>
-				</template>
-
-				<!-- Rating: 5 stars -->
-				<template v-else-if="fieldCategory === 'rating'">
-					<div class="control-group">
-						<span class="nowrap" style="cursor: pointer; font-size: 1.5em">
-							<i v-for="i in 5" :key="i"
-								class="fa"
-								:class="(highlightedStars || newStars) >= i ? 'fa-star' : 'fa-star-o'"
+					<!-- Rating -->
+					<template v-else-if="fieldCategory === 'rating'">
+						<div style="cursor: pointer; font-size: 1.5em" class="text-no-wrap">
+							<v-icon v-for="i in 5" :key="i"
+								:icon="(highlightedStars || newStars) >= i ? 'mdi-star' : 'mdi-star-outline'"
 								:title="'Rate ' + i + '/5'"
 								@mouseenter="highlightedStars = i"
 								@mouseleave="highlightedStars = 0"
 								@click="newStars = i"
-							></i>
-						</span>
-					</div>
-				</template>
+							/>
+						</div>
+					</template>
 
-				<!-- Percentage / Moon / Humidity -->
-				<template v-else-if="fieldCategory === 'percent'">
-					<div class="control-group">
-						<label class="control-label">Value</label>
-						<input type="number" min="0" max="100" :step="newField === 'percentage' ? 0.1 : 1" v-model.number="newNumValue" class="input-small" @keyup.enter="addEntry()" /> %
-					</div>
-				</template>
+					<!-- Percent -->
+					<template v-else-if="fieldCategory === 'percent'">
+						<v-text-field label="Value" type="number" min="0" max="100" :step="newField === 'percentage' ? 0.1 : 1" v-model.number="newNumValue" suffix="%" @keyup.enter="addEntry()" style="max-width: 200px" />
+					</template>
 
-				<!-- Currency -->
-				<template v-else-if="fieldCategory === 'currency'">
-					<div class="control-group">
-						<label class="control-label">Value</label>
-						<input type="number" step="0.01" v-model.number="newNumValue" @keyup.enter="addEntry()" />
-					</div>
-				</template>
+					<!-- Currency -->
+					<template v-else-if="fieldCategory === 'currency'">
+						<v-text-field label="Value" type="number" step="0.01" v-model.number="newNumValue" @keyup.enter="addEntry()" style="max-width: 200px" />
+					</template>
 
-				<div class="control-group">
-					<button class="btn" :disabled="!isValid" @click="addEntry()">Add</button>
+					</v-card-text>
+					<v-card-actions>
+						<v-btn :disabled="!isValid" @click="addEntry()">Add</v-btn>
+					</v-card-actions>
+				</v-card>
+
+				<div class="mt-4">
+					<em v-if="entries.length === 0">Add one or more fields, then save.</em>
+					<span v-for="(entry, i) in entries" :key="i" class="editable">
+						<template v-if="entry.stars !== undefined">
+							<span class="text-no-wrap" :title="entry.value"><v-icon v-for="s in 5" :key="s" :icon="entry.stars >= s ? 'mdi-star' : 'mdi-star-outline'" size="small" /></span>
+						</template>
+						<template v-else>
+							<v-icon :icon="getFieldIcon(entry.field)" size="small" :title="entry.field" /> {{ entry.value }}
+						</template>
+						{{ ' ' }}<v-btn variant="text" size="x-small" class="action" @click="removeEntry(i)"><v-icon icon="mdi-close" title="Delete" /></v-btn>
+						{{ ' ' }}
+					</span>
 				</div>
-			</div>
-
-			<div style="padding-top: 1em">
-				<em v-if="entries.length === 0">Add one or more fields, then save.</em>
-				<span v-for="(entry, i) in entries" :key="i" class="editable">
-					<template v-if="entry.stars !== undefined">
-						<span class="nowrap" :title="entry.value"><i v-for="s in 5" :key="s" class="fa" :class="entry.stars >= s ? 'fa-star' : 'fa-star-o'"></i></span>
-					</template>
-					<template v-else>
-						<i class="fa" :class="getFieldIcon(entry.field)" :title="entry.field"></i> {{ entry.value }}
-					</template>
-					{{ ' ' }}<a class="action" @click="removeEntry(i)"><i class="fa fa-times" title="Delete" /></a>
-					{{ ' ' }}
-				</span>
-			</div>
-		</div>
-		<div class="modal-footer">
-			<button class="btn btn-primary" :disabled="!!newField || entries.length === 0" @click="save()">Save</button>
-			<button class="btn" @click="close()">Cancel</button>
-		</div>
-	</div>
+			</v-card-text>
+			<v-card-actions>
+				<v-btn v-if="!isNew" variant="text" color="error" @click="emit('deleted', eventData['@id'] as string); close()">Delete</v-btn>
+				<v-spacer />
+				<v-btn color="primary" :disabled="!!newField || entries.length === 0" @click="save()">Save</v-btn>
+				<v-btn variant="text" @click="close()">Cancel</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
 </template>

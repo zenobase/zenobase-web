@@ -3,6 +3,7 @@ import type { Component } from 'vue';
 import { type ComponentPublicInstance, computed, defineAsyncComponent, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Bucket, SearchResult, WidgetSettings, ZenoEvent } from '../../types';
+import { WIDGET_TITLES, type WidgetType } from '../../types';
 import api from '../api';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import CreateTaskDialog from '../components/CreateTaskDialog.vue';
@@ -17,8 +18,9 @@ import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { dashboardKey, useDashboard } from '../composables/useDashboard';
-import { getFieldIcon } from '../utils/fieldRegistry';
+import { getFieldIcon } from '../utils/eventFormatter';
 import { getUserName } from '../utils/userNames';
+import { SETTINGS_DIALOGS } from '../widgets';
 import CountWidget from '../widgets/CountWidget.vue';
 import GanttWidget from '../widgets/GanttWidget.vue';
 
@@ -321,13 +323,13 @@ function openCreateTaskFromList() {
 
 const showWidgetSettingsDialog = ref(false);
 const editingWidgetSettings = ref<WidgetSettings | null>(null);
-const editingWidgetType = ref('');
+const editingWidgetType = ref<WidgetType | ''>('');
 
 function openWidgetSettings(settingsId: string) {
 	const widget = bucket.value?.widgets?.find((w) => w.id === settingsId);
 	if (widget) {
 		editingWidgetSettings.value = widget;
-		editingWidgetType.value = widget.type;
+		editingWidgetType.value = widget.type as WidgetType;
 		showWidgetSettingsDialog.value = true;
 	}
 }
@@ -405,118 +407,125 @@ watch(
 </script>
 
 <template>
-	<div class="container-fluid">
-		<div v-if="message" class="alert alert-block alert-error">{{ message }}</div>
+	<div>
+		<v-alert v-if="message" type="error">{{ message }}</v-alert>
 
-		<div v-if="!bucket && !message">Loading...</div>
+		<div v-if="!bucket && !message" class="text-medium-emphasis">Loading...</div>
 
-		<div class="alert alert-block alert-info" v-if="dirty && editable">
-			<a class="close" @click="revertBucket()">&times;</a>
-			<p>
-				<strong><a @click="saveBucket()">Save</a></strong> or
-				<strong><a @click="revertBucket()">revert</a></strong> changes to this dashboard.
-			</p>
-		</div>
+		<v-alert v-if="dirty && editable" type="info" closable class="mb-3" @click:close="revertBucket()">
+			<strong><a @click="saveBucket()">Save</a></strong> or
+			<strong><a @click="revertBucket()">revert</a></strong> changes to this dashboard.
+		</v-alert>
 
 		<div v-if="bucket">
-			<!-- Title bar -->
-			<div class="row-fluid page-titlebar">
-				<p class="pull-left page-title">
-					<span class="page-title-text" :class="{ 'bucket-archived': bucket.archived }">{{ bucket.label }}</span>
-					{{ ' ' }}
-					<span class="badge badge-success page-title-decoration" title="Events" v-if="dashboard.total.value >= 0">{{ dashboard.total.value.toLocaleString() }}</span>
-					<span class="badge badge-important page-title-decoration" title="Couldn't load any events" v-if="dashboard.total.value < 0">0</span>
-					{{ ' ' }}
-					<a class="page-title-decoration" @click="run()" title="Refresh" v-if="editable"><i class="fa fa-refresh" :class="{ 'fa-spin': loading }" /></a>
-					{{ ' ' }}
-					<a class="page-title-decoration" @click="openEventDialog({})" title="Create Event..." v-if="editable && !bucket.aliases?.length"><i class="fa fa-plus" /></a>
-				</p>
-
-				<div class="pull-right page-title dropdown" :class="{ open: menuOpen }" v-if="editable">
-					<a class="dropdown-toggle" @click="menuOpen = !menuOpen" title="More..."><i class="fa fa-bars" /> {{ ' ' }} <b class="caret" /></a>
-					<ul class="dropdown-menu" role="menu">
-						<li role="presentation" v-if="!bucket.aliases?.length"><a role="menuitem" @click="openSaveView()">Save View...</a></li>
-						<li role="presentation" class="divider" v-if="!bucket.aliases?.length" />
-						<li role="presentation" v-if="!bucket.aliases?.length"><a role="menuitem" @click="openTasks()">Tasks...</a></li>
-						<li role="presentation" v-if="!bucket.aliases?.length"><a role="menuitem" @click="openImport()">Import...</a></li>
-						<li role="presentation" v-if="dashboard.total.value > 0"><a role="menuitem" @click="openExport()">Export...</a></li>
-						<li role="presentation" class="divider" />
-						<li role="presentation"><a role="menuitem" @click="openSettings()">Settings...</a></li>
-					</ul>
-				</div>
-			</div>
+			<Teleport to="#page-toolbar">
+				<span class="text-subtitle-1 font-weight-bold mr-1" :class="{ 'bucket-archived': bucket.archived }">{{ bucket.label }}</span>
+				<v-btn icon size="small" variant="text" @click="run()" title="Refresh" v-if="editable">
+					<v-icon icon="mdi-refresh" :class="{ 'mdi-spin': loading }" />
+				</v-btn>
+				<v-btn icon size="small" variant="text" @click="openEventDialog({})" title="Create Event..." v-if="editable && !bucket.aliases?.length">
+					<v-icon icon="mdi-plus" />
+				</v-btn>
+				<v-menu v-model="menuOpen" v-if="editable">
+					<template v-slot:activator="{ props }">
+						<v-btn icon variant="text" size="small" v-bind="props" title="More...">
+							<v-icon icon="mdi-dots-vertical" />
+						</v-btn>
+					</template>
+					<v-list density="compact">
+						<v-list-item v-if="!bucket.aliases?.length" @click="openSaveView()">
+							<v-list-item-title>Save View...</v-list-item-title>
+						</v-list-item>
+						<v-divider v-if="!bucket.aliases?.length" />
+						<v-list-item v-if="!bucket.aliases?.length" @click="openTasks()">
+							<v-list-item-title>Tasks...</v-list-item-title>
+						</v-list-item>
+						<v-list-item v-if="!bucket.aliases?.length" @click="openImport()">
+							<v-list-item-title>Import...</v-list-item-title>
+						</v-list-item>
+						<v-list-item v-if="dashboard.total.value > 0" @click="openExport()">
+							<v-list-item-title>Export...</v-list-item-title>
+						</v-list-item>
+						<v-divider />
+						<v-list-item @click="openSettings()">
+							<v-list-item-title>Settings...</v-list-item-title>
+						</v-list-item>
+					</v-list>
+				</v-menu>
+			</Teleport>
 
 			<!-- Description -->
-			<p class="nav" style="clear: both" v-if="bucket.description">{{ bucket.description }}</p>
+			<div class="text-body-2 text-medium-emphasis mb-2" v-if="bucket.description">{{ bucket.description }}</div>
 
-			<!-- Constraints -->
-			<ul class="nav nav-pills pull-left" v-if="dashboard.constraints.value.length || dashboard.constraintsB.value.length">
-				<li class="active" v-for="constraint in dashboard.constraints.value" :key="constraint.toString()">
-					<a :title="constraint.toString()">
-						<i class="fa fa-minus fa-white" v-if="constraint.negated" />
-						<i :class="'fa fa-white ' + getFieldIcon(constraint.field)" @click="dashboard.invertConstraint(constraint)" /> {{ constraint.field === 'author' ? getUserName(constraint.shortValue()) : constraint.shortValue() }}
-						<i class="fa fa-times fa-white" @click="dashboard.removeConstraint(constraint)" />
-					</a>
-				</li>
-				<li><a title="A/B Comparison" @click="dashboard.swapAB()"><i class="fa fa-adjust" /></a></li>
-				<li class="active active-b" v-for="constraint in dashboard.constraintsB.value" :key="'b-' + constraint.toString()">
-					<a :title="constraint.toString()">
-						<i class="fa fa-minus fa-white" v-if="constraint.negated" />
-						<i :class="'fa fa-white ' + getFieldIcon(constraint.field)" @click="dashboard.invertConstraintB(constraint)" /> {{ constraint.field === 'author' ? getUserName(constraint.shortValue()) : constraint.shortValue() }}
-						<i class="fa fa-times fa-white" @click="dashboard.removeConstraintB(constraint)" />
-					</a>
-				</li>
-			</ul>
+			<!-- Constraint chips -->
+			<div class="d-flex align-center flex-wrap ga-1 mb-2" v-if="dashboard.constraints.value.length || dashboard.constraintsB.value.length">
+				<v-chip color="primary" variant="flat" size="default" class="font-weight-bold" title="Events (A)" v-if="dashboard.total.value >= 0">{{ dashboard.total.value.toLocaleString() }}</v-chip>
+				<v-chip v-for="constraint in dashboard.constraints.value" :key="constraint.toString()" color="primary" variant="outlined" size="default" class="font-weight-bold" :title="constraint.toString()">
+					<v-icon v-if="constraint.negated" icon="mdi-minus" start />
+					<v-icon :icon="getFieldIcon(constraint.field)" start @click="dashboard.invertConstraint(constraint)" />
+					{{ constraint.field === 'author' ? getUserName(constraint.shortValue()) : constraint.shortValue() }}
+					<v-icon icon="mdi-close" end size="x-small" @click="dashboard.removeConstraint(constraint)" />
+				</v-chip>
+				<v-btn v-if="dashboard.constraints.value.length || dashboard.constraintsB.value.length" icon size="small" variant="text" title="Compare A/B" @click="dashboard.swapAB()">
+					<v-icon icon="mdi-swap-horizontal" />
+				</v-btn>
+				<v-chip color="#CC6600" variant="flat" size="default" class="font-weight-bold" title="Events (B)" v-if="dashboard.totalB.value !== null && dashboard.totalB.value >= 0">{{ dashboard.totalB.value.toLocaleString() }}</v-chip>
+				<v-chip v-for="constraint in dashboard.constraintsB.value" :key="'b-' + constraint.toString()" color="#CC6600" variant="outlined" size="default" class="font-weight-bold" :title="constraint.toString()">
+					<v-icon v-if="constraint.negated" icon="mdi-minus" start />
+					<v-icon :icon="getFieldIcon(constraint.field)" start @click="dashboard.invertConstraintB(constraint)" />
+					{{ constraint.field === 'author' ? getUserName(constraint.shortValue()) : constraint.shortValue() }}
+					<v-icon icon="mdi-close" end size="x-small" @click="dashboard.removeConstraintB(constraint)" />
+				</v-chip>
+			</div>
+
+			<!-- Error state -->
+			<v-empty-state v-if="dashboard.total.value < 0" icon="mdi-alert-circle-outline" headline="Couldn't load data" text="Try refreshing, or check back later." />
 
 			<!-- Top placement -->
-			<div class="row-fluid" v-if="hasWidgets('top') || dirty">
-				<div class="span12">
-					<ul class="nav nav-tabs">
-						<li v-for="settings in getWidgets('top')" :key="settings.id" :class="{ active: getActiveTab('top') === settings.id, drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'top')" @dragend="onDragEnd">
-							<a @click.prevent="setActiveTab('top', settings.id)">{{ settings.label }}&nbsp;<i class="fa fa-cog fa-hover" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></a>
-						</li>
-						<li :class="{ drop: dropTargetId === '+top' }" @dragover="onDragOver($event, '+top')" @dragleave="onDragLeave" @drop="onDrop($event, '+top', 'top')"><a title="Add..." @click="openAddWidget('top')"><i class="fa fa-plus fa-hover" /></a></li>
-					</ul>
-					<div class="tab-content">
-						<div v-for="settings in getWidgets('top')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('top') === settings.id }">
-							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
-						</div>
-					</div>
-				</div>
+			<div v-if="dashboard.total.value >= 0 && (hasWidgets('top') || dirty)" class="widget-panel mb-3">
+				<v-tabs v-model="activeTabs['top']" show-arrows>
+					<v-tab v-for="settings in getWidgets('top')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'top')" @dragend="onDragEnd" @click="setActiveTab('top', settings.id)">{{ settings.label }}<v-icon icon="mdi-cog" class="tab-settings-icon ml-1" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
+					<v-tab class="widget-tab" :class="{ drop: dropTargetId === '+top' }" @dragover="onDragOver($event, '+top')" @dragleave="onDragLeave" @drop="onDrop($event, '+top', 'top')" @click="openAddWidget('top')" title="Add..."><v-icon icon="mdi-plus" size="small" /></v-tab>
+				</v-tabs>
+				<v-tabs-window v-model="activeTabs['top']">
+					<v-tabs-window-item v-for="settings in getWidgets('top')" :key="settings.id" :value="settings.id" eager :transition="false" :reverse-transition="false">
+						<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+					</v-tabs-window-item>
+				</v-tabs-window>
 			</div>
 
 			<!-- Left + Right placement -->
-			<div class="row-fluid">
-				<div class="span6" v-if="hasWidgets('left') || dirty">
-					<ul class="nav nav-tabs">
-						<li v-for="settings in getWidgets('left')" :key="settings.id" :class="{ active: getActiveTab('left') === settings.id, drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'left')" @dragend="onDragEnd">
-							<a @click.prevent="setActiveTab('left', settings.id)">{{ settings.label }}&nbsp;<i class="fa fa-cog fa-hover" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></a>
-						</li>
-						<li :class="{ drop: dropTargetId === '+left' }" @dragover="onDragOver($event, '+left')" @dragleave="onDragLeave" @drop="onDrop($event, '+left', 'left')"><a title="Add..." @click="openAddWidget('left')"><i class="fa fa-plus fa-hover" /></a></li>
-					</ul>
-					<div class="tab-content">
-						<div v-for="settings in getWidgets('left')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('left') === settings.id }">
-							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
-						</div>
+			<v-row v-if="dashboard.total.value >= 0">
+				<v-col cols="12" md="6" v-if="hasWidgets('left') || dirty">
+					<div class="widget-panel">
+						<v-tabs v-model="activeTabs['left']" show-arrows>
+							<v-tab v-for="settings in getWidgets('left')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'left')" @dragend="onDragEnd" @click="setActiveTab('left', settings.id)">{{ settings.label }}<v-icon icon="mdi-cog" class="tab-settings-icon ml-1" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
+							<v-tab class="widget-tab" :class="{ drop: dropTargetId === '+left' }" @dragover="onDragOver($event, '+left')" @dragleave="onDragLeave" @drop="onDrop($event, '+left', 'left')" @click="openAddWidget('left')" title="Add..."><v-icon icon="mdi-plus" size="small" /></v-tab>
+						</v-tabs>
+						<v-tabs-window v-model="activeTabs['left']">
+							<v-tabs-window-item v-for="settings in getWidgets('left')" :key="settings.id" :value="settings.id" eager :transition="false" :reverse-transition="false">
+								<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+							</v-tabs-window-item>
+						</v-tabs-window>
 					</div>
-				</div>
-				<div class="span6" v-if="hasWidgets('right') || dirty">
-					<ul class="nav nav-tabs">
-						<li v-for="settings in getWidgets('right')" :key="settings.id" :class="{ active: getActiveTab('right') === settings.id, drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'right')" @dragend="onDragEnd">
-							<a @click.prevent="setActiveTab('right', settings.id)">{{ settings.label }}&nbsp;<i class="fa fa-cog fa-hover" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></a>
-						</li>
-						<li :class="{ drop: dropTargetId === '+right' }" @dragover="onDragOver($event, '+right')" @dragleave="onDragLeave" @drop="onDrop($event, '+right', 'right')"><a title="Add..." @click="openAddWidget('right')"><i class="fa fa-plus fa-hover" /></a></li>
-					</ul>
-					<div class="tab-content">
-						<div v-for="settings in getWidgets('right')" :key="settings.id" class="tab-pane" :class="{ active: getActiveTab('right') === settings.id }">
-							<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
-						</div>
+				</v-col>
+				<v-col cols="12" md="6" v-if="hasWidgets('right') || dirty">
+					<div class="widget-panel">
+						<v-tabs v-model="activeTabs['right']" show-arrows>
+							<v-tab v-for="settings in getWidgets('right')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'right')" @dragend="onDragEnd" @click="setActiveTab('right', settings.id)">{{ settings.label }}<v-icon icon="mdi-cog" class="tab-settings-icon ml-1" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
+							<v-tab class="widget-tab" :class="{ drop: dropTargetId === '+right' }" @dragover="onDragOver($event, '+right')" @dragleave="onDragLeave" @drop="onDrop($event, '+right', 'right')" @click="openAddWidget('right')" title="Add..."><v-icon icon="mdi-plus" size="small" /></v-tab>
+						</v-tabs>
+						<v-tabs-window v-model="activeTabs['right']">
+							<v-tabs-window-item v-for="settings in getWidgets('right')" :key="settings.id" :value="settings.id" eager :transition="false" :reverse-transition="false">
+								<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+							</v-tabs-window-item>
+						</v-tabs-window>
 					</div>
-				</div>
-			</div>
+				</v-col>
+			</v-row>
 		</div>
 
-		<EventEditDialog v-model="showEventDialog" :bucket-id="bucketId" :event="editingEvent" @saved="onEventSaved()" />
+		<EventEditDialog v-model="showEventDialog" :bucket-id="bucketId" :event="editingEvent" @saved="onEventSaved()" @deleted="(id: string) => removeEvent(id)" />
 
 		<AddWidgetDialog v-if="bucket" v-model="showAddWidgetDialog" :bucket-id="bucketId" :bucket="bucket" :placement="addWidgetPlacement" @added="onWidgetAdded" />
 
@@ -532,6 +541,8 @@ watch(
 
 		<ExportDialog v-model="showExportDialog" :bucket-id="bucketId" :total="dashboard.total.value" :constraints="dashboard.constraints.value" />
 
-		<WidgetSettingsDialog v-if="editingWidgetSettings" v-model="showWidgetSettingsDialog" :settings="editingWidgetSettings as any" :widget-type="editingWidgetType as any" @save="(s: any) => onWidgetSettingsSaved(s)" @remove="onWidgetRemoved" />
+		<WidgetSettingsDialog v-if="editingWidgetSettings" v-model="showWidgetSettingsDialog" :settings="editingWidgetSettings" :title="WIDGET_TITLES[editingWidgetType as WidgetType]" @save="onWidgetSettingsSaved" @remove="onWidgetRemoved">
+				<component :is="SETTINGS_DIALOGS[editingWidgetType as WidgetType]" />
+			</WidgetSettingsDialog>
 	</div>
 </template>

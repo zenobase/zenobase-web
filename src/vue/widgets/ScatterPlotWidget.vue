@@ -4,6 +4,7 @@ import type { FieldInfo, ScatterPlotParams, SearchResult } from '../../types/sea
 import { compactDuration, compactNumber } from '../../utils/helpers';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { BRAND_BLUE_RGB } from '../plugins/vuetify';
 // biome-ignore lint/style/useImportType: Vue component used in template
 import EChartsChart from './EChartsChart.vue';
 
@@ -100,7 +101,7 @@ function draw() {
 			type: 'scatter',
 			data: data.value,
 			symbolSize: 10,
-			itemStyle: { color: 'rgba(119, 152, 191, 0.5)' },
+			itemStyle: { color: `rgba(${BRAND_BLUE_RGB}, 0.5)` },
 			selectedMode: 'single',
 		},
 	];
@@ -361,12 +362,13 @@ onMounted(() => dashboard.register(registration));
 
 <template>
 	<div>
-		<div class="row-fluid" v-show="data?.length || dataB?.length">
-			<div class="pull-right">
-				<a class="xbtn" title="Download" @click="downloadCSV"><i class="fa fa-file-text" /></a>
-				<a class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><i class="fa fa-camera" /></a>
+		<v-row v-show="data?.length || dataB?.length">
+			<v-spacer />
+			<div class="d-flex ga-1">
+				<v-btn variant="text" size="small" class="xbtn" title="Download" @click="downloadCSV"><v-icon icon="mdi-file-document-outline" size="small" /></v-btn>
+				<v-btn variant="text" size="small" class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><v-icon icon="mdi-camera" size="small" /></v-btn>
 			</div>
-		</div>
+		</v-row>
 		<EChartsChart ref="chartRef" v-if="data?.length || dataB?.length" :options="chartOptions" :height="chartHeight" />
 		<EChartsChart v-if="rChartOptions" :options="rChartOptions" />
 		<p v-if="data === null" class="none">Loading...</p>

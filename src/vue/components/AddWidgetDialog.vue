@@ -155,31 +155,26 @@ watch(
 </script>
 
 <template>
-	<template v-if="visible">
-	<div class="modal-backdrop fade in" @click="close()" />
-	<div id="add-widget-dialog" class="modal fade in" style="display: block; top: 10%">
-		<form class="modal-form">
-			<div class="modal-header">
-				<a class="close" @click="close()">&times;</a>
-				<h4>Add Widget</h4>
-			</div>
-			<div class="modal-body">
-				<div class="control-group">
-					<ul class="thumbnails">
-						<li class="span3" v-for="template in findTemplates()" :key="template.type">
-							<div class="thumbnail" style="cursor: pointer" @click="add(template)">
-								<p><strong>{{ template.label }}</strong></p>
-								<img width="300" height="200" :src="template.thumbnail" alt="Preview" />
-								<p>{{ template.description }}</p>
-							</div>
-						</li>
-					</ul>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn" @click="close()">Cancel</button>
-			</div>
-		</form>
-	</div>
-	</template>
+	<v-dialog v-model="visible" max-width="900" @update:model-value="!$event && close()">
+		<v-card>
+			<v-card-title>Add Widget</v-card-title>
+			<v-card-text>
+				<v-row>
+					<v-col v-for="template in findTemplates()" :key="template.type" cols="4">
+						<v-card variant="outlined" hover style="cursor: pointer" @click="add(template)">
+							<v-card-text class="text-center">
+								<strong>{{ template.label }}</strong>
+							</v-card-text>
+							<v-img :src="template.thumbnail" :alt="template.label" width="300" height="200" />
+							<v-card-text class="text-body-2">{{ template.description }}</v-card-text>
+						</v-card>
+					</v-col>
+				</v-row>
+			</v-card-text>
+			<v-card-actions>
+				<v-spacer />
+				<v-btn variant="text" @click="close()">Cancel</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
 </template>

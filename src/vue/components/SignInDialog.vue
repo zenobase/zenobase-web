@@ -50,36 +50,22 @@ async function signIn() {
 </script>
 
 <template>
-	<div v-if="model" class="modal-backdrop fade in" @click="model = false" />
-	<div class="modal" :class="{ hide: !model, in: model, fade: true }" :style="model ? { display: 'block', top: '10%' } : {}">
-		<form class="modal-form" @submit.prevent="signIn()">
-			<div class="modal-header">
-				<a class="close" @click="model = false">&times;</a>
-				<h4>Sign in</h4>
-			</div>
-			<div class="modal-body">
-				<div v-if="message" class="alert alert-error">{{ message }}</div>
-				<div class="control-group">
-					<label class="control-label" for="sign-in-username"><strong>Username</strong></label>
-					<div class="controls">
-						<input id="sign-in-username" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus v-model="username" />
-					</div>
-				</div>
-				<div class="control-group">
-					<label class="control-label" for="sign-in-password"><strong>Password</strong></label>
-					<div class="controls">
-						<input id="sign-in-password" type="password" required v-model="password" />
-					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<div class="pull-left">
-					<a @click="$emit('lostPassword')">Lost password?</a>
-				</div>
-				<button type="submit" class="btn btn-primary" :disabled="!username || !password || loading">Sign in</button>
-				{{ ' ' }}
-				<button type="button" class="btn" @click="model = false">Cancel</button>
-			</div>
-		</form>
-	</div>
+	<v-dialog v-model="model" max-width="500">
+		<v-card>
+			<v-card-title>Sign in</v-card-title>
+			<v-form @submit.prevent="signIn()">
+				<v-card-text>
+					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+					<v-text-field label="Username" v-model="username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus />
+					<v-text-field label="Password" type="password" v-model="password" required />
+				</v-card-text>
+				<v-card-actions>
+					<a class="ml-2" @click="$emit('lostPassword')">Lost password?</a>
+					<v-spacer />
+					<v-btn type="submit" color="primary" :disabled="!username || !password || loading">Sign in</v-btn>
+					<v-btn variant="text" @click="model = false">Cancel</v-btn>
+				</v-card-actions>
+			</v-form>
+		</v-card>
+	</v-dialog>
 </template>

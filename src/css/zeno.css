@@ -1,0 +1,474 @@
+@import './highlight-railscasts-8.4.css';
+
+/* ── Global ── */
+
+html {
+	font-size: 16px;
+}
+
+a {
+	cursor: pointer;
+	color: rgb(var(--v-theme-primary));
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+abbr {
+	text-transform: none;
+}
+
+.v-dialog .v-card-title {
+	padding-top: 1rem;
+}
+
+.pac-container {
+	z-index: 10000 !important;
+}
+
+/* ── Layout ── */
+
+.v-col {
+	overflow: hidden;
+	min-width: 0;
+}
+
+.v-table {
+	overflow-x: auto;
+}
+
+.v-table th {
+	font-weight: 700 !important;
+}
+
+.v-tabs-window {
+	overflow: visible;
+}
+
+/* ── Footer ── */
+
+.zeno-footer a {
+	color: inherit;
+}
+
+/* ── Widget panels ── */
+
+.v-tabs {
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.v-tab {
+	font-size: 1rem !important;
+}
+
+/* Disable tab animations — hide the sliding indicator, use border instead */
+.v-tab__slider {
+	display: none !important;
+}
+
+.v-tab--selected {
+	border-bottom: 2px solid rgb(var(--v-theme-primary));
+}
+
+/* Tab settings gear: hidden until hover */
+.tab-settings-icon {
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.widget-tab:hover .tab-settings-icon {
+	opacity: 0.6;
+}
+
+.tab-settings-icon:hover {
+	opacity: 1 !important;
+}
+
+/* Drag & Drop on tabs */
+.v-tab.drop {
+	background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+/* ── Hover-reveal patterns ── */
+
+.action {
+	visibility: hidden;
+}
+
+tr:hover > td > .action,
+span:hover > .action {
+	visibility: visible;
+}
+
+.xbtn {
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+*:hover > .xbtn {
+	opacity: 0.5;
+}
+
+.xbtn:hover {
+	opacity: 1 !important;
+}
+
+/* ── List search bar ── */
+
+.list-search-bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 0;
+	margin-top: 4px;
+	margin-bottom: 16px;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.list-search-bar:focus-within {
+	border-bottom-color: rgb(var(--v-theme-primary));
+}
+
+.list-search-input {
+	border: none;
+	outline: none;
+	flex: 1;
+	min-width: 0;
+	font-size: inherit;
+	background: transparent;
+}
+
+.list-search-input::placeholder {
+	color: rgba(0, 0, 0, 0.38);
+}
+
+
+/* ── Constraint chips ── */
+
+.v-chip.font-weight-bold .v-chip__content {
+	padding: 0 4px;
+}
+
+/* ── Event list rows ── */
+
+.event-row > td {
+	padding-top: 8px !important;
+	padding-bottom: 8px !important;
+}
+
+.event-row--editable {
+	cursor: pointer;
+}
+
+.event-row--editable:hover > td {
+	background-color: rgba(0, 0, 0, 0.02);
+}
+
+.event-edit-hint {
+	position: absolute;
+	top: 8px;
+	right: 4px;
+	opacity: 0;
+	color: rgba(0, 0, 0, 0.3);
+}
+
+.event-row--editable:hover .event-edit-hint {
+	opacity: 1;
+}
+
+/* ── Editable event fields ── */
+
+.editable {
+	display: inline-block;
+	padding: 4px 8px;
+	margin: 2px 0;
+	border-radius: 4px;
+	line-height: 1.6;
+}
+
+.editable:hover {
+	background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* ── Status classes ── */
+
+.none {
+	font-style: italic;
+	color: rgba(0, 0, 0, 0.38);
+	padding: 12px 0;
+}
+
+.bucket-virtual {
+	font-style: italic;
+}
+
+.bucket-archived,
+.bucket-archived a:link,
+.bucket-archived a:visited {
+	color: rgba(0, 0, 0, 0.38);
+}
+
+.credentials-invalid {
+	text-decoration: line-through;
+}
+
+/* ── Google Maps controls ── */
+
+.map-control {
+	z-index: 0;
+	cursor: pointer;
+	text-decoration: none;
+	font-family: Roboto, Arial, sans-serif;
+	font-size: 18px;
+	font-weight: 500;
+	direction: ltr;
+	overflow: hidden;
+	text-align: center;
+	position: relative;
+	color: rgb(0, 0, 0);
+	-webkit-user-select: none;
+	background-color: rgb(255, 255, 255);
+	margin-top: 10px;
+	padding: 0;
+	width: 40px;
+	height: 40px;
+	line-height: 40px;
+	border-radius: 2px;
+	background-clip: padding-box;
+	box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+}
+
+.map img {
+	max-width: none;
+}
+
+/* ── Home page hero ── */
+
+.hero-unit {
+	background-image: url(/img/home/tracks.jpg);
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center top;
+	border-radius: 0 !important;
+}
+
+.hero-overlay {
+	background: rgba(255, 255, 255, 0.5);
+	padding: 80px 24px 72px;
+}
+
+.hero-content {
+	max-width: 640px;
+	margin: 0 auto;
+}
+
+.hero-logo {
+	margin-bottom: 24px;
+}
+
+.hero-title {
+	color: rgba(0, 0, 0, 0.82);
+	font-size: 2.75rem;
+	font-weight: 300;
+	letter-spacing: -0.5px;
+	line-height: 1.15;
+	margin-bottom: 12px;
+}
+
+.hero-subtitle {
+	color: rgba(0, 0, 0, 0.55);
+	font-size: 1.15rem;
+	font-weight: 400;
+	margin-bottom: 32px;
+}
+
+.hero-btn {
+	letter-spacing: 0.5px;
+	font-weight: 500;
+	padding: 0 28px !important;
+	text-decoration: none !important;
+}
+
+@media (max-width: 600px) {
+	.hero-overlay {
+		padding: 56px 16px 48px;
+	}
+
+	.hero-title {
+		font-size: 1.75rem;
+	}
+
+	.hero-subtitle {
+		font-size: 1rem;
+	}
+}
+
+/* ── Landing page sections ── */
+
+.landing-section {
+	padding: 40px 24px;
+}
+
+.landing-section--tinted {
+	background-color: rgba(59, 134, 198, 0.04);
+}
+
+.section-header {
+	max-width: 640px;
+	margin: 0 auto 24px;
+	text-align: center;
+}
+
+.section-header h2 {
+	font-size: 1.75rem;
+	font-weight: 400;
+	letter-spacing: -0.3px;
+	margin-bottom: 8px;
+	color: rgba(0, 0, 0, 0.82);
+}
+
+.section-desc {
+	color: rgba(0, 0, 0, 0.5);
+	font-size: 1rem;
+}
+
+/* ── Field cloud ── */
+
+.field-cloud {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 24px;
+	padding: 16px 0;
+	justify-items: center;
+	align-items: center;
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.field-cloud-item {
+	transition: opacity 0.15s ease;
+	opacity: 0.72;
+}
+
+.field-cloud-item:hover {
+	opacity: 1;
+}
+
+.field-cloud-item a {
+	color: inherit;
+	pointer-events: none;
+	text-decoration: none;
+}
+
+@media (max-width: 600px) {
+	.field-cloud {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 16px;
+	}
+}
+
+@media (max-width: 450px) {
+	.field-cloud {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 12px;
+	}
+}
+
+/* ── Widget carousel ── */
+
+.widget-carousel {
+	max-width: 640px;
+	margin: 0 auto;
+}
+
+.widget-slide {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 24px 16px;
+}
+
+.widget-thumbnail {
+	max-height: 360px;
+	width: auto;
+	border-radius: 6px;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.widget-label {
+	margin-top: 16px;
+	font-size: 1.1rem;
+	font-weight: 500;
+	color: rgba(0, 0, 0, 0.72);
+	letter-spacing: 0.3px;
+}
+
+/* ── Integration matrix ── */
+
+.integration-matrix {
+	overflow-x: auto;
+	max-width: 900px;
+	margin: 0 auto;
+}
+
+.integration-matrix .integration-header {
+	font-size: 0.7rem !important;
+	padding: 6px 4px !important;
+	color: rgba(0, 0, 0, 0.5) !important;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+.integration-matrix td {
+	padding: 6px 8px !important;
+}
+
+.integration-matrix tbody tr {
+	transition: background-color 0.1s ease;
+}
+
+.integration-matrix tbody tr:hover {
+	background-color: rgba(59, 134, 198, 0.04);
+}
+
+/* ── API docs ── */
+
+#api h2 {
+	margin-top: 40px;
+}
+
+#api h3 {
+	margin-top: 20px;
+}
+
+#api pre {
+	background-color: #232323;
+	color: #e6e1dc;
+	padding: 1em;
+	border-radius: 4px;
+}
+
+#api code {
+	background-color: #232323;
+	color: #e6e1dc;
+	border: none;
+}
+
+/* ── Pricing table ── */
+
+#pricing td {
+	font-size: larger;
+	vertical-align: middle;
+}
+
+/* ── Event edit map ── */
+
+#create-location-map {
+	height: 200px;
+}
+
+#create-location-map img {
+	max-width: none;
+}

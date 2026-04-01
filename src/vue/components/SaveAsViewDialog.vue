@@ -89,30 +89,25 @@ watch(
 </script>
 
 <template>
-	<div v-if="visible" class="modal-backdrop fade in" @click="close()" />
-	<div class="modal" :class="{ hide: !visible, in: visible, fade: true }" :style="visible ? { display: 'block', top: '10%' } : {}">
-		<form class="modal-form" @submit.prevent="create()">
-			<div class="modal-header">
-				<a class="close" @click="close()">&times;</a>
-				<h4>Create View</h4>
-			</div>
-			<div class="modal-body">
-				<div class="alert alert-error" v-if="message">{{ message }}</div>
-				<div class="control-group">
-					<label><strong>Label</strong></label>
-					<div class="input-append">
-						<input type="text" class="xlarge" required minlength="1" maxlength="30" v-model="label" />
-						<span class="add-on">
-							<i class="fa fa-check" title="valid" v-if="label.length > 0" />
-							<i class="fa fa-exclamation" title="not valid" v-else />
-						</span>
-					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="submit" class="btn btn-primary" :disabled="!label">Create</button>
-				<button type="button" class="btn" @click="close()">Cancel</button>
-			</div>
-		</form>
-	</div>
+	<v-dialog v-model="visible" max-width="500" @update:model-value="!$event && close()">
+		<v-card>
+			<v-card-title>Create View</v-card-title>
+			<v-form @submit.prevent="create()">
+				<v-card-text>
+					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+					<v-text-field label="Label" v-model="label" required autofocus>
+						<template #append-inner>
+							<v-icon v-if="label.length > 0" icon="mdi-check" color="success" />
+							<v-icon v-else icon="mdi-exclamation" color="warning" />
+						</template>
+					</v-text-field>
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn type="submit" color="primary" :disabled="!label">Create</v-btn>
+					<v-btn variant="text" @click="close()">Cancel</v-btn>
+				</v-card-actions>
+			</v-form>
+		</v-card>
+	</v-dialog>
 </template>

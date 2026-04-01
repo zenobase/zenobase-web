@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onBeforeUnmount, onMounted, ref } from 'vue';
+import { inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { GeoPoint, ZenoEvent } from '../../types';
 import type { ListParams, SearchResult } from '../../types/search';
 import { Constraint } from '../../utils/constraint';
@@ -12,7 +12,7 @@ function locationToHtml(v: unknown): string {
 	if (!obj || !('lat' in obj)) return '';
 	const text = locationText(obj);
 	const filter = text.replace(' ', '') + '~100 m';
-	return '<span class="nowrap"><i class="fa fa-map-marker" title="Location"></i> <a class="location-filter" data-filter="' + esc(filter) + '">' + esc(text) + '</a></span>';
+	return '<span class="text-no-wrap"><i class="mdi mdi-map-marker" title="Location"></i> <a class="location-filter" data-filter="' + esc(filter) + '">' + esc(text) + '</a></span>';
 }
 
 const FIELD_OVERRIDES: Record<string, (value: unknown) => string> = { location: locationToHtml };
@@ -25,10 +25,10 @@ interface FilterField {
 }
 
 const FILTER_FIELDS: FilterField[] = [
-	{ id: 'resource.title', label: 'resources', icon: 'fa-bookmark', tokenized: true },
-	{ id: 'source.title', label: 'sources', icon: 'fa-external-link', tokenized: true },
-	{ id: 'tag', label: 'tags', icon: 'fa-tag', tokenized: false },
-	{ id: 'note', label: 'notes', icon: 'fa-comment-o', tokenized: true },
+	{ id: 'resource.title', label: 'resources', icon: 'mdi-bookmark', tokenized: true },
+	{ id: 'source.title', label: 'sources', icon: 'mdi-open-in-new', tokenized: true },
+	{ id: 'tag', label: 'tags', icon: 'mdi-tag', tokenized: false },
+	{ id: 'note', label: 'notes', icon: 'mdi-comment-outline', tokenized: true },
 ];
 
 const props = defineProps<{
@@ -145,15 +145,21 @@ function selectField(field: FilterField) {
 	dropdownOpen.value = false;
 }
 
-function onEventClick(e: MouseEvent) {
+function onEventClick(e: MouseEvent, event: ZenoEvent) {
 	const target = e.target as HTMLElement;
-	const link = target.closest('.location-filter') as HTMLElement | null;
-	if (link) {
-		e.preventDefault();
-		const filter = link.dataset.filter;
-		if (filter) {
-			dashboard.addConstraint('location', filter, false);
+	if (target.closest('a')) {
+		const locationLink = target.closest('.location-filter') as HTMLElement | null;
+		if (locationLink) {
+			e.preventDefault();
+			const filter = locationLink.dataset.filter;
+			if (filter) {
+				dashboard.addConstraint('location', filter, false);
+			}
 		}
+		return;
+	}
+	if (props.editable && !props.isVirtual) {
+		emit('openDialog', 'edit-event-dialog', event);
 	}
 }
 
@@ -163,6 +169,12 @@ function closeDropdownOnOutsideClick(e: MouseEvent) {
 		dropdownOpen.value = false;
 	}
 }
+
+let filterDebounce: ReturnType<typeof setTimeout> | null = null;
+watch(filterValue, () => {
+	if (filterDebounce) clearTimeout(filterDebounce);
+	filterDebounce = setTimeout(() => refresh(), 300);
+});
 
 const registration: WidgetRegistration = { params, update, init };
 onMounted(() => {
@@ -176,55 +188,45 @@ onBeforeUnmount(() => {
 
 <template>
 	<div>
-		<form class="form-search" @submit.prevent="applyFilter()">
-			<div class="input-append">
-				<input type="text" class="search-query input-large" v-model="filterValue" :placeholder="'search in ' + filterField.label" />
-				<div class="btn-group" :class="{ open: dropdownOpen }">
-					<button type="button" class="btn dropdown-toggle" title="Field" @click="toggleDropdown()">
-						<i class="fa" :class="filterField.icon" />
-						{{ ' ' }}
-						<span class="caret" />
-					</button>
-					<button type="button" class="btn" title="Clear" @click="clearFilter()"><i class="fa fa-close" /></button>
-					<ul class="dropdown-menu" role="menu">
-						<li v-for="field in FILTER_FIELDS" :key="field.id" role="presentation">
-							<a role="menuitem" @click="selectField(field)"><i class="fa" :class="field.icon" /> &nbsp; {{ field.label }}</a>
-						</li>
-					</ul>
-				</div>
-			</div>
-			<div class="pull-right">
-				<button type="submit" class="xbtn" title="Filter" :disabled="!filterValue"><i class="fa fa-filter" /></button>
-			</div>
+		<form class="list-search-bar" @submit.prevent="applyFilter()">
+			<v-menu>
+				<template #activator="{ props: menuProps }">
+					<v-icon :icon="filterField.icon" size="small" v-bind="menuProps" style="cursor: pointer" class="text-medium-emphasis" title="Search field" />
+				</template>
+				<v-list density="compact">
+					<v-list-item v-for="field in FILTER_FIELDS" :key="field.id" @click="selectField(field)">
+						<template #prepend><v-icon :icon="field.icon" size="small" /></template>
+						{{ field.label }}
+					</v-list-item>
+				</v-list>
+			</v-menu>
+			<input
+				v-model="filterValue"
+				:placeholder="'search in ' + filterField.label"
+				class="list-search-input"
+			/>
+			<v-icon v-if="filterValue" icon="mdi-close" size="x-small" class="text-medium-emphasis" style="cursor: pointer" title="Clear" @click="clearFilter()" />
+			<v-icon icon="mdi-filter" size="small" :class="filterValue ? 'text-primary' : 'text-disabled'" style="cursor: pointer" title="Apply filter to dashboard" @click="applyFilter()" />
 		</form>
 
-		<table class="table" v-show="items?.length">
+		<v-table v-show="items?.length" density="default">
 			<tbody>
-				<tr v-for="event in items" :key="event['@id'] as string" class="event-row">
-					<td style="line-height: 1.5; border-style: none">
-						<span v-html="formatEventHtml(event, undefined, FIELD_OVERRIDES)" @click="onEventClick($event)" />
-						&nbsp;
-						<div class="action pull-right" v-if="editable && !isVirtual">
-							<a class="event-edit-action" @click="emit('openDialog', 'edit-event-dialog', event)"><i class="fa fa-pencil" title="Edit" /></a>
-							{{ ' ' }}
-							<a class="event-delete-action" @click="emit('removeEvent', event['@id'] as string)"><i class="fa fa-trash-o" title="Delete" /></a>
-						</div>
+				<tr v-for="event in items" :key="event['@id'] as string" class="event-row" :class="{ 'event-row--editable': editable && !isVirtual }" @click="onEventClick($event, event)">
+					<td style="line-height: 1.5; border-style: none; position: relative">
+						<span v-html="formatEventHtml(event, undefined, FIELD_OVERRIDES)" />
+						<v-icon v-if="editable && !isVirtual" icon="mdi-pencil" size="x-small" class="event-edit-hint" />
 					</td>
 				</tr>
 			</tbody>
-		</table>
+		</v-table>
 
 		<p v-if="items === null" class="none">Loading...</p>
 		<p v-else-if="items.length === 0" class="none">None</p>
 
-		<div class="btn-toolbar" v-show="items?.length">
-			<div class="btn-group pull-right">
-				<button class="btn" title="Previous" :disabled="!hasPrev()" @click="prev()"><i class="fa fa-chevron-left" /></button>
-				<button class="btn" title="Next" :disabled="!hasNext()" @click="next()"><i class="fa fa-chevron-right" /></button>
-			</div>
-			<div class="btn-group pull-right">
-				<button class="btn disabled zeno-paging"><b>{{ offset + 1 }}</b> &ndash; <b>{{ offset + (items?.length ?? 0) }}</b> of <b>{{ total.toLocaleString() }}</b></button>
-			</div>
+		<div class="d-flex align-center justify-end" v-show="items?.length">
+			<v-btn icon variant="text" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" /></v-btn>
+			<span style="color: rgba(0,0,0,0.5)"><b>{{ offset + 1 }}</b>&ndash;<b>{{ offset + (items?.length ?? 0) }}</b> of <b>{{ total.toLocaleString() }}</b></span>
+			<v-btn icon variant="text" title="Next" :disabled="!hasNext()" @click="next()"><v-icon icon="mdi-chevron-right" /></v-btn>
 		</div>
 	</div>
 </template>

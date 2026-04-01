@@ -1,3 +1,4 @@
 .idea/
+.playwright-mcp/
 node_modules/
 dist/

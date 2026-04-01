@@ -44,7 +44,7 @@ onMounted(async () => {
 </script>
 
 <template>
-	<div class="container-fluid">
-		<div v-if="message" class="alert alert-block alert-error">{{ message }}</div>
+	<div>
+		<v-alert v-if="message" type="error" variant="tonal">{{ message }}</v-alert>
 	</div>
 </template>

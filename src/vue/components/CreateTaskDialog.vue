@@ -550,69 +550,35 @@ watch(
 </script>
 
 <template>
-	<div v-if="visible" class="modal-backdrop fade in" @click="close()" />
-	<div class="modal" :class="{ hide: !visible, in: visible, fade: true }" :style="visible ? { display: 'block', top: '10%' } : {}">
-		<form class="modal-form" @submit.prevent="create()">
-			<div class="modal-header">
-				<a class="close" @click="close()">&times;</a>
-				<h4 class="alert-heading">Create Task</h4>
-			</div>
-			<div class="modal-body">
-				<div class="alert alert-error" v-if="message">{{ message }}</div>
-				<div>
-					<p class="alert alert-info">This task runs incrementally when the bucket is refreshed.</p>
-				</div>
-				<div class="control-group">
-					<label class="control-label" for="task-type">Type</label>
-					<div class="controls">
-						<select v-model="selectedType">
-							<option v-for="t in types" :key="t.id" :value="t">{{ t.id }}</option>
-						</select>
-						<p class="help-block">
-							{{ selectedType.description }}
-							{{ ' ' }}
-							<a v-if="selectedType.url" :href="selectedType.url" target="_blank">Source&hellip;</a>
-						</p>
+	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
+		<v-card>
+			<v-card-title>Create Task</v-card-title>
+			<v-form @submit.prevent="create()">
+				<v-card-text>
+					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+					<v-alert type="info" variant="tonal" class="mb-4">This task runs incrementally when the bucket is refreshed.</v-alert>
+					<v-select label="Type" :items="types" item-title="id" item-value="id" return-object v-model="selectedType" />
+					<div class="text-body-2 mb-4">
+						{{ selectedType.description }}
+						{{ ' ' }}
+						<a v-if="selectedType.url" :href="selectedType.url" target="_blank">Source&hellip;</a>
 					</div>
-				</div>
-				<template v-for="field in selectedType.fields" :key="field.key">
-					<div class="control-group" v-if="field.type === 'text'">
-						<label class="control-label" :for="field.key">{{ field.label }}</label>
-						<input :name="field.key" type="text" v-model="settings[field.key]" :required="field.required" :placeholder="field.placeholder" />
-						<p class="help-block" v-if="field.htmlHelp" v-html="field.htmlHelp"></p>
-						<p class="help-block" v-else-if="field.help">{{ field.help }}</p>
-					</div>
-					<div class="control-group" v-else-if="field.type === 'date'">
-						<label class="control-label" :for="field.key">{{ field.label }}</label>
-						<input class="input-small" type="date" v-model="settings[field.key]" />
-						<p class="help-block" v-if="field.help">{{ field.help }}</p>
-					</div>
-					<div class="control-group" v-else-if="field.type === 'radio' && Array.isArray(field.options)">
-						<label class="control-label">{{ field.label }}</label>
-						<label class="radio" v-for="opt in (field.options as FieldOption[])" :key="String(opt.value)">
-							<input type="radio" :name="field.key" :value="opt.value" v-model="settings[field.key]" /> {{ opt.label }}
-						</label>
-					</div>
-					<div class="control-group" v-else-if="field.type === 'checkbox'">
-						<label class="control-label">{{ field.label }}</label>
-						<label class="checkbox">
-							<input type="checkbox" v-model="(settings[field.key] as boolean)" /> {{ field.checkboxLabel }}
-						</label>
-					</div>
-					<div class="control-group" v-else-if="field.type === 'select'">
-						<label class="control-label" :for="field.key">{{ field.label }}</label>
-						<select :name="field.key" v-model="settings[field.key]" :required="field.required">
-							<option v-if="!field.required" :value="null"></option>
-							<option v-for="opt in getSelectOptions(field)" :key="String(opt.value)" :value="opt.value">{{ opt.label }}</option>
-						</select>
-						<p class="help-block" v-if="field.help">{{ field.help }}</p>
-					</div>
-				</template>
-			</div>
-			<div class="modal-footer">
-				<button type="submit" class="btn btn-primary">Save</button>
-				<button type="button" class="btn" @click="close()">Cancel</button>
-			</div>
-		</form>
-	</div>
+					<template v-for="field in selectedType.fields" :key="field.key">
+						<v-text-field v-if="field.type === 'text'" :label="field.label" v-model="settings[field.key]" :required="field.required" :placeholder="field.placeholder" :hint="field.help" :persistent-hint="!!field.help" />
+						<v-text-field v-else-if="field.type === 'date'" :label="field.label" type="date" v-model="settings[field.key]" :hint="field.help" :persistent-hint="!!field.help" />
+						<v-radio-group v-else-if="field.type === 'radio' && Array.isArray(field.options)" :label="field.label" v-model="settings[field.key]">
+							<v-radio v-for="opt in (field.options as FieldOption[])" :key="String(opt.value)" :label="opt.label" :value="opt.value" />
+						</v-radio-group>
+						<v-checkbox v-else-if="field.type === 'checkbox'" :label="field.checkboxLabel" v-model="settings[field.key]" />
+						<v-select v-else-if="field.type === 'select'" :label="field.label" :items="getSelectOptions(field)" item-title="label" item-value="value" v-model="settings[field.key]" :required="field.required" :clearable="!field.required" :hint="field.help" :persistent-hint="!!field.help" />
+					</template>
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn type="submit" color="primary">Save</v-btn>
+					<v-btn variant="text" @click="close()">Cancel</v-btn>
+				</v-card-actions>
+			</v-form>
+		</v-card>
+	</v-dialog>
 </template>

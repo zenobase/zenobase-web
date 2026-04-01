@@ -23,8 +23,8 @@ const terms = ref<Array<{ label: string; count: number }> | null>(null);
 function classesForOrderBy(column: string): string[] {
 	const classes: string[] = [];
 	if (props.settings.order?.includes(column)) {
-		classes.push('fa');
-		classes.push(props.settings.order.charAt(0) === '-' ? 'fa-sort-desc' : 'fa-sort-asc');
+		classes.push('mdi');
+		classes.push(props.settings.order.charAt(0) === '-' ? 'mdi-sort-descending' : 'mdi-sort-ascending');
 	}
 	return classes;
 }
@@ -92,7 +92,7 @@ onMounted(() => dashboard.register(registration));
 
 <template>
 	<div>
-		<table class="table" v-show="terms?.length">
+		<v-table v-show="terms?.length">
 			<thead>
 				<tr>
 					<th style="text-transform: capitalize">
@@ -109,18 +109,17 @@ onMounted(() => dashboard.register(registration));
 					<td style="text-align: right">{{ term.count.toLocaleString() }}</td>
 				</tr>
 			</tbody>
-		</table>
+		</v-table>
 
 		<p v-if="terms === null" class="none">Loading...</p>
 		<p v-else-if="terms.length === 0" class="none">None</p>
 
-		<div class="btn-toolbar" v-show="terms?.length">
-			<div class="btn-group pull-right">
-				<button class="btn" title="Previous" :disabled="!hasPrev()" @click="prev()"><i class="fa fa-chevron-left" /></button>
-				<button class="btn" title="Next" :disabled="!hasNext()" @click="next()"><i class="fa fa-chevron-right" /></button>
-			</div>
-			<div class="btn-group pull-right">
-				<button class="btn disabled zeno-paging"><b>{{ offset + 1 }}</b> &ndash; <b>{{ offset + (terms?.length ?? 0) }}</b></button>
+		<div class="d-flex align-center" v-show="terms?.length">
+			<v-spacer />
+			<span class="text-body-2"><b>{{ offset + 1 }}</b> &ndash; <b>{{ offset + (terms?.length ?? 0) }}</b></span>
+			<div class="d-flex ga-1">
+				<v-btn variant="text" size="small" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" size="small" /></v-btn>
+				<v-btn variant="text" size="small" title="Next" :disabled="!hasNext()" @click="next()"><v-icon icon="mdi-chevron-right" size="small" /></v-btn>
 			</div>
 		</div>
 	</div>

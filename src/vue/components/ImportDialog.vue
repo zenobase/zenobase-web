@@ -204,51 +204,37 @@ watch(selectedFormat, () => {
 </script>
 
 <template>
-	<div v-if="visible" class="modal-backdrop fade in" @click="close()" />
-	<div class="modal" :class="{ hide: !visible, in: visible, fade: true }" :style="visible ? { display: 'block', top: '10%' } : {}">
-		<form class="modal-form" @submit.prevent="submit()">
-			<fieldset :disabled="importing">
-				<div class="modal-header">
-					<a class="close" @click="close()">&times;</a>
-					<h4>Import</h4>
-				</div>
-				<div class="modal-body">
-					<div class="alert alert-error" v-if="message">{{ message }}</div>
-					<div class="control-group form-horizontal">
-						<select class="input-medium" v-model="selectedFormat" :disabled="importing">
-							<option v-for="f in formats" :key="f.id" :value="f">{{ f.label }}</option>
-						</select>
-						{{ ' ' }}
-						<span class="btn btn-file">
-							<span>Select file</span>
-							<input ref="fileInput" type="file" @change="onFileSelected" />
-						</span>
-					</div>
-					<div class="controls">
-						<span class="help-block" v-html="selectedFormat.description"></span>
-					</div>
-				</div>
-				<div class="modal-body modal-append" v-if="events.length === 0 && selectedFormat.settingsType === 'timezone'">
-					<div class="control-group">
-						<select name="timezone" v-model="settings.timezone" required>
-							<option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
-						</select>
-						<p class="help-block">The timezone to use.</p>
-					</div>
-				</div>
-				<div class="modal-body modal-append" v-if="events.length > 0">
-					<p v-html="formatEventHtml(events[previewOffset], previewExcludeFields)"></p>
-					<div class="btn-group pull-right">
-						<button type="button" class="btn disabled zeno-paging">Preview <b>{{ previewOffset + 1 }}</b> of <b>{{ events.length.toLocaleString() }}</b></button>
-						<button type="button" class="btn" title="Previous" @click="prevPreview()" :disabled="previewOffset === 0"><i class="fa fa-chevron-left" /></button>
-						<button type="button" class="btn" title="Next" @click="nextPreview()" :disabled="previewOffset + 1 >= events.length"><i class="fa fa-chevron-right" /></button>
-					</div>
-				</div>
-				<div class="modal-footer">
-					<button type="submit" class="btn btn-primary" :disabled="importing || events.length === 0">Import</button>
-					<button type="button" class="btn" @click="close()" :disabled="importing">Cancel</button>
-				</div>
-			</fieldset>
-		</form>
-	</div>
+	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
+		<v-card>
+			<v-card-title>Import</v-card-title>
+			<v-form @submit.prevent="submit()">
+				<fieldset :disabled="importing" style="border: none; padding: 0; margin: 0">
+					<v-card-text>
+						<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
+						<div class="d-flex ga-2 align-center mb-4">
+							<v-select :items="formats" item-title="label" item-value="id" return-object v-model="selectedFormat" :disabled="importing" label="Format" style="max-width: 200px" hide-details />
+							<v-btn variant="outlined" @click="fileInput?.click()">Select file</v-btn>
+							<input ref="fileInput" type="file" style="display: none" @change="onFileSelected" />
+						</div>
+						<div class="text-body-2 mb-4" v-html="selectedFormat.description"></div>
+						<v-select v-if="events.length === 0 && selectedFormat.settingsType === 'timezone'" :items="timezones" v-model="settings.timezone" label="Timezone" required hint="The timezone to use." persistent-hint />
+						<template v-if="events.length > 0">
+							<p v-html="formatEventHtml(events[previewOffset], previewExcludeFields)"></p>
+							<div class="d-flex align-center mt-2">
+								<v-spacer />
+								<v-btn icon variant="text" title="Previous" :disabled="previewOffset === 0" @click="prevPreview()"><v-icon icon="mdi-chevron-left" /></v-btn>
+								<span style="color: rgba(0,0,0,0.5)">Preview <b>{{ previewOffset + 1 }}</b> of <b>{{ events.length.toLocaleString() }}</b></span>
+								<v-btn icon variant="text" title="Next" :disabled="previewOffset + 1 >= events.length" @click="nextPreview()"><v-icon icon="mdi-chevron-right" /></v-btn>
+							</div>
+						</template>
+					</v-card-text>
+					<v-card-actions>
+						<v-spacer />
+						<v-btn type="submit" color="primary" :disabled="importing || events.length === 0">Import</v-btn>
+						<v-btn variant="text" @click="close()" :disabled="importing">Cancel</v-btn>
+					</v-card-actions>
+				</fieldset>
+			</v-form>
+		</v-card>
+	</v-dialog>
 </template>
