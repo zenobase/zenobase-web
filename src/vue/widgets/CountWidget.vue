@@ -77,7 +77,6 @@ function init() {
 }
 
 async function refresh() {
-	init();
 	const result = await dashboard.search([params()]);
 	update(result);
 }

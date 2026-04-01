@@ -131,7 +131,6 @@ async function refresh() {
 	const p = params();
 	p.offset = offset.value;
 	const result = await dashboard.search([p]);
-	init();
 	update(result);
 }
 
