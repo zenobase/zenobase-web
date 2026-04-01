@@ -447,7 +447,7 @@ watch(
 			</div>
 
 			<!-- Description -->
-			<p class="nav pull-left" v-if="bucket.description">{{ bucket.description }}</p>
+			<p class="nav" style="clear: both" v-if="bucket.description">{{ bucket.description }}</p>
 
 			<!-- Constraints -->
 			<ul class="nav nav-pills pull-left" v-if="dashboard.constraints.value.length || dashboard.constraintsB.value.length">
