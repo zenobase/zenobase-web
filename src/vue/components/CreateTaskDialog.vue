@@ -79,25 +79,6 @@ const types: TaskType[] = [
 		],
 	},
 	{
-		id: 'fitbark',
-		description: 'Creates an event for the activity level for every day or hour.',
-		url: 'https://www.fitbark.com/',
-		fields: [
-			{ key: 'name', label: 'Dog Name', type: 'text', default: '', required: true, help: 'The exact name of your dog, as entered in FitBark.' },
-			{
-				key: 'hourly',
-				label: 'Interval',
-				type: 'radio',
-				default: false,
-				options: [
-					{ value: false, label: 'day' },
-					{ value: true, label: 'hour' },
-				],
-			},
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
-		],
-	},
-	{
 		id: 'fitbit-activities',
 		description: 'Creates an event for each activity.',
 		url: 'https://www.fitbit.com/',
