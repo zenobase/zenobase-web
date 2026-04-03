@@ -17,6 +17,7 @@ import TaskListDialog from '../components/TaskListDialog.vue';
 import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
+import { reloadBucketsKey } from '../composables/useBuckets';
 import { dashboardKey, useDashboard } from '../composables/useDashboard';
 import { getFieldIcon } from '../utils/eventFormatter';
 import { getUserName } from '../utils/userNames';
@@ -55,6 +56,7 @@ const route = useRoute();
 const router = useRouter();
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
+const reloadBuckets = inject(reloadBucketsKey, () => {});
 const bucketId = computed(() => route.params.bucketId as string);
 
 const bucket = ref<Bucket | null>(null);
@@ -76,7 +78,7 @@ async function run() {
 		for (const task of response.data.tasks) {
 			await api.get(`/tasks/${task['@id']}`);
 		}
-		setTimeout(() => dashboard.refresh(), 1000);
+		setTimeout(() => { dashboard.refresh(); reloadBuckets(); }, 1000);
 	} finally {
 		loading.value = false;
 	}
@@ -238,7 +240,7 @@ async function removeEvent(eventId: string) {
 	try {
 		const response = await api.del(`/buckets/${bucketId.value}/${eventId}`);
 		alertApi.show('Deleted an event.', 'success', response.headers('X-Command-ID') || '');
-		setTimeout(() => dashboard.refresh(), 1000);
+		setTimeout(() => { dashboard.refresh(); reloadBuckets(); }, 1000);
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
@@ -250,7 +252,7 @@ async function removeEvent(eventId: string) {
 }
 
 function onEventSaved() {
-	setTimeout(() => dashboard.refresh(), 1000);
+	setTimeout(() => { dashboard.refresh(); reloadBuckets(); }, 1000);
 }
 
 // Dialog visibility states
@@ -306,11 +308,11 @@ function openExport() {
 
 function onBucketSaved(updatedBucket: Bucket) {
 	bucket.value = updatedBucket;
-	setTimeout(() => dashboard.refresh(), 1000);
+	setTimeout(() => { dashboard.refresh(); reloadBuckets(); }, 1000);
 }
 
 function onImported() {
-	setTimeout(() => dashboard.refresh(), 1000);
+	setTimeout(() => { dashboard.refresh(); reloadBuckets(); }, 1000);
 }
 
 function onTaskCreated() {
@@ -370,7 +372,7 @@ async function loadBucket() {
 		bucket.value = response.data;
 		if (refreshInterval) clearInterval(refreshInterval);
 		if (bucket.value.refresh) {
-			refreshInterval = setInterval(() => dashboard.refresh(), 60000);
+			refreshInterval = setInterval(() => { dashboard.refresh(); reloadBuckets(); }, 60000);
 		}
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;

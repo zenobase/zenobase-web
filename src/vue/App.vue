@@ -10,6 +10,7 @@ import SignInDialog from './components/SignInDialog.vue';
 import SignUpDialog from './components/SignUpDialog.vue';
 import { alertKey, useAlert } from './composables/useAlert';
 import { authKey, useAuth } from './composables/useAuth';
+import { reloadBucketsKey } from './composables/useBuckets';
 
 const router = useRouter();
 const auth = useAuth();
@@ -90,6 +91,7 @@ function loadMore() {
 	loadBuckets();
 }
 
+provide(reloadBucketsKey, () => loadBuckets({ reset: true }));
 
 
 // Create bucket dialog
