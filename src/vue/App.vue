@@ -357,7 +357,7 @@ watch(
 				>
 					<v-list-item-title class="font-weight-bold">{{ b.label }}</v-list-item-title>
 					<template v-slot:append>
-						<v-chip size="small" variant="flat" :color="b.archived ? 'grey' : 'primary'" class="font-weight-bold">{{ b.size?.toLocaleString() }}</v-chip>
+						<v-chip size="small" :variant="b.aliases?.length ? 'outlined' : 'flat'" :color="b.archived ? 'grey' : 'primary'" class="font-weight-bold">{{ b.size?.toLocaleString() }}</v-chip>
 					</template>
 				</v-list-item>
 				<v-list-item v-if="hasMore" @click="loadMore()" class="text-medium-emphasis">
