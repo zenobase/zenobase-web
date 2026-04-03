@@ -8,7 +8,7 @@ import NotFoundPage from './pages/NotFoundPage.vue';
 import OAuthAuthorizePage from './pages/OAuthAuthorizePage.vue';
 import PasswordResetPage from './pages/PasswordResetPage.vue';
 import SettingsPage from './pages/SettingsPage.vue';
-import UserPage from './pages/UserPage.vue';
+
 import VerificationPage from './pages/VerificationPage.vue';
 
 const router = createRouter({
@@ -21,7 +21,7 @@ const router = createRouter({
 		{ path: '/legal/:section?', component: LegalPage },
 		{ path: '/api/:section?', component: ApiDocsPage },
 		{ path: '/settings', component: SettingsPage },
-		{ path: '/users/:username', component: UserPage, props: true },
+		{ path: '/users/:username', redirect: '/' },
 		{ path: '/users/:username/reset', component: PasswordResetPage, props: true },
 		{ path: '/users/:username/verify', component: VerificationPage, props: true },
 		{ path: '/:pathMatch(.*)*', component: NotFoundPage },

@@ -21,7 +21,7 @@ onMounted(async () => {
 	} catch {
 		alertApi.show('Your email address could not be verified.', 'error');
 	}
-	router.push(`/users/${username}`);
+	router.push('/');
 });
 </script>
 

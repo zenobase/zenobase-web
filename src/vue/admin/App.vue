@@ -26,7 +26,7 @@ async function signOut() {
 			<v-spacer />
 			<div class="d-flex align-center ga-1 mr-3 text-body-2" v-if="auth.user.value?.name">
 				<v-icon icon="mdi-account" size="small" class="text-medium-emphasis" />
-				<a :href="`/#/users/${auth.user.value.name}`">{{ auth.user.value.name }}</a>
+				<a href="/#/settings">{{ auth.user.value.name }}</a>
 				<span class="text-medium-emphasis">|</span>
 				<a class="text-medium-emphasis" @click="signOut()">Sign out</a>
 			</div>

@@ -46,7 +46,7 @@ async function submit() {
 		const user = await auth.signUp(username.value, password.value, email.value);
 		model.value = false;
 		if (user.name) {
-			router.push(`/users/${user.name}`);
+			router.push('/');
 		}
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;

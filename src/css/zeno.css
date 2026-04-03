@@ -16,6 +16,19 @@ a:hover {
 	text-decoration: underline;
 }
 
+.v-navigation-drawer a {
+	color: inherit;
+}
+
+.v-navigation-drawer a:hover {
+	text-decoration: none;
+}
+
+.drawer-switch {
+	transform: scale(0.8);
+	transform-origin: left center;
+}
+
 abbr {
 	text-transform: none;
 }

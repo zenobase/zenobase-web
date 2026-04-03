@@ -27,11 +27,7 @@ onMounted(async () => {
 		} catch {
 			// window.close() may fail if not opened by script
 		}
-		if (auth.user.value) {
-			router.push(`/users/${auth.user.value.name || 'guest'}`);
-		} else {
-			router.push('/');
-		}
+		router.push('/');
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {

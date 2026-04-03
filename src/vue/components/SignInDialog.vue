@@ -33,8 +33,8 @@ async function signIn() {
 	try {
 		await auth.signIn(username.value, password.value);
 		model.value = false;
-		if (router.currentRoute.value.path === '/') {
-			router.push(`/users/${username.value}`);
+		if (router.currentRoute.value.path !== '/') {
+			router.push('/');
 		}
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;

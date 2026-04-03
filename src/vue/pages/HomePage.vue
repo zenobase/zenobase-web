@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { inject, type Ref } from 'vue';
-import { useRouter } from 'vue-router';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { FIELD_REGISTRY } from '../utils/eventFormatter';
 
-const router = useRouter();
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
 const showSignIn = inject<Ref<boolean>>('showSignIn')!;
+const openCreateBucket = inject<() => void>('openCreateBucket')!;
 
 async function start() {
 	alertApi.clear();
@@ -17,8 +16,7 @@ async function start() {
 		const response = await api.postForm<{ access_token: string }>('/oauth/token', 'grant_type=client_credentials');
 		api.setToken(response.data.access_token);
 		await auth.whoami();
-		const name = auth.user.value?.name || 'guest';
-		router.push({ path: `/users/${name}`, query: { openCreateBucket: '1' } });
+		setTimeout(() => openCreateBucket(), 1000);
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
@@ -93,24 +91,20 @@ const integrations: Record<string, string[]> = {
 </script>
 
 <template>
-	<div id="home-view">
+	<div id="home-view" v-if="!auth.user.value">
 		<!-- Hero -->
-		<v-sheet class="hero-unit text-center">
+		<v-sheet v-if="!auth.user.value" class="hero-unit text-center">
 			<div class="hero-overlay">
 				<div class="hero-content">
 					<img src="/img/logo_560x144.png" alt="Zenobase" width="280" height="72" class="hero-logo" />
 					<h1 class="hero-title">Got data? Get answers.</h1>
 					<p class="hero-subtitle">Capture and analyze your personal data.</p>
 					<div class="hero-cta">
-						<v-btn v-if="!auth.user.value" size="large" variant="outlined" class="hero-btn" @click="start()">
+						<v-btn size="large" variant="outlined" class="hero-btn" @click="start()">
 							Get Started
 							<v-icon end icon="mdi-arrow-right" />
 						</v-btn>
-						<v-btn v-else size="large" variant="outlined" class="hero-btn" :to="`/users/${auth.user.value.name || 'guest'}`">
-							My Data
-							<v-icon end icon="mdi-arrow-right" />
-						</v-btn>
-						<div v-if="!auth.user.value" class="mt-3 text-body-2">
+						<div class="mt-3 text-body-2">
 							or <a @click="showSignIn = true">sign in</a>
 						</div>
 					</div>

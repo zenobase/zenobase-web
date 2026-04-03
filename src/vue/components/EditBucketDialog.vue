@@ -123,10 +123,7 @@ async function archiveBucket(archive: boolean) {
 	try {
 		await api.put(`/buckets/${props.bucketId}`, newBucket.value);
 		close();
-		const owner = newBucket.value.roles.find((r) => r.role === 'owner');
-		if (owner) {
-			router.push(`/users/${owner.principal}`);
-		}
+		router.push('/');
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
@@ -142,10 +139,7 @@ async function deleteBucket() {
 	try {
 		await api.del(`/buckets/${props.bucketId}`);
 		close();
-		const owner = newBucket.value?.roles.find((r) => r.role === 'owner');
-		if (owner) {
-			router.push(`/users/${owner.principal}`);
-		}
+		router.push('/');
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {

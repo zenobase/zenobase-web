@@ -28,7 +28,7 @@ async function submit() {
 	try {
 		await auth.resetPassword(username, key, expires, password.value);
 		alertApi.show('Your password has been changed.', 'success');
-		router.push(`/users/${username}`);
+		router.push('/');
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
