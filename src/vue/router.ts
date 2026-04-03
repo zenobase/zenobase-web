@@ -2,6 +2,8 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import ApiDocsPage from './pages/ApiDocsPage.vue';
 import CredentialsPage from './pages/CredentialsPage.vue';
 import DashboardPage from './pages/DashboardPage.vue';
+import ErrorLoggedPage from './pages/ErrorLoggedPage.vue';
+import ErrorUnhandledPage from './pages/ErrorUnhandledPage.vue';
 import HomePage from './pages/HomePage.vue';
 import LegalPage from './pages/LegalPage.vue';
 import NotFoundPage from './pages/NotFoundPage.vue';
@@ -20,6 +22,8 @@ const router = createRouter({
 		{ path: '/oauth/authorize', component: OAuthAuthorizePage },
 		{ path: '/legal/:section?', component: LegalPage },
 		{ path: '/api/:section?', component: ApiDocsPage },
+		{ path: '/error-unhandled', component: ErrorUnhandledPage },
+		{ path: '/error-logged', component: ErrorLoggedPage },
 		{ path: '/settings', component: SettingsPage },
 		{ path: '/users/:username', redirect: '/' },
 		{ path: '/users/:username/reset', component: PasswordResetPage, props: true },
