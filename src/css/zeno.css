@@ -58,6 +58,7 @@ abbr {
 
 .v-tabs-window {
 	overflow: visible;
+	padding-top: 12px;
 }
 
 /* ── Footer ── */
