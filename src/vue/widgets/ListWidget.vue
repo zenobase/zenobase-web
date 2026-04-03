@@ -214,16 +214,14 @@ onBeforeUnmount(() => {
 
 		<v-table v-show="items?.length" density="default">
 			<tbody>
-				<v-hover v-for="event in items" :key="event['@id'] as string" v-slot="{ isHovering, props: hoverProps }">
-				<tr v-bind="hoverProps" class="event-row" :class="{ 'event-row--editable': editable && !isVirtual }" @click="onEventClick($event)" @contextmenu.prevent="editable && !isVirtual && onLongPress(event)">
+				<tr v-for="event in items" :key="event['@id'] as string" class="event-row" :class="{ 'event-row--editable': editable && !isVirtual }" @click="onEventClick($event)" @contextmenu.prevent="editable && !isVirtual && onLongPress(event)">
 					<td style="line-height: 1.5; border-style: none; position: relative; overflow: visible">
 						<span v-html="formatEventHtml(event, undefined, FIELD_OVERRIDES)" />
-						<div v-if="editable && !isVirtual" class="event-actions" :class="{ 'event-actions--visible': isHovering || longPressedEventId === event['@id'] }">
+						<div v-if="editable && !isVirtual" class="event-actions" :class="{ 'event-actions--visible': longPressedEventId === event['@id'] }">
 							<v-btn icon="mdi-pencil" size="small" variant="elevated" color="primary" title="Edit" @click.stop="emit('openDialog', 'edit-event-dialog', event)" />
 						</div>
 					</td>
 				</tr>
-			</v-hover>
 			</tbody>
 		</v-table>
 

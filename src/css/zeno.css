@@ -192,8 +192,25 @@ span:hover > .action {
 	pointer-events: none;
 }
 
+.event-actions .v-btn {
+	pointer-events: none;
+}
+
+@media (hover: hover) {
+	.event-row:hover .event-actions {
+		opacity: 1;
+	}
+
+	.event-row:hover .event-actions .v-btn {
+		pointer-events: auto;
+	}
+}
+
 .event-actions--visible {
 	opacity: 1;
+}
+
+.event-actions--visible .v-btn {
 	pointer-events: auto;
 }
 
