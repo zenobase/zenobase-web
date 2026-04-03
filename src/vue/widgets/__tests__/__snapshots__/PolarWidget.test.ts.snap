@@ -1,0 +1,120 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PolarWidget > matches snapshot 1`] = `
+{
+  "angleAxis": {
+    "axisLine": {
+      "lineStyle": {
+        "color": "#ddd",
+      },
+    },
+    "axisTick": {
+      "show": false,
+    },
+    "data": [
+      "0h",
+      "1h",
+      "2h",
+      "3h",
+      "4h",
+      "5h",
+      "6h",
+      "7h",
+      "8h",
+      "9h",
+      "10h",
+      "11h",
+      "12h",
+      "13h",
+      "14h",
+      "15h",
+      "16h",
+      "17h",
+      "18h",
+      "19h",
+      "20h",
+      "21h",
+      "22h",
+      "23h",
+    ],
+    "splitLine": {
+      "lineStyle": {
+        "color": "#ddd",
+      },
+      "show": true,
+    },
+    "startAngle": 97.5,
+    "type": "category",
+  },
+  "animation": false,
+  "legend": {
+    "show": false,
+  },
+  "polar": {
+    "radius": "75%",
+  },
+  "radiusAxis": {
+    "axisLabel": {
+      "show": false,
+    },
+    "axisLine": {
+      "show": false,
+    },
+    "axisTick": {
+      "show": false,
+    },
+    "max": undefined,
+    "min": undefined,
+    "splitLine": {
+      "lineStyle": {
+        "color": "#ddd",
+      },
+      "show": true,
+    },
+  },
+  "series": [
+    {
+      "barCategoryGap": "0%",
+      "barGap": "-100%",
+      "coordinateSystem": "polar",
+      "data": [
+        2,
+        4,
+        6,
+        8,
+        10,
+        12,
+        14,
+        16,
+        18,
+        20,
+        22,
+        24,
+        26,
+        28,
+        30,
+        32,
+        34,
+        36,
+        38,
+        40,
+        42,
+        44,
+        46,
+        48,
+      ],
+      "itemStyle": {
+        "borderColor": "rgba(59, 134, 198, 0.2)",
+        "borderWidth": 1,
+        "color": "rgba(59, 134, 198, 0.4)",
+      },
+      "name": "count",
+      "type": "bar",
+    },
+  ],
+  "tooltip": {
+    "formatter": [Function],
+    "trigger": "item",
+  },
+}
+`;

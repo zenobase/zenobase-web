@@ -1,0 +1,114 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TimelineWidget > matches snapshot 1`] = `
+{
+  "animation": false,
+  "brush": {
+    "brushType": "lineX",
+    "throttleDelay": 0,
+    "throttleType": "fixRate",
+    "xAxisIndex": 0,
+  },
+  "dataZoom": [
+    {
+      "moveOnMouseMove": false,
+      "moveOnMouseWheel": false,
+      "type": "inside",
+      "xAxisIndex": 0,
+      "zoomOnMouseWheel": true,
+    },
+  ],
+  "grid": {
+    "bottom": 30,
+    "left": 50,
+    "right": 20,
+    "top": 10,
+  },
+  "legend": {
+    "show": false,
+  },
+  "series": [
+    {
+      "cursor": "pointer",
+      "data": [
+        [
+          1704067200000,
+          10,
+        ],
+        [
+          1706745600000,
+          8,
+        ],
+        [
+          1709251200000,
+          12,
+        ],
+      ],
+      "itemStyle": {
+        "borderRadius": 5,
+        "borderWidth": 0,
+        "color": "rgba(59, 134, 198, 0.4)",
+      },
+      "name": "count",
+      "type": "bar",
+      "z": 2,
+    },
+  ],
+  "toolbox": {
+    "feature": {
+      "brush": {
+        "type": [
+          "lineX",
+        ],
+      },
+    },
+    "show": false,
+  },
+  "tooltip": {
+    "formatter": [Function],
+    "trigger": "item",
+  },
+  "xAxis": {
+    "axisLabel": {
+      "hideOverlap": true,
+    },
+    "axisLine": {
+      "lineStyle": {
+        "color": "#ccc",
+      },
+    },
+    "axisTick": {
+      "lineStyle": {
+        "color": "#ccc",
+      },
+    },
+    "minInterval": 2419200000,
+    "splitLine": {
+      "show": false,
+    },
+    "splitNumber": 10,
+    "type": "time",
+  },
+  "yAxis": {
+    "axisLabel": {
+      "formatter": [Function],
+    },
+    "axisLine": {
+      "show": false,
+    },
+    "axisTick": {
+      "lineStyle": {
+        "color": "#ccc",
+      },
+      "show": true,
+    },
+    "max": undefined,
+    "min": undefined,
+    "splitLine": {
+      "show": false,
+    },
+    "splitNumber": 4,
+    "type": "value",
+  },
+}
+`;

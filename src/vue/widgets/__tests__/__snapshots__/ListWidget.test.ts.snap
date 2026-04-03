@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ListWidget > matches snapshot 1`] = `
+"<div>
+  <form class="list-search-bar"><i class="mdi-bookmark mdi v-icon notranslate v-theme--light v-icon--size-small v-icon--clickable text-medium-emphasis" style="cursor: pointer;" role="button" aria-hidden="false" tabindex="0" aria-haspopup="menu" aria-expanded="false" aria-controls="v-menu-v-0" aria-owns="v-menu-v-0" title="Search field"></i>
+    <!----><input placeholder="search in resources" class="list-search-input">
+    <!--v-if--><i class="mdi-filter mdi v-icon notranslate v-theme--light v-icon--size-small v-icon--clickable text-disabled" style="cursor: pointer;" role="button" aria-hidden="false" tabindex="0" title="Apply filter to dashboard"></i>
+  </form>
+  <div class="v-table v-theme--light v-table--density-default" style="">
+    <!---->
+    <div class="v-table__wrapper">
+      <table>
+        <tbody>
+          <tr class="event-row">
+            <td style="line-height: 1.5; border-style: none; position: relative;"><span><span class="text-no-wrap"><i class="mdi mdi-tag" title="Tag"></i> sleep</span> &nbsp; <span class="text-no-wrap"><i class="mdi mdi-calendar-outline" title="Timestamp"></i> <abbr title="2025-06-01T12:00:00Z">Jun 1, 2025, 5:00 AM</abbr></span></span>
+              <!--v-if-->
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!---->
+  </div>
+  <!--v-if-->
+  <div class="d-flex align-center justify-end" style=""><button type="button" class="v-btn v-btn--disabled v-btn--icon v-theme--light v-btn--density-default v-btn--size-default v-btn--variant-text" disabled="" title="Previous"><span class="v-btn__overlay"></span><span class="v-btn__underlay"></span>
+      <!----><span class="v-btn__content" data-no-activator=""><i class="mdi-chevron-left mdi v-icon notranslate v-theme--light v-icon--size-default" aria-hidden="true"></i></span>
+      <!---->
+      <!---->
+    </button><span style="color: rgba(0, 0, 0, 0.5);"><b>1</b>–<b>1</b> of <b>1</b></span><button type="button" class="v-btn v-btn--disabled v-btn--icon v-theme--light v-btn--density-default v-btn--size-default v-btn--variant-text" disabled="" title="Next"><span class="v-btn__overlay"></span><span class="v-btn__underlay"></span>
+      <!----><span class="v-btn__content" data-no-activator=""><i class="mdi-chevron-right mdi v-icon notranslate v-theme--light v-icon--size-default" aria-hidden="true"></i></span>
+      <!---->
+      <!---->
+    </button></div>
+</div>"
+`;

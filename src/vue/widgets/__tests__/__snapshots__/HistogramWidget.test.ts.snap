@@ -1,0 +1,59 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`HistogramWidget > matches snapshot 1`] = `
+{
+  "animation": false,
+  "grid": {
+    "bottom": 30,
+    "height": 110,
+    "left": 80,
+    "right": 20,
+    "top": 10,
+  },
+  "legend": {
+    "show": false,
+  },
+  "series": [
+    {
+      "barWidth": 10,
+      "data": [
+        5,
+        12,
+        3,
+      ],
+      "itemStyle": {
+        "borderRadius": 5,
+        "color": "rgba(59, 134, 198, 0.4)",
+      },
+      "name": "count",
+      "type": "bar",
+    },
+  ],
+  "tooltip": {
+    "formatter": [Function],
+    "trigger": "item",
+  },
+  "xAxis": {
+    "axisLabel": {
+      "formatter": [Function],
+      "hideOverlap": true,
+    },
+    "splitLine": {
+      "show": false,
+    },
+    "type": "value",
+  },
+  "yAxis": {
+    "axisTick": {
+      "show": false,
+    },
+    "data": [
+      "0..60ms",
+      "60ms..120ms",
+      "120ms..180ms",
+    ],
+    "inverse": true,
+    "type": "category",
+  },
+}
+`;

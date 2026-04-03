@@ -1,0 +1,79 @@
+import { flushPromises } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
+import PolarWidget from '../PolarWidget.vue';
+import { createEChartsStub, feedData, mountWidget } from './helpers';
+
+describe('PolarWidget', () => {
+	const settings = { id: 'w1', value_field: 'duration', interval: 'hour_of_day' };
+
+	const mockData = Array.from({ length: 24 }, (_, i) => ({
+		label: `${i}h`,
+		value: String(i),
+		count: (i + 1) * 2,
+	}));
+
+	function mountWithStub(settingsOverride?: Record<string, unknown>) {
+		const { Stub, capturedOptions } = createEChartsStub();
+		const result = mountWidget(PolarWidget, settingsOverride ?? settings, {
+			stubs: { EChartsChart: Stub },
+		});
+		return { ...result, capturedOptions };
+	}
+
+	it('mounts and registers with dashboard', () => {
+		const { dashboard } = mountWithStub();
+		expect(dashboard.register).toHaveBeenCalledOnce();
+	});
+
+	it('shows loading state initially', () => {
+		const { wrapper } = mountWithStub();
+		expect(wrapper.find('.none').text()).toBe('Loading...');
+	});
+
+	it('builds chart with correct angle axis labels', async () => {
+		const { registration, capturedOptions } = mountWithStub();
+		await feedData(registration, 'w1', mockData);
+		await flushPromises();
+
+		const angleAxis = (capturedOptions.value as Record<string, unknown>).angleAxis as { data: string[] };
+		expect(angleAxis.data).toHaveLength(24);
+		expect(angleAxis.data[0]).toBe('0h');
+		expect(angleAxis.data[23]).toBe('23h');
+	});
+
+	it('builds chart with correct series data', async () => {
+		const { registration, capturedOptions } = mountWithStub();
+		await feedData(registration, 'w1', mockData);
+		await flushPromises();
+
+		const series = (capturedOptions.value as Record<string, unknown>).series as Array<{ data: number[] }>;
+		expect(series).toHaveLength(1);
+		expect(series[0].data).toEqual(mockData.map((d) => d.count));
+	});
+
+	it('adds second series for A/B comparison', async () => {
+		const { registration, capturedOptions } = mountWithStub();
+		const dataBSlice = mockData.map((d) => ({ ...d, count: d.count + 5 }));
+		await feedData(registration, 'w1', mockData, dataBSlice);
+		await flushPromises();
+
+		const series = (capturedOptions.value as Record<string, unknown>).series as Array<{ name: string }>;
+		expect(series).toHaveLength(2);
+		expect(series[1].name).toContain('-B');
+	});
+
+	it('shows "None" for empty data', async () => {
+		const { wrapper, registration } = mountWithStub();
+		await feedData(registration, 'w1', []);
+
+		expect(wrapper.text()).toContain('None');
+	});
+
+	it('matches snapshot', async () => {
+		const { registration, capturedOptions } = mountWithStub();
+		await feedData(registration, 'w1', mockData);
+		await flushPromises();
+
+		expect(capturedOptions.value).toMatchSnapshot();
+	});
+});

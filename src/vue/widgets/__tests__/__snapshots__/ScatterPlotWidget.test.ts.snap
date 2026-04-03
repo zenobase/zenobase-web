@@ -1,0 +1,113 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ScatterPlotWidget > matches snapshot 1`] = `
+{
+  "animation": false,
+  "dataZoom": [
+    {
+      "type": "inside",
+      "xAxisIndex": 0,
+    },
+    {
+      "type": "inside",
+      "yAxisIndex": 0,
+    },
+  ],
+  "grid": {
+    "bottom": 40,
+    "containLabel": false,
+    "left": 60,
+    "right": 20,
+    "top": 10,
+  },
+  "legend": {
+    "show": false,
+  },
+  "series": [
+    {
+      "data": [
+        [
+          60,
+          80,
+        ],
+        [
+          120,
+          90,
+        ],
+        [
+          45,
+          70,
+        ],
+        [
+          90,
+          85,
+        ],
+      ],
+      "itemStyle": {
+        "color": "rgba(59, 134, 198, 0.5)",
+      },
+      "selectedMode": "single",
+      "symbolSize": 10,
+      "type": "scatter",
+    },
+  ],
+  "tooltip": {
+    "formatter": [Function],
+    "trigger": "item",
+  },
+  "xAxis": {
+    "axisLabel": {
+      "formatter": [Function],
+    },
+    "axisLine": {
+      "onZero": false,
+      "show": false,
+    },
+    "axisTick": {
+      "alignWithLabel": true,
+      "lineStyle": {
+        "color": "#ccc",
+      },
+      "show": true,
+    },
+    "max": undefined,
+    "min": undefined,
+    "name": "count of duration",
+    "nameGap": 25,
+    "nameLocation": "middle",
+    "scale": true,
+    "splitLine": {
+      "show": false,
+    },
+    "splitNumber": 8,
+    "type": "value",
+  },
+  "yAxis": {
+    "axisLabel": {
+      "formatter": [Function],
+    },
+    "axisLine": {
+      "onZero": false,
+      "show": false,
+    },
+    "axisTick": {
+      "alignWithLabel": true,
+      "lineStyle": {
+        "color": "#ccc",
+      },
+      "show": true,
+    },
+    "max": undefined,
+    "min": undefined,
+    "name": "count of rating",
+    "nameGap": 40,
+    "nameLocation": "middle",
+    "scale": true,
+    "splitLine": {
+      "show": false,
+    },
+    "splitNumber": 8,
+    "type": "value",
+  },
+}
+`;

@@ -1,0 +1,36 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GanttWidget > matches snapshot 1`] = `
+"<div>
+  <div class="v-table v-theme--light v-table--density-default" style="">
+    <!---->
+    <div class="v-table__wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-transform: capitalize;">tag <i class=""></i></th>
+            <th style="text-align: right;">Last <i class=""></i></th>
+            <th style="text-align: right;">Freq</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a>exercise</a></td>
+            <td style="text-align: right;"><abbr title="2025-06-15T00:00:00Z">16d ago</abbr></td>
+            <td style="text-align: right;"><span>3d</span></td>
+          </tr>
+          <tr>
+            <td><a>reading</a></td>
+            <td style="text-align: right;"><abbr title="2025-06-01T00:00:00Z">1mo ago</abbr></td>
+            <td style="text-align: right;">
+              <!--v-if-->
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!---->
+  </div>
+  <!--v-if-->
+</div>"
+`;

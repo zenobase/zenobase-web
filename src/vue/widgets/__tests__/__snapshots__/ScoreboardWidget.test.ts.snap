@@ -1,0 +1,43 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ScoreboardWidget > matches snapshot 1`] = `
+"<div>
+  <div class="v-table v-theme--light v-table--density-default" style="">
+    <!---->
+    <div class="v-table__wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-transform: capitalize;">tag <i class=""></i></th>
+            <th style="text-align: right;">Count <i class=""></i></th>
+            <!--v-if-->
+            <!--v-if-->
+            <th style="text-align: right;">Sum <i class=""></i></th>
+            <th style="text-align: right;">Avg <i class=""></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a>sleep</a></td>
+            <td style="text-align: right;">30</td>
+            <!--v-if-->
+            <!--v-if-->
+            <td style="text-align: right;">14,400</td>
+            <td style="text-align: right;">480</td>
+          </tr>
+          <tr>
+            <td><a>exercise</a></td>
+            <td style="text-align: right;">15</td>
+            <!--v-if-->
+            <!--v-if-->
+            <td style="text-align: right;">900</td>
+            <td style="text-align: right;">60</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!---->
+  </div>
+  <!--v-if-->
+</div>"
+`;

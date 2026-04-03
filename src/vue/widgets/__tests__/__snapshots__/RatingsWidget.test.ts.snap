@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`RatingsWidget > matches snapshot 1`] = `
+"<div>
+  <div class="v-table v-theme--light v-table--density-default" style="">
+    <!---->
+    <div class="v-table__wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Rating</th>
+            <th style="text-align: right;">Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a aria-label="Filter by rating"><i class="mdi-star mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star-outline mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i></a></td>
+            <td style="text-align: right;">15</td>
+          </tr>
+          <tr>
+            <td><a aria-label="Filter by rating"><i class="mdi-star mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star-outline mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star-outline mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i></a></td>
+            <td style="text-align: right;">8</td>
+          </tr>
+          <tr>
+            <td><a aria-label="Filter by rating"><i class="mdi-star-outline mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star-outline mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star-outline mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star-outline mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i><i class="mdi-star-outline mdi v-icon notranslate v-theme--light v-icon--size-small" aria-hidden="true"></i></a></td>
+            <td style="text-align: right;">2</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!---->
+  </div>
+  <!--v-if-->
+</div>"
+`;
