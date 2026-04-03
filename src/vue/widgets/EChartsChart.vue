@@ -17,6 +17,7 @@ const props = defineProps<{
 const emit = defineEmits<{
 	snapshot: [];
 	ready: [instance: echarts.ECharts];
+	updated: [instance: echarts.ECharts];
 }>();
 
 const chartEl = ref<HTMLDivElement | null>(null);
@@ -38,6 +39,7 @@ function render(options: Record<string, unknown> | null) {
 	if (chart) {
 		if (options) {
 			chart.setOption(options, { notMerge: true });
+			emit('updated', chart);
 		} else {
 			chart.dispose();
 			chart = null;

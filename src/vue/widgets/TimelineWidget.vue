@@ -593,11 +593,7 @@ function onChartReady(instance: ECharts) {
 			}
 		});
 	}
-	instance.dispatchAction({
-		type: 'takeGlobalCursor',
-		key: 'brush',
-		brushOption: { brushType: 'lineX', brushMode: 'single' },
-	});
+	activateBrush(instance);
 	let pendingRange: number[] | null = null;
 	instance.on('brushSelected', (params: unknown) => {
 		const p = params as Record<string, unknown>;
@@ -624,11 +620,15 @@ function onChartReady(instance: ECharts) {
 			filterByValue(value);
 		}
 		// Re-activate brush for next selection
-		instance.dispatchAction({
-			type: 'takeGlobalCursor',
-			key: 'brush',
-			brushOption: { brushType: 'lineX', brushMode: 'single' },
-		});
+		activateBrush(instance);
+	});
+}
+
+function activateBrush(instance: ECharts) {
+	instance.dispatchAction({
+		type: 'takeGlobalCursor',
+		key: 'brush',
+		brushOption: { brushType: 'lineX', brushMode: 'single' },
 	});
 }
 
@@ -697,9 +697,15 @@ onMounted(() => dashboard.register(registration));
 			</div>
 		</v-row>
 
-		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
+		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" @updated="activateBrush" />
 		<EChartsChart v-if="effectSizeOptions" :options="effectSizeOptions" />
 		<p v-if="times === null" class="none">Loading...</p>
 		<p v-else-if="times.length === 0 && timesB.length === 0" class="none">None</p>
 	</div>
 </template>
+
+<style scoped>
+:deep(.echarts-chart div[style*="cursor"]) {
+	cursor: pointer !important;
+}
+</style>
