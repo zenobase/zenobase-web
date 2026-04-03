@@ -421,7 +421,7 @@ watch(
 
 		<div v-if="bucket">
 			<Teleport to="#page-toolbar">
-				<span class="text-subtitle-1 font-weight-bold mr-1" :class="{ 'bucket-archived': bucket.archived }" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ bucket.label }}</span>
+				<span class="text-subtitle-1 font-weight-bold mr-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ bucket.label }}</span>
 				<v-btn icon size="small" variant="text" @click="run()" title="Refresh" v-if="editable">
 					<v-icon icon="mdi-refresh" :class="{ 'mdi-spin': loading }" />
 				</v-btn>

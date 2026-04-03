@@ -352,12 +352,12 @@ watch(
 					v-for="b in buckets"
 					:key="b['@id']"
 					:to="`/buckets/${b['@id']}/`"
-					:class="{ 'text-medium-emphasis': b.archived }"
+					:class="{ 'bucket-archived': b.archived }"
 					:prepend-icon="b.aliases?.length ? 'mdi-view-dashboard-outline' : 'mdi-view-dashboard'"
 				>
 					<v-list-item-title class="font-weight-bold">{{ b.label }}</v-list-item-title>
 					<template v-slot:append>
-						<v-chip size="small" variant="flat" color="primary" class="font-weight-bold">{{ b.size?.toLocaleString() }}</v-chip>
+						<v-chip size="small" variant="flat" :color="b.archived ? 'grey' : 'primary'" class="font-weight-bold">{{ b.size?.toLocaleString() }}</v-chip>
 					</template>
 				</v-list-item>
 				<v-list-item v-if="hasMore" @click="loadMore()" class="text-medium-emphasis">

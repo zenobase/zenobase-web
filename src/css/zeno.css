@@ -217,9 +217,8 @@ span:hover > .action {
 	font-style: italic;
 }
 
-.bucket-archived,
-.bucket-archived a:link,
-.bucket-archived a:visited {
+.bucket-archived .v-list-item__prepend .v-icon,
+.bucket-archived .v-list-item-title {
 	color: rgba(0, 0, 0, 0.38);
 }
 
