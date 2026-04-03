@@ -114,13 +114,10 @@ onMounted(() => dashboard.register(registration));
 		<p v-if="terms === null" class="none">Loading...</p>
 		<p v-else-if="terms.length === 0" class="none">None</p>
 
-		<div class="d-flex align-center" v-show="terms?.length">
-			<v-spacer />
-			<span class="text-body-2"><b>{{ offset + 1 }}</b> &ndash; <b>{{ offset + (terms?.length ?? 0) }}</b></span>
-			<div class="d-flex ga-1">
-				<v-btn variant="text" size="small" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" size="small" /></v-btn>
-				<v-btn variant="text" size="small" title="Next" :disabled="!hasNext()" @click="next()"><v-icon icon="mdi-chevron-right" size="small" /></v-btn>
-			</div>
+		<div class="d-flex align-center justify-end" v-show="hasPrev() || hasNext()">
+			<v-btn icon variant="text" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" /></v-btn>
+			<span style="color: rgba(0,0,0,0.5)"><b>{{ offset + 1 }}</b>&ndash;<b>{{ offset + (terms?.length ?? 0) }}</b></span>
+			<v-btn icon variant="text" title="Next" :disabled="!hasNext()" @click="next()"><v-icon icon="mdi-chevron-right" /></v-btn>
 		</div>
 	</div>
 </template>
