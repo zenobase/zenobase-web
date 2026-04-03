@@ -21,7 +21,8 @@
 		"rules": {
 			"recommended": true,
 			"correctness": {
-				"noUndeclaredVariables": "off"
+				"noUndeclaredVariables": "off",
+				"noUnknownPseudoClass": "off"
 			},
 			"style": {
 				"useTemplate": "off",
