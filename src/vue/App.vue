@@ -540,3 +540,15 @@ watch(
 		</v-dialog>
 	</v-app>
 </template>
+
+<style>
+.v-navigation-drawer .v-list {
+	--v-list-prepend-gap: 8px;
+}
+.drawer-switch {
+	margin-inline-start: 4px;
+}
+.drawer-switch .v-label {
+	margin-inline-start: 8px;
+}
+</style>
