@@ -169,7 +169,7 @@ watch(
 			</v-btn>
 		</Teleport>
 
-		<div style="max-width: 800px; margin: 0 auto">
+		<div style="max-width: 800px; margin: 0 auto" class="pt-4">
 			<!-- Quota -->
 			<v-card variant="elevated" elevation="1" class="mb-6" v-if="quota">
 				<v-card-title>Quota</v-card-title>
@@ -209,6 +209,7 @@ watch(
 			<!-- Credentials -->
 			<v-card variant="elevated" elevation="1" class="mb-6">
 				<v-card-title>Credentials</v-card-title>
+				<v-card-subtitle>You have granted Zenobase access to data in these services</v-card-subtitle>
 				<v-card-text>
 					<v-table>
 						<tbody>
@@ -234,6 +235,7 @@ watch(
 			<!-- Authorizations -->
 			<v-card variant="elevated" elevation="1" class="mb-6">
 				<v-card-title>Authorizations</v-card-title>
+				<v-card-subtitle>These services have been granted access to data in Zenobase</v-card-subtitle>
 				<v-card-text>
 					<v-table>
 						<tbody>
@@ -262,3 +264,14 @@ watch(
 		</div>
 	</div>
 </template>
+
+<style scoped>
+.v-card-title {
+	text-transform: uppercase;
+	font-size: 0.875rem !important;
+	font-weight: 600;
+}
+:deep(.v-card-subtitle) {
+	white-space: normal !important;
+}
+</style>
