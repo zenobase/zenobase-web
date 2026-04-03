@@ -306,22 +306,14 @@ watch(
 				<img src="/img/logo_120x120.png" alt="Zenobase" width="28" height="28" />
 			</router-link>
 			<div id="page-toolbar" class="d-flex align-center ga-1" style="flex: 1; min-width: 0" />
-			<div class="d-none d-sm-flex align-center ga-1 mr-3 text-body-2" v-if="auth.user.value">
-				<v-icon icon="mdi-account" size="small" class="text-medium-emphasis" />
-				<span>{{ auth.user.value.name || 'guest' }}</span>
-				<span class="text-medium-emphasis">|</span>
-				<a class="text-medium-emphasis" @click="signOut()">Sign out</a>
-			</div>
-			<v-menu v-if="auth.user.value" class="d-sm-none">
+			<v-menu v-if="auth.user.value">
 				<template v-slot:activator="{ props }">
-					<v-btn icon size="small" variant="text" v-bind="props" class="mr-1 d-sm-none">
-						<v-icon icon="mdi-account" />
+					<v-btn size="small" variant="text" v-bind="props" class="mr-1 text-body-2">
+						<v-icon icon="mdi-account" size="small" class="text-medium-emphasis" />
+						<span class="ml-1">{{ auth.user.value.name || 'guest' }}</span>
 					</v-btn>
 				</template>
 				<v-list density="compact">
-					<v-list-item>
-						<v-list-item-title>{{ auth.user.value.name || 'guest' }}</v-list-item-title>
-					</v-list-item>
 					<v-list-item @click="signOut()">
 						<v-list-item-title>Sign out</v-list-item-title>
 					</v-list-item>
