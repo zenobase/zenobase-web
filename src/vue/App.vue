@@ -40,7 +40,13 @@ async function signOut() {
 }
 
 // Navigation drawer
-const drawer = ref(true);
+const drawerState = ref(false);
+const routerReady = ref(false);
+router.isReady().then(() => { routerReady.value = true; });
+const drawer = computed({
+	get: () => drawerState.value || (routerReady.value && router.currentRoute.value.path === '/' && !!auth.user.value),
+	set: (val: boolean) => { drawerState.value = val; },
+});
 
 // Bucket list
 const buckets = ref<Array<Bucket & { size: number }> | null>(null);
