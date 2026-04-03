@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import * as Sentry from '@sentry/vue';
 import { computed, provide, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Bucket, WidgetSettings } from '../types';
@@ -262,8 +263,10 @@ watch(
 	() => auth.user.value,
 	() => {
 		if (auth.user.value) {
+			Sentry.setUser({ id: auth.user.value['@id'] });
 			loadBuckets();
 		} else {
+			Sentry.setUser(null);
 			buckets.value = null;
 			bucketOffset.value = 0;
 			bucketTotal.value = 0;

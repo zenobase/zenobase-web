@@ -13,7 +13,7 @@ if (el) {
 	Sentry.init({
 		app,
 		dsn: import.meta.env.VITE_SENTRY_DSN,
-		integrations: [Sentry.browserTracingIntegration({ router })],
+		integrations: [Sentry.browserTracingIntegration({ router }), Sentry.captureConsoleIntegration({ levels: ['error'] })],
 		tracesSampleRate: 1.0,
 	});
 
