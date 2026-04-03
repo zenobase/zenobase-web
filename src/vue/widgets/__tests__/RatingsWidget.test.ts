@@ -34,7 +34,7 @@ describe('RatingsWidget', () => {
 		const row = wrapper.find('tbody tr');
 		const icons = row.findAll('.v-icon');
 		// toStars(80) = 4 filled stars, 1 outline
-		const filled = icons.filter((i) => i.text().includes('mdi-star') && !i.text().includes('mdi-star-outline'));
+		const filled = icons.filter((i) => i.classes().includes('mdi-star'));
 		expect(icons).toHaveLength(5);
 		expect(filled).toHaveLength(4);
 	});
