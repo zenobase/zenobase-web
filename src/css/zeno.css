@@ -116,16 +116,12 @@ span:hover > .action {
 }
 
 .xbtn {
-	opacity: 0;
+	opacity: 0.5;
 	transition: opacity 0.15s ease;
 }
 
-*:hover > .xbtn {
-	opacity: 0.5;
-}
-
 .xbtn:hover {
-	opacity: 1 !important;
+	opacity: 1;
 }
 
 /* ── List search bar ── */
