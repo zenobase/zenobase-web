@@ -9,6 +9,7 @@ const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
 const showSignIn = inject<Ref<boolean>>('showSignIn')!;
 const openCreateBucket = inject<() => void>('openCreateBucket')!;
+const drawer = inject<Ref<boolean>>('drawer')!;
 
 async function start() {
 	alertApi.clear();
@@ -91,22 +92,30 @@ const integrations: Record<string, string[]> = {
 </script>
 
 <template>
-	<div id="home-view" v-if="!auth.user.value">
+	<div id="home-view">
 		<!-- Hero -->
-		<v-sheet v-if="!auth.user.value" class="hero-unit text-center">
+		<v-sheet class="hero-unit text-center">
 			<div class="hero-overlay">
 				<div class="hero-content">
 					<img src="/img/logo_560x144.png" alt="Zenobase" width="280" height="72" class="hero-logo" />
 					<h1 class="hero-title">Got data? Get answers.</h1>
 					<p class="hero-subtitle">Capture and analyze your personal data.</p>
 					<div class="hero-cta">
-						<v-btn size="large" variant="outlined" class="hero-btn" @click="start()">
-							Get Started
-							<v-icon end icon="mdi-arrow-right" />
-						</v-btn>
-						<div class="mt-3 text-body-2">
-							or <a @click="showSignIn = true">sign in</a>
-						</div>
+						<template v-if="auth.user.value">
+							<v-btn size="large" variant="outlined" class="hero-btn" @click="drawer = true">
+								My Data
+								<v-icon end icon="mdi-arrow-right" />
+							</v-btn>
+						</template>
+						<template v-else>
+							<v-btn size="large" variant="outlined" class="hero-btn" @click="start()">
+								Get Started
+								<v-icon end icon="mdi-arrow-right" />
+							</v-btn>
+							<div class="mt-3 text-body-2">
+								or <a @click="showSignIn = true">sign in</a>
+							</div>
+						</template>
 					</div>
 				</div>
 			</div>

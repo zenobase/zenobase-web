@@ -28,7 +28,7 @@ provide('showSignIn', showSignIn);
 
 auth.whoami();
 
-const showFooter = computed(() => !(auth.user.value && router.currentRoute.value.path === '/'));
+const showFooter = true;
 
 async function signOut() {
 	alertApi.clear();
@@ -41,13 +41,8 @@ async function signOut() {
 }
 
 // Navigation drawer
-const drawerState = ref(false);
-const routerReady = ref(false);
-router.isReady().then(() => { routerReady.value = true; });
-const drawer = computed({
-	get: () => drawerState.value || (routerReady.value && router.currentRoute.value.path === '/' && !!auth.user.value),
-	set: (val: boolean) => { drawerState.value = val; },
-});
+const drawer = ref(false);
+provide('drawer', drawer);
 
 // Bucket list
 const buckets = ref<Array<Bucket & { size: number }> | null>(null);
