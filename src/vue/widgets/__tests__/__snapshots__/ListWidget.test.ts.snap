@@ -12,7 +12,7 @@ exports[`ListWidget > matches snapshot 1`] = `
       <table>
         <tbody>
           <tr class="event-row">
-            <td style="line-height: 1.5; border-style: none; position: relative;"><span><span class="text-no-wrap"><i class="mdi mdi-tag" title="Tag"></i> sleep</span> &nbsp; <span class="text-no-wrap"><i class="mdi mdi-calendar-outline" title="Timestamp"></i> <abbr title="2025-06-01T12:00:00Z">Jun 1, 2025, 5:00 AM</abbr></span></span>
+            <td style="line-height: 1.5; border-style: none; position: relative; overflow: visible;"><span><span class="text-no-wrap"><i class="mdi mdi-tag" title="Tag"></i> sleep</span> &nbsp; <span class="text-no-wrap"><i class="mdi mdi-calendar-outline" title="Timestamp"></i> <abbr title="2025-06-01T12:00:00Z">Jun 1, 2025, 5:00 AM</abbr></span></span>
               <!--v-if-->
             </td>
           </tr>

@@ -172,23 +172,29 @@ span:hover > .action {
 }
 
 .event-row--editable {
-	cursor: pointer;
+	cursor: default;
 }
 
 .event-row--editable:hover > td {
 	background-color: rgba(0, 0, 0, 0.02);
 }
 
-.event-edit-hint {
+.event-actions {
 	position: absolute;
-	top: 8px;
-	right: 4px;
+	top: 50%;
+	right: 8px;
+	transform: translateY(-50%);
+	z-index: 1;
+	display: flex;
+	gap: 4px;
 	opacity: 0;
-	color: rgba(0, 0, 0, 0.3);
+	transition: opacity 0.15s ease;
+	pointer-events: none;
 }
 
-.event-row--editable:hover .event-edit-hint {
+.event-actions--visible {
 	opacity: 1;
+	pointer-events: auto;
 }
 
 /* ── Editable event fields ── */

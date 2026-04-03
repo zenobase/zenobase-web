@@ -134,6 +134,13 @@ async function refresh() {
 	update(result);
 }
 
+const longPressedEventId = ref<string | null>(null);
+
+function onLongPress(event: ZenoEvent) {
+	longPressedEventId.value = event['@id'] as string;
+	setTimeout(() => { longPressedEventId.value = null; }, 3000);
+}
+
 const dropdownOpen = ref(false);
 
 function _toggleDropdown() {
@@ -145,7 +152,7 @@ function selectField(field: FilterField) {
 	dropdownOpen.value = false;
 }
 
-function onEventClick(e: MouseEvent, event: ZenoEvent) {
+function onEventClick(e: MouseEvent) {
 	const target = e.target as HTMLElement;
 	if (target.closest('a')) {
 		const locationLink = target.closest('.location-filter') as HTMLElement | null;
@@ -156,10 +163,6 @@ function onEventClick(e: MouseEvent, event: ZenoEvent) {
 				dashboard.addConstraint('location', filter, false);
 			}
 		}
-		return;
-	}
-	if (props.editable && !props.isVirtual) {
-		emit('openDialog', 'edit-event-dialog', event);
 	}
 }
 
@@ -211,12 +214,16 @@ onBeforeUnmount(() => {
 
 		<v-table v-show="items?.length" density="default">
 			<tbody>
-				<tr v-for="event in items" :key="event['@id'] as string" class="event-row" :class="{ 'event-row--editable': editable && !isVirtual }" @click="onEventClick($event, event)">
-					<td style="line-height: 1.5; border-style: none; position: relative">
+				<v-hover v-for="event in items" :key="event['@id'] as string" v-slot="{ isHovering, props: hoverProps }">
+				<tr v-bind="hoverProps" class="event-row" :class="{ 'event-row--editable': editable && !isVirtual }" @click="onEventClick($event)" @contextmenu.prevent="editable && !isVirtual && onLongPress(event)">
+					<td style="line-height: 1.5; border-style: none; position: relative; overflow: visible">
 						<span v-html="formatEventHtml(event, undefined, FIELD_OVERRIDES)" />
-						<v-icon v-if="editable && !isVirtual" icon="mdi-pencil" size="x-small" class="event-edit-hint" />
+						<div v-if="editable && !isVirtual" class="event-actions" :class="{ 'event-actions--visible': isHovering || longPressedEventId === event['@id'] }">
+							<v-btn icon="mdi-pencil" size="small" variant="elevated" color="primary" title="Edit" @click.stop="emit('openDialog', 'edit-event-dialog', event)" />
+						</div>
 					</td>
 				</tr>
+			</v-hover>
 			</tbody>
 		</v-table>
 
