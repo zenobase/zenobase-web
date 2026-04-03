@@ -5,7 +5,6 @@ import { compactDuration, compactNumber } from '../../utils/helpers';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
-// biome-ignore lint/style/useImportType: Vue component used in template
 import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{

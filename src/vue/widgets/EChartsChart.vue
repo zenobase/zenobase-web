@@ -116,6 +116,6 @@ defineExpose({ snapshot, reflow, selectPoint, getInstance });
 
 <style>
 .echarts-chart [style*="crosshair"] {
-	cursor: pointer !important;
+	cursor: pointer;
 }
 </style>

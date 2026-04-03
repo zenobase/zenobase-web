@@ -7,7 +7,6 @@ import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
-// biome-ignore lint/style/useImportType: Vue component used in template
 import EChartsChart from './EChartsChart.vue';
 
 function pad(n: number): string {
@@ -116,7 +115,7 @@ function filterByValue(value: string) {
 	dashboard.addConstraint(props.settings.key_field || keyField, value, true);
 }
 
-function isPaired(a: TimeEntry[], b: TimeEntry[]): boolean {
+function _isPaired(a: TimeEntry[], b: TimeEntry[]): boolean {
 	for (let i = 0, j = 0; b && i < a.length && j < b.length; ) {
 		if (a[i].time === b[j].time) {
 			if (a[i].count * b[j].count === 0) {
@@ -308,7 +307,7 @@ function computeEffectSize() {
 }
 
 function params(): TimelineParams {
-	interval = Interval.valueOf(props.settings.interval || '') || Interval.VALUES[1];
+	interval = Interval.findByName(props.settings.interval || '') || Interval.VALUES[1];
 	let range = '';
 	let q = '';
 	dashboard.getConstraints(keyField).forEach((constraint) => {

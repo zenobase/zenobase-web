@@ -558,7 +558,7 @@ const sideTab = ref('widget-scheduler');
 								density="compact"
 								hide-details
 								clearable
-								@click:clear="journal.filter = null; refreshJournal({ offset: 0 })"
+								@click:clear="() => { journal.filter = null; refreshJournal({ offset: 0 }) }"
 							/>
 						</div>
 						<v-table>
@@ -599,7 +599,7 @@ const sideTab = ref('widget-scheduler');
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center justify-end" v-if="journal.commands && journal.commands.length">
+						<div class="d-flex align-center justify-end" v-if="journal.commands?.length">
 							<v-btn icon variant="text" title="Previous" @click="refreshJournal({ offset: journal.offset - journal.limit })" :disabled="journal.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ journal.offset + 1 }}</b>&ndash;<b>{{ journal.offset + journal.commands.length }}</b> of <b>{{ formatNumber(journal.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshJournal({ offset: journal.offset + journal.limit })" :disabled="journal.offset + journal.limit >= journal.total"><v-icon icon="mdi-chevron-right" /></v-btn>
@@ -619,7 +619,7 @@ const sideTab = ref('widget-scheduler');
 								density="compact"
 								hide-details
 								clearable
-								@click:clear="buckets.filter = null; refreshBuckets({ offset: 0 })"
+								@click:clear="() => { buckets.filter = null; refreshBuckets({ offset: 0 }) }"
 							/>
 						</div>
 						<v-table>
@@ -651,7 +651,7 @@ const sideTab = ref('widget-scheduler');
 										<a class="action" @click="removeBucket(bucket['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
 									</td>
 								</tr>
-								<tr v-if="buckets.items && buckets.items.length">
+								<tr v-if="buckets.items?.length">
 									<td><em>Total</em></td>
 									<td></td>
 									<td></td>
@@ -661,12 +661,12 @@ const sideTab = ref('widget-scheduler');
 								<tr v-if="buckets.items === null">
 									<td colspan="5"><i>Loading</i></td>
 								</tr>
-								<tr v-if="buckets.items && buckets.items.length === 0">
+								<tr v-if="buckets.items?.length === 0">
 									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center" v-if="buckets.items && buckets.items.length">
+						<div class="d-flex align-center" v-if="buckets.items?.length">
 							<v-btn icon variant="text" :href="`/buckets/?code=${api.getToken()}`" title="Download"><v-icon icon="mdi-download" /></v-btn>
 							<v-spacer />
 							<v-btn icon variant="text" title="Previous" @click="refreshBuckets({ offset: buckets.offset - buckets.limit })" :disabled="buckets.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
@@ -688,7 +688,7 @@ const sideTab = ref('widget-scheduler');
 								density="compact"
 								hide-details
 								clearable
-								@click:clear="users.filter = null; refreshUsers({ offset: 0 })"
+								@click:clear="() => { users.filter = null; refreshUsers({ offset: 0 }) }"
 							/>
 						</div>
 						<v-table>
@@ -729,12 +729,12 @@ const sideTab = ref('widget-scheduler');
 								<tr v-if="users.items === null">
 									<td colspan="5"><i>Loading</i></td>
 								</tr>
-								<tr v-if="users.items && users.items.length === 0">
+								<tr v-if="users.items?.length === 0">
 									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center" v-if="users.items && users.items.length">
+						<div class="d-flex align-center" v-if="users.items?.length">
 							<v-btn icon variant="text" :href="`/users/?code=${api.getToken()}`" title="Download"><v-icon icon="mdi-download" /></v-btn>
 							<v-spacer />
 							<v-btn icon variant="text" title="Previous" @click="refreshUsers({ offset: users.offset - users.limit })" :disabled="users.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
@@ -780,7 +780,7 @@ const sideTab = ref('widget-scheduler');
 								density="compact"
 								hide-details
 								clearable
-								@click:clear="authorizations.filter = null; refreshAuthorizations({ offset: 0 })"
+								@click:clear="() => { authorizations.filter = null; refreshAuthorizations({ offset: 0 }) }"
 							/>
 						</div>
 						<v-table>
@@ -814,12 +814,12 @@ const sideTab = ref('widget-scheduler');
 								<tr v-if="authorizations.items === null">
 									<td colspan="6"><i>Loading</i></td>
 								</tr>
-								<tr v-if="authorizations.items && authorizations.items.length === 0">
+								<tr v-if="authorizations.items?.length === 0">
 									<td colspan="6"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center justify-end" v-if="authorizations.items && authorizations.items.length">
+						<div class="d-flex align-center justify-end" v-if="authorizations.items?.length">
 							<v-btn icon variant="text" title="Previous" @click="refreshAuthorizations({ offset: authorizations.offset - authorizations.limit })" :disabled="authorizations.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ authorizations.offset + 1 }}</b>&ndash;<b>{{ authorizations.offset + authorizations.items.length }}</b> of <b>{{ formatNumber(authorizations.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshAuthorizations({ offset: authorizations.offset + authorizations.limit })" :disabled="authorizations.offset + authorizations.limit >= authorizations.total"><v-icon icon="mdi-chevron-right" /></v-btn>
@@ -839,7 +839,7 @@ const sideTab = ref('widget-scheduler');
 								density="compact"
 								hide-details
 								clearable
-								@click:clear="credentials.filter = null; refreshCredentials({ offset: 0 })"
+								@click:clear="() => { credentials.filter = null; refreshCredentials({ offset: 0 }) }"
 							/>
 						</div>
 						<v-table>
@@ -867,12 +867,12 @@ const sideTab = ref('widget-scheduler');
 								<tr v-if="credentials.items === null">
 									<td colspan="6"><i>Loading</i></td>
 								</tr>
-								<tr v-if="credentials.items && credentials.items.length === 0">
+								<tr v-if="credentials.items?.length === 0">
 									<td colspan="6"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center justify-end" v-if="credentials.items && credentials.items.length">
+						<div class="d-flex align-center justify-end" v-if="credentials.items?.length">
 							<v-btn icon variant="text" title="Previous" @click="refreshCredentials({ offset: credentials.offset - credentials.limit })" :disabled="credentials.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ credentials.offset + 1 }}</b>&ndash;<b>{{ credentials.offset + credentials.items.length }}</b> of <b>{{ formatNumber(credentials.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshCredentials({ offset: credentials.offset + credentials.limit })" :disabled="credentials.offset + credentials.limit >= credentials.total"><v-icon icon="mdi-chevron-right" /></v-btn>
@@ -892,7 +892,7 @@ const sideTab = ref('widget-scheduler');
 								density="compact"
 								hide-details
 								clearable
-								@click:clear="tasks.filter = null; refreshTasks({ offset: 0 })"
+								@click:clear="() => { tasks.filter = null; refreshTasks({ offset: 0 }) }"
 							/>
 						</div>
 						<v-table>
@@ -929,12 +929,12 @@ const sideTab = ref('widget-scheduler');
 								<tr v-if="tasks.items === null">
 									<td colspan="8"><i>Loading</i></td>
 								</tr>
-								<tr v-if="tasks.items && tasks.items.length === 0">
+								<tr v-if="tasks.items?.length === 0">
 									<td colspan="8"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center justify-end" v-if="tasks.items && tasks.items.length">
+						<div class="d-flex align-center justify-end" v-if="tasks.items?.length">
 							<v-btn icon variant="text" title="Previous" @click="refreshTasks({ offset: tasks.offset - tasks.limit })" :disabled="tasks.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ tasks.offset + 1 }}</b>&ndash;<b>{{ tasks.offset + tasks.items.length }}</b> of <b>{{ formatNumber(tasks.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshTasks({ offset: tasks.offset + tasks.limit })" :disabled="tasks.offset + tasks.limit >= tasks.total"><v-icon icon="mdi-chevron-right" /></v-btn>
@@ -1010,7 +1010,7 @@ const sideTab = ref('widget-scheduler');
 								<tr v-if="snapshots.items === null">
 									<td colspan="5"><i>Loading</i></td>
 								</tr>
-								<tr v-if="snapshots.items && snapshots.items.length === 0">
+								<tr v-if="snapshots.items?.length === 0">
 									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
@@ -1018,9 +1018,9 @@ const sideTab = ref('widget-scheduler');
 						<div class="d-flex align-center">
 							<v-btn icon variant="text" @click="createSnapshot()" :disabled="snapshots.snapshotting" title="Snapshot"><v-icon icon="mdi-camera" /></v-btn>
 							<v-spacer />
-							<v-btn icon variant="text" title="Previous" v-if="snapshots.items && snapshots.items.length" @click="refreshSnapshots({ offset: snapshots.offset - snapshots.limit })" :disabled="snapshots.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
-							<span style="color: rgba(0,0,0,0.5)" v-if="snapshots.items && snapshots.items.length"><b>{{ snapshots.offset + 1 }}</b>&ndash;<b>{{ snapshots.offset + snapshots.items.length }}</b> of <b>{{ formatNumber(snapshots.total) }}</b></span>
-							<v-btn icon variant="text" title="Next" v-if="snapshots.items && snapshots.items.length" @click="refreshSnapshots({ offset: snapshots.offset + snapshots.limit })" :disabled="snapshots.offset + snapshots.limit >= snapshots.total"><v-icon icon="mdi-chevron-right" /></v-btn>
+							<v-btn icon variant="text" title="Previous" v-if="snapshots.items?.length" @click="refreshSnapshots({ offset: snapshots.offset - snapshots.limit })" :disabled="snapshots.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)" v-if="snapshots.items?.length"><b>{{ snapshots.offset + 1 }}</b>&ndash;<b>{{ snapshots.offset + snapshots.items.length }}</b> of <b>{{ formatNumber(snapshots.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" v-if="snapshots.items?.length" @click="refreshSnapshots({ offset: snapshots.offset + snapshots.limit })" :disabled="snapshots.offset + snapshots.limit >= snapshots.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
 					</v-tabs-window-item>
 

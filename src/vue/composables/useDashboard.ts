@@ -32,7 +32,7 @@ export interface DashboardApi {
 
 export const dashboardKey: InjectionKey<DashboardApi> = Symbol('dashboard');
 
-function escape(s: unknown): unknown {
+function escapeCommas(s: unknown): unknown {
 	return typeof s === 'string' ? s.replace(/,/g, '\\,') : s;
 }
 
@@ -96,7 +96,7 @@ export function useDashboard(
 			.filter((p) => p != null)
 			.map((p) =>
 				Object.entries(p)
-					.map(([key, value]) => (value !== undefined && value !== null && value !== '' ? `${key}:${escape(value)}` : null))
+					.map(([key, value]) => (value !== undefined && value !== null && value !== '' ? `${key}:${escapeCommas(value)}` : null))
 					.filter((v) => v != null)
 					.join(','),
 			);
@@ -111,7 +111,7 @@ export function useDashboard(
 			.filter((p) => p != null)
 			.map((p) =>
 				Object.entries(p)
-					.map(([key, value]) => (value !== undefined && value !== null && value !== '' ? `${key}:${escape(value)}` : null))
+					.map(([key, value]) => (value !== undefined && value !== null && value !== '' ? `${key}:${escapeCommas(value)}` : null))
 					.filter((v) => v != null)
 					.join(','),
 			);

@@ -149,7 +149,7 @@ function filterWidgets(widgets: WidgetSettings[]): WidgetSettings[] {
 	});
 }
 
-function getActiveTab(placement: string): string {
+function _getActiveTab(placement: string): string {
 	if (activeTabs.value[placement]) return activeTabs.value[placement];
 	const widgets = getWidgets(placement);
 	return widgets.length > 0 ? widgets[0].id : '';

@@ -34,12 +34,12 @@ function toStars(value: number | null): number {
 	return Math.round(value / 20);
 }
 
-function toString(value: number | null): string {
+function formatBound(value: number | null): string {
 	return typeof value === 'number' ? `${value}%` : '*';
 }
 
 function filterByRating(rating: Rating) {
-	dashboard.addConstraint('rating', `[${toString(rating.from)}..${toString(rating.to)})`);
+	dashboard.addConstraint('rating', `[${formatBound(rating.from)}..${formatBound(rating.to)})`);
 }
 
 const registration: WidgetRegistration = { params, update, init };
@@ -58,7 +58,7 @@ onMounted(() => dashboard.register(registration));
 			<tbody>
 				<tr v-for="rating in ratings" :key="rating.from ?? 'null'">
 					<td>
-						<a @click="filterByRating(rating)">
+						<a @click="filterByRating(rating)" aria-label="Filter by rating">
 							<v-icon v-for="i in 5" :key="i" :icon="toStars(rating.from) >= i ? 'mdi-star' : 'mdi-star-outline'" size="small" />
 						</a>
 					</td>

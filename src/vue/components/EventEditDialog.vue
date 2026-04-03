@@ -619,7 +619,7 @@ watch(
 				</div>
 			</v-card-text>
 			<v-card-actions>
-				<v-btn v-if="!isNew" variant="text" color="error" @click="emit('deleted', eventData['@id'] as string); close()">Delete</v-btn>
+				<v-btn v-if="!isNew" variant="text" color="error" @click="() => { emit('deleted', eventData['@id'] as string); close() }">Delete</v-btn>
 				<v-spacer />
 				<v-btn color="primary" :disabled="!!newField || entries.length === 0" @click="save()">Save</v-btn>
 				<v-btn variant="text" @click="close()">Cancel</v-btn>

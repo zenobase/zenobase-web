@@ -170,9 +170,9 @@ watch(
 						<v-icon icon="mdi-plus" />
 					</v-btn>
 					<v-spacer />
-					<v-btn v-if="tasks && tasks.length" icon variant="text" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" /></v-btn>
-					<span v-if="tasks && tasks.length" style="color: rgba(0,0,0,0.5)"><b>{{ offset + 1 }}</b>&ndash;<b>{{ offset + tasks.length }}</b> of <b>{{ total }}</b></span>
-					<v-btn v-if="tasks && tasks.length" icon variant="text" title="Next" :disabled="!hasNext()" @click="next()"><v-icon icon="mdi-chevron-right" /></v-btn>
+					<v-btn v-if="tasks?.length" icon variant="text" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" /></v-btn>
+					<span v-if="tasks?.length" style="color: rgba(0,0,0,0.5)"><b>{{ offset + 1 }}</b>&ndash;<b>{{ offset + tasks.length }}</b> of <b>{{ total }}</b></span>
+					<v-btn v-if="tasks?.length" icon variant="text" title="Next" :disabled="!hasNext()" @click="next()"><v-icon icon="mdi-chevron-right" /></v-btn>
 				</div>
 			</v-card-text>
 			<v-card-actions>

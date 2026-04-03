@@ -136,7 +136,7 @@ async function refresh() {
 
 const dropdownOpen = ref(false);
 
-function toggleDropdown() {
+function _toggleDropdown() {
 	dropdownOpen.value = !dropdownOpen.value;
 }
 

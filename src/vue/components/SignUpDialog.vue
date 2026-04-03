@@ -68,7 +68,7 @@ async function submit() {
 			<v-form @submit.prevent="submit()">
 				<v-card-text>
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
-					<v-text-field label="Username (4-16 lowercase letters and numbers)" v-model="username" :rules="usernameRules" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus>
+					<v-text-field label="Username (4-16 lowercase letters and numbers)" v-model="username" :rules="usernameRules" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required >
 						<template #append-inner>
 							<v-icon v-if="username && usernameRules.every(r => r(username) === true)" icon="mdi-check" color="success" />
 							<v-icon v-else icon="mdi-exclamation" color="warning" />

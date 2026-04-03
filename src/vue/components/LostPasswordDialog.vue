@@ -49,7 +49,7 @@ async function submit() {
 			<v-form @submit.prevent="submit()">
 				<v-card-text>
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
-					<v-text-field label="Username" v-model="username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required autofocus />
+					<v-text-field label="Username" v-model="username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required />
 					<v-text-field label="Email" type="email" v-model="email" required />
 				</v-card-text>
 				<v-card-actions>

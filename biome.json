@@ -1,5 +1,8 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+	"html": {
+		"experimentalFullSupportEnabled": true
+	},
 	"files": {
 		"includes": ["src/**/*.{js,ts,vue}", "vite.config.js"]
 	},
@@ -18,27 +21,18 @@
 		"rules": {
 			"recommended": true,
 			"correctness": {
-				"noUndeclaredVariables": "off",
-				"noUnusedFunctionParameters": "off",
-				"noUnusedVariables": "off",
-				"noUnusedImports": "off",
-				"noInnerDeclarations": "off"
+				"noUndeclaredVariables": "off"
 			},
 			"style": {
-				"useConst": "off",
-				"noParameterAssign": "off",
 				"useTemplate": "off",
 				"noNonNullAssertion": "off"
 			},
+			"a11y": {
+				"noAutofocus": "off"
+			},
 			"complexity": {
 				"useLiteralKeys": "off",
-				"noArguments": "off"
-			},
-			"suspicious": {
-				"noGlobalAssign": "off",
-				"noAssignInExpressions": "off",
-				"noFallthroughSwitchClause": "off",
-				"noShadowRestrictedNames": "off"
+				"noImportantStyles": "off"
 			}
 		}
 	}

@@ -95,7 +95,7 @@ watch(
 			<v-form @submit.prevent="create()">
 				<v-card-text>
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
-					<v-text-field label="Label" v-model="label" required autofocus>
+					<v-text-field label="Label" v-model="label" required >
 						<template #append-inner>
 							<v-icon v-if="label.length > 0" icon="mdi-check" color="success" />
 							<v-icon v-else icon="mdi-exclamation" color="warning" />

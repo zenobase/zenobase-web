@@ -71,7 +71,7 @@ function matchSymbol(value: string): IntervalDef | undefined {
 	}
 }
 
-function valueOf(name: string): IntervalDef | undefined {
+function findByName(name: string): IntervalDef | undefined {
 	if (name) {
 		for (let i = 0; i < VALUES.length; ++i) {
 			if (VALUES[i].name === name) {
@@ -81,4 +81,4 @@ function valueOf(name: string): IntervalDef | undefined {
 	}
 }
 
-export const Interval = { VALUES, match, matchRange, matchSymbol, valueOf };
+export const Interval = { VALUES, match, matchRange, matchSymbol, findByName };

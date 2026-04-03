@@ -1,7 +1,7 @@
 import { type InjectionKey, type Ref, ref } from 'vue';
 import type { User } from '../../types';
 import { param } from '../../utils/helpers';
-import api, { ApiError } from '../api';
+import api from '../api';
 
 export interface AuthApi {
 	user: Ref<User | null>;

@@ -437,7 +437,7 @@ watch(
 		<div v-if="profile">
 			<Teleport to="#page-toolbar">
 				<span class="text-subtitle-1 font-weight-bold mr-1">{{ username }}</span>
-				<v-btn icon size="small" variant="text" @click="loadBuckets(); loadCredentials(); loadAuthorizations()" v-if="isSelf" title="Refresh">
+				<v-btn icon size="small" variant="text" @click="() => { loadBuckets(); loadCredentials(); loadAuthorizations() }" v-if="isSelf" title="Refresh">
 					<v-icon icon="mdi-refresh" />
 				</v-btn>
 				<v-menu v-if="isSelf">
@@ -470,7 +470,7 @@ watch(
 							<tbody>
 								<tr v-if="buckets === null"><td colspan="2"><i>Loading...</i></td></tr>
 								<tr v-else-if="buckets.length === 0"><td colspan="2"><i>None</i></td></tr>
-								<tr v-for="b in buckets" :key="b['@id']" class="bucket-row" :class="{ 'bucket-archived': b.archived, 'bucket-virtual': b.aliases && b.aliases.length }">
+								<tr v-for="b in buckets" :key="b['@id']" class="bucket-row" :class="{ 'bucket-archived': b.archived, 'bucket-virtual': b.aliases?.length }">
 									<td class="text-no-wrap">
 										<router-link class="bucket-link" :to="`/buckets/${b['@id']}/`">{{ b.label }}</router-link>
 										{{ ' ' }} ({{ b.size?.toLocaleString() }})
@@ -483,15 +483,15 @@ watch(
 						</v-table>
 						<div class="d-flex align-center justify-end">
 							<div class="d-flex align-center" v-if="buckets?.length">
-								<v-btn icon variant="text" title="Previous" :disabled="bucketOffset <= 0" @click="bucketOffset -= bucketLimit; loadBuckets()"><v-icon icon="mdi-chevron-left" /></v-btn>
+								<v-btn icon variant="text" title="Previous" :disabled="bucketOffset <= 0" @click="() => { bucketOffset -= bucketLimit; loadBuckets() }"><v-icon icon="mdi-chevron-left" /></v-btn>
 								<span style="color: rgba(0,0,0,0.5)">
 									<b>{{ bucketOffset + 1 }}</b>&ndash;<b>{{ bucketOffset + (buckets?.length ?? 0) }}</b> of <b>{{ bucketTotal }}</b>
 									{{ ' ' }}
-									<a v-if="!includeArchived" @click="includeArchived = true; loadBuckets()">excluding</a>
-									<a v-else @click="includeArchived = false; loadBuckets()">including</a>
+									<a v-if="!includeArchived" @click="() => { includeArchived = true; loadBuckets() }">excluding</a>
+									<a v-else @click="() => { includeArchived = false; loadBuckets() }">including</a>
 									{{ ' ' }} archived
 								</span>
-								<v-btn icon variant="text" title="Next" :disabled="bucketOffset + bucketLimit >= bucketTotal" @click="bucketOffset += bucketLimit; loadBuckets()"><v-icon icon="mdi-chevron-right" /></v-btn>
+								<v-btn icon variant="text" title="Next" :disabled="bucketOffset + bucketLimit >= bucketTotal" @click="() => { bucketOffset += bucketLimit; loadBuckets() }"><v-icon icon="mdi-chevron-right" /></v-btn>
 							</div>
 						</div>
 					</v-tabs-window-item>
@@ -510,9 +510,9 @@ watch(
 							</tbody>
 						</v-table>
 						<div class="d-flex align-center justify-end" v-if="credentials?.length">
-							<v-btn icon variant="text" title="Previous" :disabled="credOffset <= 0" @click="credOffset -= credLimit; loadCredentials()"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<v-btn icon variant="text" title="Previous" :disabled="credOffset <= 0" @click="() => { credOffset -= credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ credOffset + 1 }}</b>&ndash;<b>{{ credOffset + (credentials?.length ?? 0) }}</b> of <b>{{ credTotal }}</b></span>
-							<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="credOffset += credLimit; loadCredentials()"><v-icon icon="mdi-chevron-right" /></v-btn>
+							<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="() => { credOffset += credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
 					</v-tabs-window-item>
 
@@ -530,9 +530,9 @@ watch(
 							</tbody>
 						</v-table>
 						<div class="d-flex align-center justify-end" v-if="authorizations?.length">
-							<v-btn icon variant="text" title="Previous" :disabled="authzOffset <= 0" @click="authzOffset -= authzLimit; loadAuthorizations()"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<v-btn icon variant="text" title="Previous" :disabled="authzOffset <= 0" @click="() => { authzOffset -= authzLimit; loadAuthorizations() }"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ authzOffset + 1 }}</b>&ndash;<b>{{ authzOffset + (authorizations?.length ?? 0) }}</b> of <b>{{ authzTotal }}</b></span>
-							<v-btn icon variant="text" title="Next" :disabled="authzOffset + authzLimit >= authzTotal" @click="authzOffset += authzLimit; loadAuthorizations()"><v-icon icon="mdi-chevron-right" /></v-btn>
+							<v-btn icon variant="text" title="Next" :disabled="authzOffset + authzLimit >= authzTotal" @click="() => { authzOffset += authzLimit; loadAuthorizations() }"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
 					</v-tabs-window-item>
 				</v-tabs-window>

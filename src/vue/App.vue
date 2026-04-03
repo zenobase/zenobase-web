@@ -47,7 +47,7 @@ async function signOut() {
 			<span>Please <strong>sign up</strong> to preserve your data.</span>
 		</v-system-bar>
 
-		<v-system-bar v-if="auth.user.value && auth.user.value.name && !auth.user.value.verified" color="warning" style="cursor: pointer; height: auto; padding: 8px 16px; justify-content: flex-start" @click="router.push(`/users/${auth.user.value.name}?settings=1`)">
+		<v-system-bar v-if="auth.user.value?.name && !auth.user.value.verified" color="warning" style="cursor: pointer; height: auto; padding: 8px 16px; justify-content: flex-start" @click="router.push(`/users/${auth.user.value.name}?settings=1`)">
 			<v-icon icon="$warning" class="mr-2" />
 			<span>Please <strong>verify your email address</strong>, so we can contact you if your data is on fire (or you need to reset your password).</span>
 		</v-system-bar>
@@ -124,7 +124,7 @@ async function signOut() {
 			</v-footer>
 		</v-main>
 
-		<SignInDialog v-model="showSignIn" @lost-password="showSignIn = false; showLostPassword = true" />
+		<SignInDialog v-model="showSignIn" @lost-password="() => { showSignIn = false; showLostPassword = true }" />
 		<SignUpDialog v-model="showSignUp" />
 		<LostPasswordDialog v-model="showLostPassword" />
 	</v-app>

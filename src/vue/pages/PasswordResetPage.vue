@@ -51,7 +51,6 @@ async function submit() {
 					id="password-reset-password"
 					type="password"
 					label="Password (min 8 characters)"
-					autofocus
 					required
 					:rules="[(v: string) => v.length >= 8 || 'Min 8 characters']"
 					v-model="password"
