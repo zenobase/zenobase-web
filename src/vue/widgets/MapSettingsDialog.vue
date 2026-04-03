@@ -6,5 +6,5 @@ const { draft } = inject<SettingsDialogContext>(settingsDialogKey)!;
 </script>
 
 <template>
-	<v-text-field label="Title" required maxlength="20" v-model="draft.label" />
+	<v-text-field label="Title *" required maxlength="20" v-model="draft.label" />
 </template>

@@ -564,13 +564,13 @@ watch(
 						<a v-if="selectedType.url" :href="selectedType.url" target="_blank">Source&hellip;</a>
 					</div>
 					<template v-for="field in selectedType.fields" :key="field.key">
-						<v-text-field v-if="field.type === 'text'" :label="field.label" v-model="settings[field.key]" :required="field.required" :placeholder="field.placeholder" :hint="field.help" :persistent-hint="!!field.help" />
+						<v-text-field v-if="field.type === 'text'" :label="field.required ? field.label + ' *' : field.label" v-model="settings[field.key]" :required="field.required" :placeholder="field.placeholder" :hint="field.help" :persistent-hint="!!field.help" />
 						<v-text-field v-else-if="field.type === 'date'" :label="field.label" type="date" v-model="settings[field.key]" :hint="field.help" :persistent-hint="!!field.help" />
 						<v-radio-group v-else-if="field.type === 'radio' && Array.isArray(field.options)" :label="field.label" v-model="settings[field.key]">
 							<v-radio v-for="opt in (field.options as FieldOption[])" :key="String(opt.value)" :label="opt.label" :value="opt.value" />
 						</v-radio-group>
 						<v-checkbox v-else-if="field.type === 'checkbox'" :label="field.checkboxLabel" v-model="settings[field.key]" />
-						<v-select v-else-if="field.type === 'select'" :label="field.label" :items="getSelectOptions(field)" item-title="label" item-value="value" v-model="settings[field.key]" :required="field.required" :clearable="!field.required" :hint="field.help" :persistent-hint="!!field.help" />
+						<v-select v-else-if="field.type === 'select'" :label="field.required ? field.label + ' *' : field.label" :items="getSelectOptions(field)" item-title="label" item-value="value" v-model="settings[field.key]" :required="field.required" :clearable="!field.required" :hint="field.help" :persistent-hint="!!field.help" />
 					</template>
 				</v-card-text>
 				<v-card-actions>

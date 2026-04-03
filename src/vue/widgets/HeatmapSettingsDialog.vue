@@ -16,7 +16,7 @@ watch(
 </script>
 
 <template>
-	<v-text-field label="Title" required maxlength="20" v-model="draft.label" />
+	<v-text-field label="Title *" required maxlength="20" v-model="draft.label" />
 	<v-select label="Values" :items="[{ title: 'None', value: '' }, ...numericFieldNames.map(f => ({ title: f, value: f }))]" v-model="draft.value_field" hint="Optional field to use for calculating the weight of each point." persistent-hint />
 	<v-text-field label="Filter" v-model="draft.filter" placeholder="e.g. tag:xyz">
 		<template v-if="filterValid !== null" #append-inner>

@@ -46,11 +46,11 @@ watch(
 </script>
 
 <template>
-	<v-text-field label="Title" required maxlength="20" v-model="draft.label" />
+	<v-text-field label="Title *" required maxlength="20" v-model="draft.label" />
 	<v-sheet class="pa-4 mb-2" border rounded>
 		<v-text-field label="X Axis" v-model="draft.label_x" placeholder="Title" />
 		<div class="d-flex ga-2 align-center">
-			<v-select label="Statistic" :items="statisticsFor(draft.field_x)" v-model="draft.statistic_x" required style="max-width: 120px" />
+			<v-select label="Statistic *" :items="statisticsFor(draft.field_x)" v-model="draft.statistic_x" required style="max-width: 120px" />
 			<v-select label="Field" :items="numericAndTimestampFieldNames" v-model="draft.field_x" />
 			<template v-if="currentUnitsX.length">
 				<v-select label="Unit" :items="currentUnitsX" v-model="draft.unit_x" style="max-width: 100px" />
@@ -69,7 +69,7 @@ watch(
 	<v-sheet class="pa-4 mb-4" border rounded>
 		<v-text-field label="Y Axis" v-model="draft.label_y" placeholder="Title" />
 		<div class="d-flex ga-2 align-center">
-			<v-select label="Statistic" :items="statisticsFor(draft.field_y)" v-model="draft.statistic_y" required style="max-width: 120px" />
+			<v-select label="Statistic *" :items="statisticsFor(draft.field_y)" v-model="draft.statistic_y" required style="max-width: 120px" />
 			<v-select label="Field" :items="numericAndTimestampFieldNames" v-model="draft.field_y" />
 			<template v-if="currentUnitsY.length">
 				<v-select label="Unit" :items="currentUnitsY" v-model="draft.unit_y" style="max-width: 100px" />

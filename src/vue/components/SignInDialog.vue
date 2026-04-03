@@ -56,8 +56,8 @@ async function signIn() {
 			<v-form @submit.prevent="signIn()">
 				<v-card-text>
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
-					<v-text-field label="Username" v-model="username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required />
-					<v-text-field label="Password" type="password" v-model="password" required />
+					<v-text-field label="Username *" v-model="username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required />
+					<v-text-field label="Password *" type="password" v-model="password" required />
 				</v-card-text>
 				<v-card-actions>
 					<a class="ml-2" @click="$emit('lostPassword')">Lost password?</a>

@@ -559,7 +559,7 @@ watch(
 						</div>
 						<v-text-field
 							type="email"
-							label="Email"
+							label="Email *"
 							required
 							v-model="settingsEmail"
 							hint="For important, account-related messages."
@@ -592,7 +592,7 @@ watch(
 						<div class="mb-4">
 							<v-text-field
 								id="create-bucket-label"
-								label="Label"
+								label="Label *"
 								required
 								minlength="1"
 								maxlength="30"
@@ -651,7 +651,7 @@ watch(
 						<div class="mb-4">
 							<v-text-field
 								id="create-view-label"
-								label="Label"
+								label="Label *"
 								required
 								minlength="1"
 								maxlength="30"

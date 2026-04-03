@@ -45,7 +45,7 @@ const sampleValues: Record<string, unknown> = {
 	concentration: { '@value': 80, unit: 'mg/dL' },
 	pressure: { '@value': 30.05, unit: 'inHg' },
 	velocity: { '@value': 88, unit: 'mph' },
-	pace: { '@value': 1200, unit: 's/km' },
+	pace: { '@value': 1259, unit: 's/km' },
 	duration: 27000000,
 	frequency: { '@value': 55, unit: 'bpm' },
 	bits: { '@value': 1.5, unit: 'GB' },

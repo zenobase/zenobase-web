@@ -30,9 +30,9 @@ onInit((d: WidgetSettings) => {
 </script>
 
 <template>
-	<v-text-field label="Title" required maxlength="20" v-model="draft.label" />
+	<v-text-field label="Title *" required maxlength="20" v-model="draft.label" />
 	<div class="d-flex ga-2 align-center">
-		<v-select label="Statistic" :items="statisticsFor(draft.field)" v-model="draft.statistic" required style="max-width: 120px" />
+		<v-select label="Statistic *" :items="statisticsFor(draft.field)" v-model="draft.statistic" required style="max-width: 120px" />
 		<v-select label="Field" :items="numericAndTimestampFieldNames" v-model="draft.field" />
 		<template v-if="currentUnits.length">
 			<v-select label="Unit" :items="currentUnits" v-model="draft.unit" style="max-width: 100px" />

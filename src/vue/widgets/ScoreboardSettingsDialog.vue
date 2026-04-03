@@ -25,17 +25,17 @@ onInit((d: WidgetSettings) => {
 </script>
 
 <template>
-	<v-text-field label="Title" required maxlength="20" v-model="draft.label" />
-	<v-select label="Term" :items="textFieldNames" v-model="draft.key_field" required />
+	<v-text-field label="Title *" required maxlength="20" v-model="draft.label" />
+	<v-select label="Term *" :items="textFieldNames" v-model="draft.key_field" required />
 	<div class="d-flex ga-2 align-center">
-		<v-select label="Values" :items="numericFieldNames" v-model="draft.value_field" required />
+		<v-select label="Values *" :items="numericFieldNames" v-model="draft.value_field" required />
 		<template v-if="currentValueUnits.length">
 			<v-select label="Unit" :items="currentValueUnits" v-model="draft.unit" style="max-width: 100px" />
 		</template>
 	</div>
-	<v-text-field label="Limit" type="number" required min="1" max="100" v-model.number="draft.limit" style="max-width: 120px" />
+	<v-text-field label="Limit *" type="number" required min="1" max="100" v-model.number="draft.limit" style="max-width: 120px" />
 	<div class="d-flex ga-2">
-		<v-select label="Order" :items="['term', 'count', 'sum', 'min', 'max', 'avg']" v-model="orderField" required />
+		<v-select label="Order *" :items="['term', 'count', 'sum', 'min', 'max', 'avg']" v-model="orderField" required />
 		<v-select :items="[{ title: 'asc', value: true }, { title: 'desc', value: false }]" v-model="isAsc" required style="max-width: 120px" />
 	</div>
 	<div class="text-subtitle-2 mb-2">Statistics</div>

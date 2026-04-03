@@ -38,9 +38,9 @@ onBeforeSave((settings: WidgetSettings) => {
 </script>
 
 <template>
-	<v-text-field label="Title" required maxlength="20" v-model="draft.label" />
+	<v-text-field label="Title *" required maxlength="20" v-model="draft.label" />
 	<div class="d-flex ga-2 align-center">
-		<v-select label="Values" :items="numericFieldNames" v-model="draft.field" required />
+		<v-select label="Values *" :items="numericFieldNames" v-model="draft.field" required />
 		<v-text-field label="Per" v-model="draft.interval" style="max-width: 80px" />
 		<span v-if="draft.field?.startsWith('duration')">hours</span>
 		<v-select label="Unit" v-if="currentUnits.length" :items="currentUnits" v-model="draft.unit" style="max-width: 100px" />

@@ -217,7 +217,7 @@ watch(selectedFormat, () => {
 							<input ref="fileInput" type="file" style="display: none" @change="onFileSelected" />
 						</div>
 						<div class="text-body-2 mb-4" v-html="selectedFormat.description"></div>
-						<v-select v-if="events.length === 0 && selectedFormat.settingsType === 'timezone'" :items="timezones" v-model="settings.timezone" label="Timezone" required hint="The timezone to use." persistent-hint />
+						<v-select v-if="events.length === 0 && selectedFormat.settingsType === 'timezone'" :items="timezones" v-model="settings.timezone" label="Timezone *" required hint="The timezone to use." persistent-hint />
 						<template v-if="events.length > 0">
 							<p v-html="formatEventHtml(events[previewOffset], previewExcludeFields)"></p>
 							<div class="d-flex align-center mt-2">

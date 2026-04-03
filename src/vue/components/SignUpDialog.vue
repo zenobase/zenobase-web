@@ -68,15 +68,15 @@ async function submit() {
 			<v-form @submit.prevent="submit()">
 				<v-card-text>
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
-					<v-text-field label="Username (4-16 lowercase letters and numbers)" v-model="username" :rules="usernameRules" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required >
+					<v-text-field label="Username (4-16 lowercase letters and numbers) *" v-model="username" :rules="usernameRules" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required >
 						<template #append-inner>
 							<v-icon v-if="username && usernameRules.every(r => r(username) === true)" icon="mdi-check" color="success" />
 							<v-icon v-else icon="mdi-exclamation" color="warning" />
 						</template>
 					</v-text-field>
-					<v-text-field label="Password (min 8 characters)" type="password" v-model="password" :rules="passwordRules" required />
-					<v-text-field label="Password (repeat)" type="password" v-model="passwordConfirmed" required />
-					<v-text-field label="Email" type="email" v-model="email" :rules="emailRules" required hint="We'll email you a confirmation, and use this address if you ever need to reset your password." persistent-hint />
+					<v-text-field label="Password (min 8 characters) *" type="password" v-model="password" :rules="passwordRules" required />
+					<v-text-field label="Password (repeat) *" type="password" v-model="passwordConfirmed" required />
+					<v-text-field label="Email *" type="email" v-model="email" :rules="emailRules" required hint="We'll email you a confirmation, and use this address if you ever need to reset your password." persistent-hint />
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer />

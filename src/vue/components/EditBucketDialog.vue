@@ -205,7 +205,7 @@ watch(
 			<v-form @submit.prevent="save()">
 				<v-card-text v-if="newBucket">
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
-					<v-text-field label="Label" v-model="newBucket.label" required />
+					<v-text-field label="Label *" v-model="newBucket.label" required />
 					<v-textarea label="Description" rows="2" v-model="newBucket.description" />
 
 					<div class="text-subtitle-2 mb-2">Permissions</div>
