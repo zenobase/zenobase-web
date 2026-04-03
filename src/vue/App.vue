@@ -399,8 +399,10 @@ watch(
 			</v-container>
 
 			<v-footer v-if="showFooter" class="zeno-footer text-disabled pa-4 flex-column align-center ga-2">
+				<div class="d-flex justify-center">
+					<span>&copy; 2012&ndash;{{ new Date().getFullYear() }} Zenobase &middot; Built with <v-icon icon="mdi-heart" size="small" />&nbsp;in Seattle</span>
+				</div>
 				<div class="d-flex justify-center ga-4">
-					<span>&copy; 2012&ndash;{{ new Date().getFullYear() }} Zenobase</span>
 					<router-link to="/legal/" class="text-disabled">Legal</router-link>
 					<router-link to="/api/" class="text-disabled">API</router-link>
 					<a href="mailto:info@zenobase.com" class="text-disabled">Contact</a>
@@ -409,11 +411,6 @@ watch(
 					<a href="https://blog.zenobase.com/" class="text-disabled" title="Blog"><v-icon icon="mdi-rss" size="small" /></a>
 					<a href="https://github.com/zenobase" class="text-disabled" title="GitHub"><v-icon icon="mdi-github" size="small" /></a>
 					<a href="https://www.linkedin.com/company/2676455" class="text-disabled" title="LinkedIn"><v-icon icon="mdi-linkedin" size="small" /></a>
-				</div>
-				<div class="d-flex justify-center align-center ga-1">
-					<span>Built with</span>
-					<v-icon icon="mdi-heart" size="small" />
-					<span>in Seattle</span>
 				</div>
 			</v-footer>
 		</v-main>
