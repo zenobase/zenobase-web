@@ -86,18 +86,12 @@ abbr {
 	border-bottom: 2px solid rgb(var(--v-theme-primary));
 }
 
-/* Tab settings gear: hidden until hover */
 .tab-settings-icon {
-	opacity: 0;
-	transition: opacity 0.15s ease;
-}
-
-.widget-tab:hover .tab-settings-icon {
-	opacity: 0.6;
+	opacity: 0.5;
 }
 
 .tab-settings-icon:hover {
-	opacity: 1 !important;
+	opacity: 1;
 }
 
 /* Drag & Drop on tabs */

@@ -474,7 +474,7 @@ watch(
 			<!-- Top placement -->
 			<div v-if="dashboard.total.value >= 0 && (hasWidgets('top') || dirty)" class="widget-panel mb-3">
 				<v-tabs v-model="activeTabs['top']" show-arrows>
-					<v-tab v-for="settings in getWidgets('top')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'top')" @dragend="onDragEnd" @click="setActiveTab('top', settings.id)">{{ settings.label }}<v-icon icon="mdi-cog" class="tab-settings-icon ml-1" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
+					<v-tab v-for="settings in getWidgets('top')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'top')" @dragend="onDragEnd" @click="setActiveTab('top', settings.id)">{{ settings.label }}<v-icon v-if="activeTabs['top'] === settings.id" icon="mdi-cog" class="tab-settings-icon ml-2" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
 					<v-tab class="widget-tab" :class="{ drop: dropTargetId === '+top' }" @dragover="onDragOver($event, '+top')" @dragleave="onDragLeave" @drop="onDrop($event, '+top', 'top')" @click="openAddWidget('top')" title="Add..."><v-icon icon="mdi-plus" size="small" /></v-tab>
 				</v-tabs>
 				<v-tabs-window v-model="activeTabs['top']">
@@ -489,7 +489,7 @@ watch(
 				<v-col cols="12" md="6" v-if="hasWidgets('left') || dirty">
 					<div class="widget-panel">
 						<v-tabs v-model="activeTabs['left']" show-arrows>
-							<v-tab v-for="settings in getWidgets('left')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'left')" @dragend="onDragEnd" @click="setActiveTab('left', settings.id)">{{ settings.label }}<v-icon icon="mdi-cog" class="tab-settings-icon ml-1" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
+							<v-tab v-for="settings in getWidgets('left')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'left')" @dragend="onDragEnd" @click="setActiveTab('left', settings.id)">{{ settings.label }}<v-icon v-if="activeTabs['left'] === settings.id" icon="mdi-cog" class="tab-settings-icon ml-2" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
 							<v-tab class="widget-tab" :class="{ drop: dropTargetId === '+left' }" @dragover="onDragOver($event, '+left')" @dragleave="onDragLeave" @drop="onDrop($event, '+left', 'left')" @click="openAddWidget('left')" title="Add..."><v-icon icon="mdi-plus" size="small" /></v-tab>
 						</v-tabs>
 						<v-tabs-window v-model="activeTabs['left']">
@@ -502,7 +502,7 @@ watch(
 				<v-col cols="12" md="6" v-if="hasWidgets('right') || dirty">
 					<div class="widget-panel">
 						<v-tabs v-model="activeTabs['right']" show-arrows>
-							<v-tab v-for="settings in getWidgets('right')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'right')" @dragend="onDragEnd" @click="setActiveTab('right', settings.id)">{{ settings.label }}<v-icon icon="mdi-cog" class="tab-settings-icon ml-1" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
+							<v-tab v-for="settings in getWidgets('right')" :key="settings.id" :value="settings.id" class="widget-tab" :class="{ drop: dropTargetId === settings.id }" draggable="true" @dragstart="onDragStart($event, settings.id)" @dragover="onDragOver($event, settings.id)" @dragleave="onDragLeave" @drop="onDrop($event, settings.id, 'right')" @dragend="onDragEnd" @click="setActiveTab('right', settings.id)">{{ settings.label }}<v-icon v-if="activeTabs['right'] === settings.id" icon="mdi-cog" class="tab-settings-icon ml-2" size="x-small" title="Settings..." @click.stop="openWidgetSettings(settings.id)" /></v-tab>
 							<v-tab class="widget-tab" :class="{ drop: dropTargetId === '+right' }" @dragover="onDragOver($event, '+right')" @dragleave="onDragLeave" @drop="onDrop($event, '+right', 'right')" @click="openAddWidget('right')" title="Add..."><v-icon icon="mdi-plus" size="small" /></v-tab>
 						</v-tabs>
 						<v-tabs-window v-model="activeTabs['right']">
