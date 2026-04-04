@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as Sentry from '@sentry/vue';
 import { computed, provide, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import type { Bucket, WidgetSettings } from '../types';
 import { Constraint } from '../utils/constraint';
 import { param } from '../utils/helpers';
@@ -14,6 +14,7 @@ import { authKey, useAuth } from './composables/useAuth';
 import { reloadBucketsKey } from './composables/useBuckets';
 
 const router = useRouter();
+const route = useRoute();
 const auth = useAuth();
 provide(authKey, auth);
 const alertApi = useAlert(async (commandId: string) => {
@@ -34,7 +35,7 @@ const showFooter = true;
 async function signOut() {
 	alertApi.clear();
 	await auth.signOut();
-	if (router.currentRoute.value.path === '/') {
+	if (route.path === '/') {
 		router.go(0);
 	} else {
 		router.push('/');
@@ -277,7 +278,7 @@ watch(
 
 // Reload buckets when navigating back to home (e.g. after delete/archive)
 watch(
-	() => router.currentRoute.value.path,
+	() => route.path,
 	(path) => {
 		if (path === '/' && auth.user.value) {
 			loadBuckets();
@@ -303,7 +304,7 @@ watch(
 			<span>This account has been suspended. Please contact support.</span>
 		</v-system-bar>
 
-		<v-app-bar v-if="auth.user.value || router.currentRoute.value.path !== '/'" density="compact" color="surface" flat>
+		<v-app-bar v-if="auth.user.value || route.path !== '/'" density="compact" color="surface" flat>
 			<v-app-bar-nav-icon v-if="auth.user.value" @click="drawer = !drawer" />
 			<router-link to="/" class="d-flex align-center ml-3 mr-3">
 				<img src="/img/logo_120x120.png" alt="Zenobase" width="28" height="28" />
@@ -381,7 +382,7 @@ watch(
 		</v-navigation-drawer>
 
 		<v-main>
-			<v-container fluid :class="router.currentRoute.value.path === '/' ? 'pa-0' : 'pa-4 pt-2'">
+			<v-container fluid :class="route.path === '/' ? 'pa-0' : 'pa-4 pt-2'">
 				<v-snackbar :model-value="!!alertApi.alert.value.message" :timeout="alertApi.alert.value.level === 'error' ? -1 : 5000" :color="alertApi.alert.value.level || 'info'" @update:model-value="alertApi.clear()">
 					{{ alertApi.alert.value.message }}
 					<template #actions>
@@ -391,7 +392,7 @@ watch(
 				</v-snackbar>
 
 				<div v-if="!auth.user.value?.suspended">
-					<RouterView :key="router.currentRoute.value.path" />
+					<RouterView />
 					<div v-if="auth.loading.value" class="mt-4 text-medium-emphasis">Loading...</div>
 				</div>
 			</v-container>
