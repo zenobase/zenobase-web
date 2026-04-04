@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
-import { type ComponentPublicInstance, computed, defineAsyncComponent, inject, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
+import { type ComponentPublicInstance, computed, defineAsyncComponent, inject, nextTick, onMounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Bucket, SearchResult, WidgetSettings, ZenoEvent } from '../../types';
 import { WIDGET_TITLES, type WidgetType } from '../../types';
@@ -361,8 +361,6 @@ function onWidgetRemoved() {
 	}
 }
 
-let refreshInterval: ReturnType<typeof setInterval> | undefined;
-
 async function loadBucket() {
 	message.value = '';
 	try {
@@ -370,10 +368,6 @@ async function loadBucket() {
 		response.data.widgets = filterWidgets(response.data.widgets ?? []);
 		dashboard.setExpectedWidgetCount(response.data.widgets.length);
 		bucket.value = response.data;
-		if (refreshInterval) clearInterval(refreshInterval);
-		if (bucket.value.refresh) {
-			refreshInterval = setInterval(() => { dashboard.refresh(); reloadBuckets(); }, 60000);
-		}
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
@@ -385,12 +379,6 @@ async function loadBucket() {
 }
 
 onMounted(loadBucket);
-
-onBeforeUnmount(() => {
-	if (refreshInterval) {
-		clearInterval(refreshInterval);
-	}
-});
 
 watch(bucketId, () => {
 	dashboard.reset();
