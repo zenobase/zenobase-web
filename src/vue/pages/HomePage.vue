@@ -99,7 +99,7 @@ const integrations: Record<string, string[]> = {
 				<div class="hero-content">
 					<img src="/img/logo_560x144.png" alt="Zenobase" width="280" height="72" class="hero-logo" />
 					<h1 class="hero-title">Got data? Get answers.</h1>
-					<p class="hero-subtitle">Capture and analyze your personal data.</p>
+					<p class="hero-subtitle">Collect and analyze your data.</p>
 					<div class="hero-cta">
 						<template v-if="auth.user.value">
 							<v-btn size="large" variant="outlined" class="hero-btn" @click="drawer = true">
