@@ -2,17 +2,17 @@
 
 <h1>API</h1>
 
-<p class="lead">Zenobase has an open API that developers can use to create custom integrations with 3rd party data sources, 
-or access and update data on behalf of users. For a complete example that shows how to authenticate with and post data to Zenobase, 
-<a href="https://github.com/zenobase/zenobase-cardio">look at this Android app</a>, 
-or <a href="https://blog.zenobase.com/tagged/api">find additional tips and examples on our blog</a>.</p>
+<p class="lead">Zenobase has an open API that developers can use to create custom integrations with 3rd party data sources,
+or access and update data on behalf of users. For a complete example that shows how to authenticate with and post data to Zenobase,
+<a href="https://github.com/zenobase/zenobase-cardio">look at this Android app</a>,
+or <a href="https://blog.zenobase.com/tags/api">find additional tips and examples on our blog</a>.</p>
 
 <section id="api-auth">
 
 <h3>Changelog</h3>
 
-<p>Following is a list of recent changes. If you are using this API in an application, 
-please <a href="mailto:info@zenobase.com?subject=Zenobase+API">drop us a note</a> 
+<p>Following is a list of recent changes. If you are using this API in an application,
+please <a href="mailto:info@zenobase.com?subject=Zenobase+API">drop us a note</a>
 so we can let you know about upcoming changes.</p>
 
 <dl>
@@ -123,7 +123,7 @@ so we can let you know about upcoming changes.</p>
 
 <p>Access tokens do not expire, but can be revoked any time.</p>
 
-<p>Access tokens can be obtained by an <a href="/#/api/implicit-grant">implicit grant</a> 
+<p>Access tokens can be obtained by an <a href="/#/api/implicit-grant">implicit grant</a>
 or a <a href="/#/api/password-grant">password grant</a>.</p>
 
 <section id="api-implicit-grant">
@@ -250,7 +250,7 @@ HTTP/1.1 204 No Content
 
 <h2>Buckets</h2>
 
-<p class="lead">Buckets are containers for <a href="/#/api/events">events</a>, 
+<p class="lead">Buckets are containers for <a href="/#/api/events">events</a>,
 but also include permissions and dashboard settings.</p>
 
 <section id="api-list-buckets">
@@ -278,11 +278,11 @@ Content-Type: application/json
 <code data-ui-highlight class="lang-json">{
   "total" : 1,
   "buckets" : [
-    { 
+    {
       "@id" : "jl2rg0o36e",
       "version" : 1,
       "label" : "My Data",
-      "created" : "2012-10-18T20:59:36.295Z", 
+      "created" : "2012-10-18T20:59:36.295Z",
       "size" : 4,
       "roles" : [
         { "principal" : "args4iqh2c", "role" : "owner" }
@@ -361,7 +361,7 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
 
 <pre><code data-ui-highlight class="lang-bash">curl -i -X POST 'https://api.zenobase.com/buckets/' \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer e7975e8bb6eabc3ef567 \  
+  -H 'Authorization: Bearer e7975e8bb6eabc3ef567 \
   -d '{
     "label" : "Test Bucket",
     "description" : "This bucket is for testing."
@@ -386,7 +386,7 @@ X-Command-ID: 4o6iqmpnrr
 
 <pre><code data-ui-highlight class="lang-bash">curl -i -X POST 'https://api.zenobase.com/buckets/' \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer e7975e8bb6eabc3ef567 \  
+  -H 'Authorization: Bearer e7975e8bb6eabc3ef567 \
   -d '{
     "label" : "My Data",
     "description" : "This is all my data.",
@@ -452,7 +452,7 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
 
 <pre><code data-ui-highlight class="lang-bash">curl -i -X PUT 'https://api.zenobase.com/buckets/v7jg3l5ibc' \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer e7975e8bb6eabc3ef567 \  
+  -H 'Authorization: Bearer e7975e8bb6eabc3ef567 \
   -d '{
     "label" : "Updated Bucket",
     "description" : "This bucket is archived, but still public!",
@@ -524,7 +524,7 @@ Authorization: Bearer <em>&lt;access_token&gt;</em></pre>
   <dd>See <a href="/#/api/facets">facets</a>.
   More than one facet parameter can be given.</dd>
   <dt>constraint_expression</dt>
-  <dd>See <a href="/#/api/constraints">constraints</a>. Optional. 
+  <dd>See <a href="/#/api/constraints">constraints</a>. Optional.
   If more than one constraint parameter is present, all constraints must be fulfilled.</dd>
 </dl>
 
@@ -537,8 +537,8 @@ Authorization: Bearer <em>&lt;access_token&gt;</em></pre>
 Content-Type: application/json
 <code data-ui-highlight class="lang-json">{
   "total" : 42,
-  "events": [ 
-    { 
+  "events": [
+    {
       "timestamp" : "2012-10-24T13:10:00.000-07:00",
       "tag" : [ "lunch", "thai" ],
       "author" : "7ghkds6jar",
@@ -546,7 +546,7 @@ Content-Type: application/json
     },
     ...
   ],
-  "tags": [ 
+  "tags": [
     { "label" : "lunch", "count" : 10 },
     { "label" : "thai", "count" : 1 },
     ...
@@ -577,7 +577,7 @@ Authorization: Bearer <em>&lt;access_token&gt;</em></pre>
 
 <pre>HTTP/1.1 200 OK
 Content-Type:application/json
-<code data-ui-highlight class="lang-json">{ 
+<code data-ui-highlight class="lang-json">{
   "timestamp" : "2012-10-24T13:10:00.000-07:00",
   "tag" : [ "lunch", "thai" ],
   "rating" : 80,
@@ -622,7 +622,7 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
   },
   "frequency" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"bpm" | "rpm" | "Hz"&gt;</em>    
+    "unit" : <em>&lt;"bpm" | "rpm" | "Hz"&gt;</em>
   },
   "height" : {
     "@value" : <em>&lt;Number&gt;</em>,
@@ -641,12 +641,12 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
   "moon" : <em>&lt;(0..100)&gt;</em>,
   "pace" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"s/km" | "s/mi"&gt;</em>    
+    "unit" : <em>&lt;"s/km" | "s/mi"&gt;</em>
   },
   "percentage" : <em>&lt;(0..100)&gt;</em>,
   "pressure" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"Pa" | "hPa" | "kPa" | "mbar" | "bar" | "mmHg" | "inHg" | "psi"&gt;</em>    
+    "unit" : <em>&lt;"Pa" | "hPa" | "kPa" | "mbar" | "bar" | "mmHg" | "inHg" | "psi"&gt;</em>
   },
   "rating" : <em>&lt;(0..100)&gt;</em>,
   "resource" : {
@@ -655,7 +655,7 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
   },
   "sound" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : "dB"    
+    "unit" : "dB"
   },
   "source" : {
     "title" : <em>&lt;String&gt;</em>,
@@ -664,20 +664,20 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
   "tag" : <em>&lt;String&gt;</em>,
   "temperature" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"C" | "F" | "K"&gt;</em>    
+    "unit" : <em>&lt;"C" | "F" | "K"&gt;</em>
   },
   "timestamp" : <em>&lt;yyyy-MM-dd'T'hh:mm:ss.SSSZ&gt;</em>,
   "velocity" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"m/s" | "mph" | "kmh" | "kn" | "Mach"&gt;</em>    
+    "unit" : <em>&lt;"m/s" | "mph" | "kmh" | "kn" | "Mach"&gt;</em>
   },
   "volume" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"L" | "dL" | "cL" | "mL" | "gal" | "qt" | "pt" | "cup" | "fl_oz"&gt;</em>    
+    "unit" : <em>&lt;"L" | "dL" | "cL" | "mL" | "gal" | "qt" | "pt" | "cup" | "fl_oz"&gt;</em>
   },
   "weight" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"lb" | "oz" | "kg" | "g" | "mg"&gt;</em>    
+    "unit" : <em>&lt;"lb" | "oz" | "kg" | "g" | "mg"&gt;</em>
   }
 }</code></pre>
 
@@ -686,9 +686,9 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
   <dd>The bucket to add the event to.</dd>
 </dl>
 
-<p>All fields are optional (and can be repeated any number of times). 
-But if no <code>timestamp</code> is specified, a <code>timestamp</code> 
-with the current time and a +00:00 time zone offset is added, and the 
+<p>All fields are optional (and can be repeated any number of times).
+But if no <code>timestamp</code> is specified, a <code>timestamp</code>
+with the current time and a +00:00 time zone offset is added, and the
 <code>author</code> is always set to the current user.</p>
 
 <h5>Example:</h5>
