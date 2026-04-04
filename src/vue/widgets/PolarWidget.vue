@@ -261,7 +261,7 @@ onMounted(() => dashboard.register(registration));
 						<v-list-item v-if="settings.interval === 'hour_of_day'" @click="filterByValue('[21..*)')">21h - 24h</v-list-item>
 					</v-list>
 				</v-menu>
-				<v-btn variant="text" size="small" class="xbtn" title="Download" @click="downloadCSV"><v-icon icon="mdi-file-document-outline" size="small" /></v-btn>
+				<v-btn variant="text" size="small" class="xbtn" title="Download" @click="downloadCSV"><v-icon icon="mdi-download" size="small" /></v-btn>
 				<v-btn variant="text" size="small" class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><v-icon icon="mdi-camera" size="small" /></v-btn>
 			</div>
 		</v-row>

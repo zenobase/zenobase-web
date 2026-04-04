@@ -364,7 +364,7 @@ onMounted(() => dashboard.register(registration));
 		<v-row v-show="data?.length || dataB?.length">
 			<v-spacer />
 			<div class="d-flex ga-1">
-				<v-btn variant="text" size="small" class="xbtn" title="Download" @click="downloadCSV"><v-icon icon="mdi-file-document-outline" size="small" /></v-btn>
+				<v-btn variant="text" size="small" class="xbtn" title="Download" @click="downloadCSV"><v-icon icon="mdi-download" size="small" /></v-btn>
 				<v-btn variant="text" size="small" class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><v-icon icon="mdi-camera" size="small" /></v-btn>
 			</div>
 		</v-row>
