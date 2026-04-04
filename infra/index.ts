@@ -71,9 +71,70 @@ function handler(event) {
 `,
 });
 
-// Look up the managed SecurityHeadersPolicy
-const securityHeadersPolicy = aws.cloudfront.getResponseHeadersPolicy({
-    name: "Managed-SecurityHeadersPolicy",
+// Custom security headers policy (replaces Managed-SecurityHeadersPolicy, adding CSP and Permissions-Policy)
+const securityHeadersPolicy = new aws.cloudfront.ResponseHeadersPolicy("zenobase-web-security-headers", {
+    name: "zenobase-web-security-headers",
+    securityHeadersConfig: {
+        contentTypeOptions: { override: true },
+        frameOptions: { frameOption: "DENY", override: true },
+        xssProtection: { override: true, protection: true, modeBlock: true },
+        strictTransportSecurity: {
+            override: true,
+            accessControlMaxAgeSec: 63072000,
+            includeSubdomains: false,
+            preload: false,
+        },
+        referrerPolicy: {
+            override: true,
+            referrerPolicy: "strict-origin-when-cross-origin",
+        },
+        contentSecurityPolicy: {
+            override: true,
+            contentSecurityPolicy: [
+                "default-src 'none'",
+                "script-src 'self' https://maps.googleapis.com",
+                "style-src 'self' 'unsafe-inline'",
+                "img-src 'self' https://maps.gstatic.com https://maps.googleapis.com https://*.ggpht.com https://*.google.com https://*.googleusercontent.com data:",
+                "font-src 'self'",
+                "connect-src 'self' https://api.zenobase.com https://*.ingest.sentry.io https://maps.googleapis.com",
+                "worker-src blob:",
+                "child-src blob:",
+                "frame-src 'none'",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+                "frame-ancestors 'none'",
+            ].join("; "),
+        },
+    },
+    customHeadersConfig: {
+        items: [{
+            header: "Permissions-Policy",
+            value: [
+                "accelerometer=()",
+                "autoplay=()",
+                "camera=()",
+                "cross-origin-isolated=()",
+                "display-capture=()",
+                "encrypted-media=()",
+                "fullscreen=()",
+                "geolocation=(self)",
+                "gyroscope=()",
+                "keyboard-map=()",
+                "magnetometer=()",
+                "microphone=()",
+                "midi=()",
+                "payment=()",
+                "picture-in-picture=()",
+                "publickey-credentials-get=()",
+                "screen-wake-lock=()",
+                "sync-xhr=(self)",
+                "usb=()",
+                "xr-spatial-tracking=()",
+            ].join(", "),
+            override: true,
+        }],
+    },
 });
 
 // CloudFront distribution
@@ -156,7 +217,7 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
             queryString: false,
             cookies: { forward: "none" },
         },
-        responseHeadersPolicyId: securityHeadersPolicy.then(p => p.id),
+        responseHeadersPolicyId: securityHeadersPolicy.id,
         functionAssociations: [{
             eventType: "viewer-request",
             functionArn: rewriteFunction.arn,
@@ -252,8 +313,6 @@ new aws.iam.RolePolicy("GitHubActionsZenobaseWeb", {
                     Action: [
                         "iam:ListOpenIDConnectProviders",
                         "iam:GetOpenIDConnectProvider",
-                        "cloudfront:ListResponseHeadersPolicies",
-                        "cloudfront:GetResponseHeadersPolicy",
                     ],
                     Resource: "*",
                 },
