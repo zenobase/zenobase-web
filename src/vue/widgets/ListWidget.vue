@@ -217,7 +217,7 @@ onBeforeUnmount(() => {
 				<tr v-for="event in items" :key="event['@id'] as string" class="event-row" :class="{ 'event-row--editable': editable && !isVirtual }" @click="onEventClick($event)" @contextmenu.prevent="editable && !isVirtual && onLongPress(event)">
 					<td style="line-height: 1.5; border-style: none; position: relative; overflow: visible">
 						<span v-html="formatEventHtml(event, undefined, FIELD_OVERRIDES)" />
-						<div v-if="editable && !isVirtual" class="event-actions" :class="{ 'event-actions--visible': longPressedEventId === event['@id'] }">
+						<div v-if="editable && !isVirtual" class="row-actions" :class="{ 'row-actions--visible': longPressedEventId === event['@id'] }">
 							<v-btn icon="mdi-pencil" size="small" variant="elevated" color="primary" title="Edit" @click.stop="emit('openDialog', 'edit-event-dialog', event)" />
 						</div>
 					</td>

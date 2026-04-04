@@ -613,7 +613,7 @@ watch(
 						<template v-else>
 							<v-icon :icon="getFieldIcon(entry.field)" size="small" :title="entry.field" /> {{ entry.value }}
 						</template>
-						{{ ' ' }}<v-btn variant="text" size="x-small" class="action" @click="removeEntry(i)"><v-icon icon="mdi-close" title="Delete" /></v-btn>
+						{{ ' ' }}<v-btn variant="text" size="x-small" @click="removeEntry(i)"><v-icon icon="mdi-close" title="Delete" /></v-btn>
 						{{ ' ' }}
 					</span>
 				</div>

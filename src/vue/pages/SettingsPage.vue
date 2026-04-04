@@ -138,6 +138,13 @@ async function resolveBucketLabel(id: string): Promise<string> {
 	}
 }
 
+const longPressedRowId = ref<string | null>(null);
+
+function onRowLongPress(id: string) {
+	longPressedRowId.value = id;
+	setTimeout(() => { longPressedRowId.value = null; }, 3000);
+}
+
 function formatClient(client: string): string {
 	if (!client) return '';
 	return client.replace(/^\/users\//, '');
@@ -215,10 +222,12 @@ watch(
 						<tbody>
 							<tr v-if="credentials === null"><td colspan="2"><i>Loading...</i></td></tr>
 							<tr v-else-if="credentials.length === 0"><td colspan="2"><i>None</i></td></tr>
-							<tr v-for="c in credentials" :key="c['@id']" class="credentials-row">
+							<tr v-for="c in credentials" :key="c['@id']" class="credentials-row" @contextmenu.prevent="onRowLongPress(c['@id'])">
 								<td><span :class="{ 'credentials-invalid': c.authorizationUrl }">{{ c.type }}</span></td>
-								<td style="text-align: right">
-									<a class="action credentials-delete-action" @click="deleteCredentials(c['@id'])"><v-icon icon="mdi-delete-outline" title="Delete" /></a>
+								<td style="text-align: right; position: relative; overflow: visible">
+									<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === c['@id'] }">
+										<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Delete" @click.stop="deleteCredentials(c['@id'])" />
+									</div>
 								</td>
 							</tr>
 						</tbody>
@@ -241,10 +250,12 @@ watch(
 						<tbody>
 							<tr v-if="authorizations === null"><td colspan="2"><i>Loading</i></td></tr>
 							<tr v-else-if="authorizations.length === 0"><td colspan="2"><i>None</i></td></tr>
-							<tr v-for="a in authorizations" :key="a['@id']">
+							<tr v-for="a in authorizations" :key="a['@id']" @contextmenu.prevent="onRowLongPress(a['@id'])">
 								<td>{{ formatClient(a.client) }} {{ ' ' }} <span v-if="a.scope">({{ bucketLabels[a.scope] || a.scope }})</span><span v-else>(*)</span></td>
-								<td style="text-align: right">
-									<a class="action" @click="revokeAuthorization(a['@id'])" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
+								<td style="text-align: right; position: relative; overflow: visible">
+									<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === a['@id'] }">
+										<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Revoke" @click.stop="revokeAuthorization(a['@id'])" />
+									</div>
 								</td>
 							</tr>
 						</tbody>

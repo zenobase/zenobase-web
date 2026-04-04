@@ -110,6 +110,13 @@ function openCreateTask() {
 	emit('open-create-task');
 }
 
+const longPressedRowId = ref<string | null>(null);
+
+function onRowLongPress(id: string) {
+	longPressedRowId.value = id;
+	setTimeout(() => { longPressedRowId.value = null; }, 3000);
+}
+
 function init() {
 	message.value = '';
 	offset.value = 0;
@@ -152,15 +159,15 @@ watch(
 						<tr v-if="tasks && tasks.length === 0">
 							<td colspan="3"><em>None</em></td>
 						</tr>
-						<tr v-for="task in tasks" :key="task['@id']">
+						<tr v-for="task in tasks" :key="task['@id']" style="height: 48px" @contextmenu.prevent="onRowLongPress(task['@id'])">
 							<td><abbr :title="formatTooltip(task)">{{ task.type }}</abbr></td>
 							<td>
 								<span v-if="task.status">ran {{ formatAge(task.completed) }}</span>
 							</td>
-							<td class="text-right">
-								<v-btn variant="text" size="small" class="action" @click="remove(task['@id'])">
-									<v-icon icon="mdi-delete-outline" title="Delete" />
-								</v-btn>
+							<td class="text-right" style="position: relative; overflow: visible">
+								<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === task['@id'] }">
+									<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Delete" @click.stop="remove(task['@id'])" />
+								</div>
 							</td>
 						</tr>
 					</tbody>

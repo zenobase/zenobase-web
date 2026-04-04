@@ -107,15 +107,6 @@ abbr {
 
 /* ── Hover-reveal patterns ── */
 
-.action {
-	visibility: hidden;
-}
-
-tr:hover > td > .action,
-span:hover > .action {
-	visibility: visible;
-}
-
 .xbtn {
 	opacity: 0.5;
 	transition: opacity 0.15s ease;
@@ -176,7 +167,7 @@ span:hover > .action {
 	background-color: rgba(0, 0, 0, 0.02);
 }
 
-.event-actions {
+.row-actions {
 	position: absolute;
 	top: 50%;
 	right: 8px;
@@ -189,25 +180,25 @@ span:hover > .action {
 	pointer-events: none;
 }
 
-.event-actions .v-btn {
+.row-actions .v-btn {
 	pointer-events: none;
 }
 
 @media (hover: hover) {
-	.event-row:hover .event-actions {
+	tr:hover .row-actions {
 		opacity: 1;
 	}
 
-	.event-row:hover .event-actions .v-btn {
+	tr:hover .row-actions .v-btn {
 		pointer-events: auto;
 	}
 }
 
-.event-actions--visible {
+.row-actions--visible {
 	opacity: 1;
 }
 
-.event-actions--visible .v-btn {
+.row-actions--visible .v-btn {
 	pointer-events: auto;
 }
 
