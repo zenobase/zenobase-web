@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { inject, nextTick, ref, watch } from 'vue';
+import { inject, nextTick, reactive, ref, watch } from 'vue';
 import type { WidgetSettings } from '../../types';
 import { param } from '../../utils/helpers';
-import api from '../api';
+import api, { ApiError } from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 
 const props = defineProps<{
@@ -13,6 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
 	'update:modelValue': [value: boolean];
 	'open-create-task': [];
+	'task-ran': [];
 }>();
 
 const alertApi = inject<AlertApi>(alertKey)!;
@@ -79,6 +80,53 @@ async function remove(taskId: string) {
 		} else {
 			message.value = "Couldn't delete the task. Try again later or contact support.";
 		}
+	}
+}
+
+const running = reactive<Record<string, boolean>>({});
+
+async function runTask(taskId: string) {
+	running[taskId] = true;
+	try {
+		const response = await api.get<Task>(`/tasks/${taskId}`);
+		const credentialsHeader = response.headers('X-Credentials');
+		const linkHeader = response.headers('Link');
+		if (credentialsHeader) {
+			try {
+				const credResponse = await api.post<{ '@id': string; authorizationUrl?: string }>('/credentials/', { type: credentialsHeader });
+				if (credResponse.data.authorizationUrl) {
+					alertApi.show(`<b>${credentialsHeader}</b> requires authorization`, 'error');
+					if (credResponse.data['@id'] && !credResponse.data.authorizationUrl.includes(credResponse.data['@id'])) {
+						localStorage.setItem('credentials', credResponse.data['@id']);
+					}
+					window.open(credResponse.data.authorizationUrl);
+				}
+			} catch {
+				alertApi.show("Can't create credentials.", 'error');
+			}
+		} else if (linkHeader) {
+			const match = linkHeader.match(/<(.+?)>/);
+			if (match) {
+				alertApi.show(`<b>${response.data.type}</b> requires authorization`, 'error');
+				window.open(match[1]);
+			}
+		}
+	} catch (e) {
+		if (e instanceof ApiError) {
+			if (e.status === 403) {
+				message.value = "Couldn't refresh a task. Insufficient quota?";
+			} else if (e.status < 500) {
+				message.value = "Couldn't refresh a task.";
+			} else {
+				message.value = "Couldn't refresh a task. Try again later or contact support.";
+			}
+		}
+	} finally {
+		setTimeout(() => {
+			refresh();
+			delete running[taskId];
+			emit('task-ran');
+		}, 1000);
 	}
 }
 
@@ -166,6 +214,7 @@ watch(
 							</td>
 							<td class="text-right" style="position: relative; overflow: visible">
 								<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === task['@id'] }">
+									<v-btn icon="mdi-play" size="small" variant="elevated" title="Run" :loading="running[task['@id']]" @click.stop="runTask(task['@id'])" class="mr-1" />
 									<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Delete" @click.stop="remove(task['@id'])" />
 								</div>
 							</td>

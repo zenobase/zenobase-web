@@ -4,7 +4,7 @@ import { type ComponentPublicInstance, computed, defineAsyncComponent, inject, n
 import { useRoute, useRouter } from 'vue-router';
 import type { Bucket, SearchResult, WidgetSettings, ZenoEvent } from '../../types';
 import { WIDGET_TITLES, type WidgetType } from '../../types';
-import api from '../api';
+import api, { ApiError } from '../api';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import CreateTaskDialog from '../components/CreateTaskDialog.vue';
 import EditBucketDialog from '../components/EditBucketDialog.vue';
@@ -76,12 +76,55 @@ async function run() {
 	try {
 		const response = await api.get<{ tasks: Array<{ '@id': string }> }>(`/buckets/${bucketId.value}/tasks/`);
 		for (const task of response.data.tasks) {
-			await api.get(`/tasks/${task['@id']}`);
+			if (await runTask(task['@id'])) break;
 		}
 		setTimeout(() => { dashboard.refresh(); reloadBuckets(); }, 1000);
 	} finally {
 		loading.value = false;
 	}
+}
+
+async function runTask(taskId: string): Promise<boolean> {
+	try {
+		const response = await api.get<{ type: string }>(`/tasks/${taskId}`);
+		const credentialsHeader = response.headers('X-Credentials');
+		const linkHeader = response.headers('Link');
+		if (credentialsHeader) {
+			try {
+				const credResponse = await api.post<{ '@id': string; authorizationUrl?: string }>('/credentials/', { type: credentialsHeader });
+				if (credResponse.data.authorizationUrl) {
+					alertApi.show(`<b>${credentialsHeader}</b> requires authorization`, 'error');
+					if (credResponse.data['@id'] && !credResponse.data.authorizationUrl.includes(credResponse.data['@id'])) {
+						localStorage.setItem('credentials', credResponse.data['@id']);
+					}
+					window.open(credResponse.data.authorizationUrl);
+				}
+			} catch {
+				alertApi.show("Can't create credentials.", 'error');
+			}
+			return true;
+		}
+		if (linkHeader) {
+			const match = linkHeader.match(/<(.+?)>/);
+			if (match) {
+				alertApi.show(`<b>${response.data.type}</b> requires authorization`, 'error');
+				window.open(match[1]);
+			}
+			return true;
+		}
+	} catch (e) {
+		if (e instanceof ApiError) {
+			if (e.status === 403) {
+				alertApi.show("Couldn't refresh a task. Insufficient quota?", 'error');
+			} else if (e.status < 500) {
+				alertApi.show("Couldn't refresh a task.", 'error');
+			} else {
+				alertApi.show("Couldn't refresh a task. Try again later or contact support.", 'error');
+			}
+		}
+		return true;
+	}
+	return false;
 }
 
 async function saveBucket() {
@@ -523,7 +566,7 @@ watch(
 
 		<SaveAsViewDialog v-if="bucket" v-model="showSaveAsViewDialog" :bucket-id="bucketId" :bucket="bucket" :constraints="dashboard.constraints.value" />
 
-		<TaskListDialog v-model="showTaskListDialog" :bucket-id="bucketId" @open-create-task="openCreateTaskFromList" />
+		<TaskListDialog v-model="showTaskListDialog" :bucket-id="bucketId" @open-create-task="openCreateTaskFromList" @task-ran="() => { dashboard.refresh(); reloadBuckets() }" />
 
 		<CreateTaskDialog v-model="showCreateTaskDialog" :bucket-id="bucketId" @created="onTaskCreated" />
 
