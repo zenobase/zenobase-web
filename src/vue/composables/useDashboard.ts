@@ -49,6 +49,7 @@ export function useDashboard(
 	const totalB = ref<number | null>(null);
 	const expectedWidgetCount = shallowRef(0);
 	let registeredCount = 0;
+	let generation = 0;
 
 	function parseConstraints(value: string | string[] | undefined): Constraint[] {
 		if (!value) return [];
@@ -120,14 +121,17 @@ export function useDashboard(
 		if (constraintsB.value.length > 0) {
 			requests.push(doSearch(constraintsB.value, facets));
 		}
+		const currentGen = generation;
 		Promise.all(requests).then(
 			(responses) => {
+				if (currentGen !== generation) return;
 				total.value = (responses[0]['total'] as number) ?? 0;
 				const resultB = responses.length > 1 ? responses[1] : undefined;
 				totalB.value = resultB ? ((resultB['total'] as number) ?? 0) : null;
 				for (const w of widgets) w.update(responses[0], resultB);
 			},
 			() => {
+				if (currentGen !== generation) return;
 				total.value = -1;
 				totalB.value = null;
 			},
@@ -154,6 +158,7 @@ export function useDashboard(
 	}
 
 	function reset() {
+		generation++;
 		widgets.length = 0;
 		registeredCount = 0;
 		expectedWidgetCount.value = 0;

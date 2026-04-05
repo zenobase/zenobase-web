@@ -425,6 +425,8 @@ onMounted(loadBucket);
 
 watch(bucketId, () => {
 	dashboard.reset();
+	bucket.value = null;
+	activeTabs.value = {};
 	dirty.value = false;
 	loadBucket();
 });
@@ -450,7 +452,7 @@ watch(
 			<strong><a @click="revertBucket()">revert</a></strong> changes to this dashboard.
 		</v-alert>
 
-		<div v-if="bucket">
+		<div v-if="bucket" :key="bucketId">
 			<Teleport to="#page-toolbar">
 				<span class="text-subtitle-1 font-weight-bold mr-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ bucket.label }}</span>
 				<v-btn icon size="small" variant="text" @click="run()" title="Refresh" v-if="editable">
