@@ -62,12 +62,14 @@ watch(
 	(open) => {
 		if (open) {
 			draft.value = JSON.parse(JSON.stringify(props.settings)) as WidgetSettings;
-			initFn.value?.(draft.value);
 			nextTick(() => {
 				visible.value = true;
 			});
 		} else {
 			visible.value = false;
+			initFn.value = null;
+			beforeSaveFn.value = null;
+			canSubmitRef.value = null;
 		}
 	},
 	{ immediate: true },
