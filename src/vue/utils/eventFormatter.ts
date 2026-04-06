@@ -38,9 +38,9 @@ function formatRelativeTime(isoStr: string): string {
 		return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 	}
 	const minutes = Math.floor(diff / 60000);
-	if (minutes < 60) return minutes + ' minutes ago';
+	if (minutes < 60) return minutes + (minutes === 1 ? ' minute ago' : ' minutes ago');
 	const hours = Math.floor(minutes / 60);
-	return hours + ' hours ago';
+	return hours + (hours === 1 ? ' hour ago' : ' hours ago');
 }
 
 function ratingStarsHtml(value: number): string {
