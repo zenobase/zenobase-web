@@ -85,17 +85,17 @@ export interface Constraint {
 export type WidgetType = 'count' | 'list' | 'gantt' | 'ratings' | 'histogram' | 'scoreboard' | 'timeline' | 'polar' | 'scatterplot' | 'map' | 'heatmap';
 
 export const WIDGET_TITLES: Record<WidgetType, string> = {
-	count: 'Count Widget',
-	list: 'List Widget',
-	gantt: 'Frequency Widget',
-	ratings: 'Ratings Widget',
-	histogram: 'Histogram Widget',
-	scoreboard: 'Scoreboard Widget',
-	timeline: 'Timeline Widget',
-	polar: 'Polar Chart Widget',
-	scatterplot: 'Scatter Plot Widget',
-	map: 'Map Widget',
-	heatmap: 'Heatmap Widget',
+	count: 'Count Settings',
+	list: 'List Settings',
+	gantt: 'Frequency Settings',
+	ratings: 'Ratings Settings',
+	histogram: 'Histogram Settings',
+	scoreboard: 'Scoreboard Settings',
+	timeline: 'Timeline Settings',
+	polar: 'Polar Chart Settings',
+	scatterplot: 'Scatter Plot Settings',
+	map: 'Map Settings',
+	heatmap: 'Heatmap Settings',
 };
 
 export interface WidgetSettings {

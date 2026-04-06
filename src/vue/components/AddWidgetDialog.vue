@@ -60,7 +60,7 @@ const templates: WidgetTemplate[] = [
 	},
 	{
 		type: 'heatmap',
-		label: 'Map',
+		label: 'Heatmap',
 		description: 'Shows the density of events on a map.',
 		thumbnail: '/img/widgets/heatmap.png',
 		settings: {},
