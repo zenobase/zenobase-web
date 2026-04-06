@@ -11,13 +11,15 @@
     "format": "biome format --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.8",
     "@types/google.maps": "^3.58.1",
     "@types/papaparse": "^5.5.2",
     "@vue/test-utils": "^2.4.6",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.1",
