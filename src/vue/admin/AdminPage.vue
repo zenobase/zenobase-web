@@ -667,7 +667,6 @@ const sideTab = ref('widget-scheduler');
 							</tbody>
 						</v-table>
 						<div class="d-flex align-center" v-if="buckets.items?.length">
-							<v-btn icon variant="text" :href="`/buckets/?code=${api.getToken()}`" title="Download"><v-icon icon="mdi-download" /></v-btn>
 							<v-spacer />
 							<v-btn icon variant="text" title="Previous" @click="refreshBuckets({ offset: buckets.offset - buckets.limit })" :disabled="buckets.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ buckets.offset + 1 }}</b>&ndash;<b>{{ buckets.offset + buckets.items.length }}</b> of <b>{{ formatNumber(buckets.total) }}</b></span>
@@ -735,7 +734,7 @@ const sideTab = ref('widget-scheduler');
 							</tbody>
 						</v-table>
 						<div class="d-flex align-center" v-if="users.items?.length">
-							<v-btn icon variant="text" :href="`/users/?code=${api.getToken()}`" title="Download"><v-icon icon="mdi-download" /></v-btn>
+							<v-btn icon variant="text" title="Download" @click="api.download('/users/', 'users.json')"><v-icon icon="mdi-download" /></v-btn>
 							<v-spacer />
 							<v-btn icon variant="text" title="Previous" @click="refreshUsers({ offset: users.offset - users.limit })" :disabled="users.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ users.offset + 1 }}</b>&ndash;<b>{{ users.offset + users.items.length }}</b> of <b>{{ formatNumber(users.total) }}</b></span>

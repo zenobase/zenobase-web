@@ -92,12 +92,42 @@ async function request<T = unknown>(url: string, options: RequestOptions = {}): 
 	};
 }
 
+async function download(url: string, filename: string): Promise<void> {
+	const baseUrl = getBaseUrl();
+	const fullUrl = baseUrl ? baseUrl + url : url;
+	const headers: Record<string, string> = {};
+
+	const token = getToken();
+	if (token) {
+		headers['Authorization'] = `Bearer ${token}`;
+	}
+
+	const fetchOptions: RequestInit = { method: 'GET', headers };
+	if (baseUrl) {
+		fetchOptions.credentials = 'include';
+	}
+
+	const response = await fetch(fullUrl, fetchOptions);
+	if (!response.ok) {
+		throw new ApiError(response.status, await response.text());
+	}
+
+	const blob = await response.blob();
+	const objectUrl = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = objectUrl;
+	a.download = filename;
+	a.click();
+	URL.revokeObjectURL(objectUrl);
+}
+
 const api = {
 	get: <T = unknown>(url: string) => request<T>(url),
 	post: <T = unknown>(url: string, body?: unknown) => request<T>(url, { method: 'POST', body }),
 	postForm: <T = unknown>(url: string, body: string) => request<T>(url, { method: 'POST', body, contentType: 'application/x-www-form-urlencoded' }),
 	put: <T = unknown>(url: string, body?: unknown) => request<T>(url, { method: 'PUT', body }),
 	del: <T = unknown>(url: string) => request<T>(url, { method: 'DELETE' }),
+	download,
 	getToken,
 	setToken,
 	ApiError,

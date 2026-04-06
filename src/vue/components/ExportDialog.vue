@@ -41,10 +41,6 @@ const exportUrl = computed(() => {
 	if (props.constraints.length > 0) {
 		params['q'] = props.constraints.map((c) => c.toString());
 	}
-	const token = api.getToken();
-	if (token) {
-		params['code'] = token;
-	}
 	if (media.value === 'csv') {
 		params['accept'] = 'text/plain';
 	}
@@ -56,13 +52,14 @@ const exportUrl = computed(() => {
 
 const exportFile = computed(() => `${props.bucketId}.${media.value}`);
 
-function submit() {
+async function submit() {
 	alertApi.clear();
-	const a = document.createElement('a');
-	a.href = exportUrl.value;
-	a.download = exportFile.value;
-	a.click();
-	close();
+	try {
+		await api.download(exportUrl.value, exportFile.value);
+		close();
+	} catch (e) {
+		alertApi.show(e instanceof Error ? e.message : 'Export failed', 'error');
+	}
 }
 
 function close() {
