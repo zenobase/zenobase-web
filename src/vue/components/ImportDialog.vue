@@ -223,7 +223,7 @@ watch(selectedFormat, () => {
 							<div class="d-flex align-center mt-2">
 								<v-spacer />
 								<v-btn icon variant="text" title="Previous" :disabled="previewOffset === 0" @click="prevPreview()"><v-icon icon="mdi-chevron-left" /></v-btn>
-								<span style="color: rgba(0,0,0,0.5)">Preview <b>{{ previewOffset + 1 }}</b> of <b>{{ events.length.toLocaleString() }}</b></span>
+								<span style="color: rgba(0,0,0,0.5)"><b>{{ previewOffset + 1 }}</b> of <b>{{ events.length.toLocaleString() }}</b></span>
 								<v-btn icon variant="text" title="Next" :disabled="previewOffset + 1 >= events.length" @click="nextPreview()"><v-icon icon="mdi-chevron-right" /></v-btn>
 							</div>
 						</template>
