@@ -206,7 +206,11 @@ watch(selectedFormat, () => {
 <template>
 	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
 		<v-card>
-			<v-card-title>Import</v-card-title>
+			<v-card-title class="d-flex align-center">
+				Import
+				<v-spacer />
+				<v-btn icon="mdi-close" variant="text" density="compact" @click="close()" />
+			</v-card-title>
 			<v-form @submit.prevent="submit()">
 				<fieldset :disabled="importing" style="border: none; padding: 0; margin: 0">
 					<v-card-text>

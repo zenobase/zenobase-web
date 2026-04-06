@@ -45,7 +45,11 @@ async function submit() {
 <template>
 	<v-dialog v-model="model" max-width="500">
 		<v-card>
-			<v-card-title>Reset Password</v-card-title>
+			<v-card-title class="d-flex align-center">
+				Reset Password
+				<v-spacer />
+				<v-btn icon="mdi-close" variant="text" density="compact" @click="model = false" />
+			</v-card-title>
 			<v-form @submit.prevent="submit()">
 				<v-card-text>
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>

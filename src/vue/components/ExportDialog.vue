@@ -85,7 +85,11 @@ watch(
 <template>
 	<v-dialog v-model="visible" max-width="500" @update:model-value="!$event && close()">
 		<v-card>
-			<v-card-title>Export</v-card-title>
+			<v-card-title class="d-flex align-center">
+				Export
+				<v-spacer />
+				<v-btn icon="mdi-close" variant="text" density="compact" @click="close()" />
+			</v-card-title>
 			<v-card-text>
 				<v-alert v-if="infoMessage" type="info" variant="tonal" class="mb-4">{{ infoMessage }}</v-alert>
 				<v-radio-group v-model="media">

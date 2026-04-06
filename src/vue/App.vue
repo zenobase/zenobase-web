@@ -422,7 +422,11 @@ watch(
 		<v-dialog v-model="showCreateBucket" max-width="600">
 			<v-card>
 				<form @submit.prevent="createBucket()">
-					<v-card-title class="mb-2">Create Bucket</v-card-title>
+					<v-card-title class="d-flex align-center mb-2">
+						Create Bucket
+						<v-spacer />
+						<v-btn icon="mdi-close" variant="text" density="compact" @click="showCreateBucket = false" />
+					</v-card-title>
 					<v-card-text>
 						<v-alert v-if="createBucketMessage" type="error" variant="tonal" class="mb-4">{{ createBucketMessage }}</v-alert>
 						<div class="mb-4">
@@ -478,7 +482,11 @@ watch(
 		<v-dialog v-model="showCreateView" max-width="600">
 			<v-card>
 				<form @submit.prevent="createView()">
-					<v-card-title class="mb-2">Create View</v-card-title>
+					<v-card-title class="d-flex align-center mb-2">
+						Create View
+						<v-spacer />
+						<v-btn icon="mdi-close" variant="text" density="compact" @click="showCreateView = false" />
+					</v-card-title>
 					<v-card-text>
 						<v-alert v-if="createViewMessage" type="error" variant="tonal" class="mb-4">{{ createViewMessage }}</v-alert>
 						<div class="mb-4">

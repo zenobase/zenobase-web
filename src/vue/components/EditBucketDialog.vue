@@ -173,7 +173,11 @@ watch(
 <template>
 	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
 		<v-card>
-			<v-card-title>Bucket Settings</v-card-title>
+			<v-card-title class="d-flex align-center">
+				Bucket Settings
+				<v-spacer />
+				<v-btn icon="mdi-close" variant="text" density="compact" @click="close()" />
+			</v-card-title>
 			<v-form @submit.prevent="save()">
 				<v-card-text v-if="newBucket">
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>

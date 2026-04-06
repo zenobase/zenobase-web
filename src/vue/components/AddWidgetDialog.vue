@@ -157,7 +157,11 @@ watch(
 <template>
 	<v-dialog v-model="visible" max-width="900" @update:model-value="!$event && close()">
 		<v-card>
-			<v-card-title>Add Widget</v-card-title>
+			<v-card-title class="d-flex align-center">
+				Add Widget
+				<v-spacer />
+				<v-btn icon="mdi-close" variant="text" density="compact" @click="close()" />
+			</v-card-title>
 			<v-card-text>
 				<v-row>
 					<v-col v-for="template in findTemplates()" :key="template.type" cols="4">

@@ -744,7 +744,11 @@ const sideTab = ref('widget-scheduler');
 						<!-- Edit Quota Dialog -->
 						<v-dialog v-model="showEditQuota" max-width="400">
 							<v-card>
-								<v-card-title>Quota - {{ quota.user?.name }}</v-card-title>
+								<v-card-title class="d-flex align-center">
+									Quota - {{ quota.user?.name }}
+									<v-spacer />
+									<v-btn icon="mdi-close" variant="text" density="compact" @click="showEditQuota = false" />
+								</v-card-title>
 								<form @submit.prevent="saveQuota()">
 									<v-card-text>
 										<v-alert v-if="quota.message" id="edit-quota-message" type="error" variant="tonal" class="mb-4">

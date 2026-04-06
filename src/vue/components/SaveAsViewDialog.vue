@@ -91,7 +91,11 @@ watch(
 <template>
 	<v-dialog v-model="visible" max-width="500" @update:model-value="!$event && close()">
 		<v-card>
-			<v-card-title>Create View</v-card-title>
+			<v-card-title class="d-flex align-center">
+				Create View
+				<v-spacer />
+				<v-btn icon="mdi-close" variant="text" density="compact" @click="close()" />
+			</v-card-title>
 			<v-form @submit.prevent="create()">
 				<v-card-text>
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>

@@ -84,7 +84,11 @@ watch(
 <template>
 	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
 		<v-card>
-			<v-card-title>{{ title }}</v-card-title>
+			<v-card-title class="d-flex align-center">
+				{{ title }}
+				<v-spacer />
+				<v-btn icon="mdi-close" variant="text" density="compact" @click="close()" />
+			</v-card-title>
 			<v-form v-model="formValid" @submit.prevent="save()">
 				<v-card-text>
 					<slot />

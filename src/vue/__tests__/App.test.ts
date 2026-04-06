@@ -1,8 +1,9 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
+import { createMemoryHistory, createRouter } from 'vue-router';
 import { createVuetify } from 'vuetify';
 import App from '../App.vue';
-import router from '../router';
+import productionRouter from '../router';
 
 const vuetify = createVuetify();
 
@@ -15,6 +16,10 @@ globalThis.fetch = vi.fn().mockResolvedValue({
 
 describe('App', () => {
 	it('mounts without error', () => {
+		const router = createRouter({
+			history: createMemoryHistory(),
+			routes: productionRouter.getRoutes(),
+		});
 		const wrapper = mount(App, {
 			global: {
 				plugins: [router, vuetify],
