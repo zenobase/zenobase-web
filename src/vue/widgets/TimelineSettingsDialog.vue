@@ -6,7 +6,7 @@ import { useWidgetSettings } from '../composables/useWidgetSettings';
 import { REGRESSION_METHODS, TIMELINE_INTERVALS, TIMESTAMP_SUBFIELDS } from '../utils/fieldRegistry';
 
 const { draft, onInit } = inject<SettingsDialogContext>(settingsDialogKey)!;
-const { numericAndTimestampFieldNames, currentUnits, statisticsFor, unitsForField, filterValid } = useWidgetSettings(draft);
+const { numericAndTimestampFieldNames, currentUnits, statisticsFor, unitsForField, filterValid, filterRule } = useWidgetSettings(draft);
 
 watch(
 	() => draft.value.field,
@@ -41,7 +41,7 @@ onInit((d: WidgetSettings) => {
 	<v-select label="Default Interval" :items="TIMELINE_INTERVALS" item-title="name" item-value="name" v-model="draft.interval" />
 	<v-select label="Regression" :items="[{ title: 'None', value: '' }, ...REGRESSION_METHODS.map(m => ({ title: m, value: m }))]" v-model="draft.regression" hint="Optional method for drawing a regression line." persistent-hint />
 	<v-select label="Timestamp" :items="TIMESTAMP_SUBFIELDS" item-title="label" item-value="value" v-model="draft.key_field" />
-	<v-text-field label="Filter" v-model="draft.filter" placeholder="e.g. tag:xyz">
+	<v-text-field label="Filter" v-model="draft.filter" :rules="[filterRule]" placeholder="e.g. tag:xyz">
 		<template v-if="filterValid !== null" #append-inner>
 			<v-icon v-if="filterValid" icon="mdi-check" color="success" />
 			<v-icon v-else icon="mdi-exclamation" color="warning" />

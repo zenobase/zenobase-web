@@ -5,7 +5,7 @@ import { type SettingsDialogContext, settingsDialogKey } from '../composables/us
 import { useWidgetSettings } from '../composables/useWidgetSettings';
 
 const { draft, onInit } = inject<SettingsDialogContext>(settingsDialogKey)!;
-const { textFieldNames, numericFieldNames, currentValueUnits, unitsForField, isStatisticSelected, toggleStatistic, filterValid, orderField, isAsc } = useWidgetSettings(draft);
+const { textFieldNames, numericFieldNames, currentValueUnits, unitsForField, isStatisticSelected, toggleStatistic, filterValid, filterRule, limitRule, orderField, isAsc } = useWidgetSettings(draft);
 
 watch(
 	() => draft.value.value_field,
@@ -33,7 +33,7 @@ onInit((d: WidgetSettings) => {
 			<v-select label="Unit" :items="currentValueUnits" v-model="draft.unit" style="max-width: 100px" />
 		</template>
 	</div>
-	<v-text-field label="Limit *" type="number" required min="1" max="100" v-model.number="draft.limit" style="max-width: 120px" />
+	<v-text-field label="Limit *" type="number" required :rules="[limitRule]" v-model.number="draft.limit" style="max-width: 120px" />
 	<div class="d-flex ga-2">
 		<v-select label="Order *" :items="['term', 'count', 'sum', 'min', 'max', 'avg']" v-model="orderField" required />
 		<v-select :items="[{ title: 'asc', value: true }, { title: 'desc', value: false }]" v-model="isAsc" required style="max-width: 120px" />
@@ -46,7 +46,7 @@ onInit((d: WidgetSettings) => {
 		<v-checkbox label="Sum" :model-value="isStatisticSelected('sum')" @update:model-value="toggleStatistic('sum')" hide-details />
 		<v-checkbox label="Avg" :model-value="isStatisticSelected('avg')" @update:model-value="toggleStatistic('avg')" hide-details />
 	</v-sheet>
-	<v-text-field label="Filter" v-model="draft.filter" placeholder="e.g. tag:xyz">
+	<v-text-field label="Filter" v-model="draft.filter" :rules="[filterRule]" placeholder="e.g. tag:xyz">
 		<template v-if="filterValid !== null" #append-inner>
 			<v-icon v-if="filterValid" icon="mdi-check" color="success" />
 			<v-icon v-else icon="mdi-exclamation" color="warning" />

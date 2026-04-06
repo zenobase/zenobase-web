@@ -54,6 +54,9 @@ export function useWidgetSettings(draft: MaybeRefOrGetter<WidgetSettings>) {
 	const filterXValid = computed(() => isFilterValid(toValue(draft).filter_x));
 	const filterYValid = computed(() => isFilterValid(toValue(draft).filter_y));
 
+	const filterRule = (v: string) => !v || isFilterValid(v) !== false || 'Invalid filter';
+	const limitRule = (v: number) => (Number.isInteger(v) && v >= 1 && v <= 100) || 'Must be 1\u2013100';
+
 	// --- Order helpers ---
 
 	const orderField = computed({
@@ -95,6 +98,8 @@ export function useWidgetSettings(draft: MaybeRefOrGetter<WidgetSettings>) {
 		filterValid,
 		filterXValid,
 		filterYValid,
+		filterRule,
+		limitRule,
 		orderField,
 		isAsc,
 	};

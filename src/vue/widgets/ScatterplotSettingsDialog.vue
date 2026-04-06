@@ -5,7 +5,7 @@ import { useWidgetSettings } from '../composables/useWidgetSettings';
 import { REGRESSION_METHODS, TIMELINE_INTERVALS, TIMESTAMP_SUBFIELDS } from '../utils/fieldRegistry';
 
 const { draft } = inject<SettingsDialogContext>(settingsDialogKey)!;
-const { numericAndTimestampFieldNames, currentUnitsX, currentUnitsY, statisticsFor, unitsForField, filterXValid, filterYValid } = useWidgetSettings(draft);
+const { numericAndTimestampFieldNames, currentUnitsX, currentUnitsY, statisticsFor, unitsForField, filterXValid, filterYValid, filterRule } = useWidgetSettings(draft);
 
 function swapAxes() {
 	const s = draft.value;
@@ -56,7 +56,7 @@ watch(
 				<v-select label="Unit" :items="currentUnitsX" v-model="draft.unit_x" style="max-width: 100px" />
 			</template>
 		</div>
-		<v-text-field label="Filter" v-model="draft.filter_x" placeholder="e.g. tag:xyz">
+		<v-text-field label="Filter" v-model="draft.filter_x" :rules="[filterRule]" placeholder="e.g. tag:xyz">
 			<template v-if="filterXValid !== null" #append-inner>
 				<v-icon v-if="filterXValid" icon="mdi-check" color="success" />
 				<v-icon v-else icon="mdi-exclamation" color="warning" />
@@ -75,7 +75,7 @@ watch(
 				<v-select label="Unit" :items="currentUnitsY" v-model="draft.unit_y" style="max-width: 100px" />
 			</template>
 		</div>
-		<v-text-field label="Filter" v-model="draft.filter_y" placeholder="e.g. tag:xyz">
+		<v-text-field label="Filter" v-model="draft.filter_y" :rules="[filterRule]" placeholder="e.g. tag:xyz">
 			<template v-if="filterYValid !== null" #append-inner>
 				<v-icon v-if="filterYValid" icon="mdi-check" color="success" />
 				<v-icon v-else icon="mdi-exclamation" color="warning" />

@@ -16,7 +16,10 @@ const emit = defineEmits<{
 }>();
 
 const visible = ref(false);
+const formValid = ref<boolean | null>(null);
 const draft = ref<WidgetSettings>({} as WidgetSettings);
+const originalJson = ref('');
+const dirty = computed(() => JSON.stringify(draft.value) !== originalJson.value);
 
 const initFn = shallowRef<((draft: WidgetSettings) => void) | null>(null);
 const beforeSaveFn = shallowRef<((settings: WidgetSettings) => void) | null>(null);
@@ -30,6 +33,7 @@ provide(settingsDialogKey, {
 		initFn.value = fn;
 		if (props.modelValue) {
 			fn(draft.value);
+			originalJson.value = JSON.stringify(draft.value);
 		}
 	},
 	onBeforeSave: (fn: (settings: WidgetSettings) => void) => {
@@ -62,6 +66,7 @@ watch(
 	(open) => {
 		if (open) {
 			draft.value = JSON.parse(JSON.stringify(props.settings)) as WidgetSettings;
+			originalJson.value = JSON.stringify(draft.value);
 			nextTick(() => {
 				visible.value = true;
 			});
@@ -80,14 +85,14 @@ watch(
 	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
 		<v-card>
 			<v-card-title>{{ title }}</v-card-title>
-			<v-form @submit.prevent="save()">
+			<v-form v-model="formValid" @submit.prevent="save()">
 				<v-card-text>
 					<slot />
 				</v-card-text>
 				<v-card-actions>
 					<v-btn variant="text" color="error" @click="remove()">Remove</v-btn>
 					<v-spacer />
-					<v-btn type="submit" color="primary" :disabled="!canSubmit">Update</v-btn>
+					<v-btn type="submit" color="primary" :disabled="!dirty || formValid === false || !canSubmit">Update</v-btn>
 					<v-btn variant="text" @click="close()">Cancel</v-btn>
 				</v-card-actions>
 			</v-form>

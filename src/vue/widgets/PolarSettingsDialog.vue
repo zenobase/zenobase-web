@@ -5,7 +5,7 @@ import { useWidgetSettings } from '../composables/useWidgetSettings';
 import { POLAR_INTERVALS, TIMESTAMP_SUBFIELDS } from '../utils/fieldRegistry';
 
 const { draft } = inject<SettingsDialogContext>(settingsDialogKey)!;
-const { numericAndTimestampFieldNames, currentValueUnits, statisticsFor, unitsForField, filterValid } = useWidgetSettings(draft);
+const { numericAndTimestampFieldNames, currentValueUnits, statisticsFor, unitsForField, filterValid, filterRule } = useWidgetSettings(draft);
 
 watch(
 	() => draft.value.value_field,
@@ -34,7 +34,7 @@ watch(
 	<v-select label="Interval *" :items="POLAR_INTERVALS" item-title="label" item-value="id" v-model="draft.interval" required />
 	<v-checkbox label="highlight average interval" :model-value="draft.mark === 'avg'" @update:model-value="draft.mark = $event ? 'avg' : ''" />
 	<v-select label="Timestamp" :items="TIMESTAMP_SUBFIELDS" item-title="label" item-value="value" v-model="draft.key_field" hint="How to handle events with multiple timestamps." persistent-hint />
-	<v-text-field label="Filter" v-model="draft.filter" placeholder="e.g. tag:xyz">
+	<v-text-field label="Filter" v-model="draft.filter" :rules="[filterRule]" placeholder="e.g. tag:xyz">
 		<template v-if="filterValid !== null" #append-inner>
 			<v-icon v-if="filterValid" icon="mdi-check" color="success" />
 			<v-icon v-else icon="mdi-exclamation" color="warning" />

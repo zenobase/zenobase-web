@@ -5,7 +5,7 @@ import { type SettingsDialogContext, settingsDialogKey } from '../composables/us
 import { useWidgetSettings } from '../composables/useWidgetSettings';
 
 const { draft, onInit, onBeforeSave, setCanSubmit } = inject<SettingsDialogContext>(settingsDialogKey)!;
-const { numericFieldNames, currentUnits, unitsForField, filterValid } = useWidgetSettings(draft);
+const { numericFieldNames, currentUnits, unitsForField, filterValid, filterRule } = useWidgetSettings(draft);
 
 watch(
 	() => draft.value.field,
@@ -45,7 +45,7 @@ onBeforeSave((settings: WidgetSettings) => {
 		<span v-if="draft.field?.startsWith('duration')">hours</span>
 		<v-select label="Unit" v-if="currentUnits.length" :items="currentUnits" v-model="draft.unit" style="max-width: 100px" />
 	</div>
-	<v-text-field label="Filter" v-model="draft.filter" placeholder="e.g. tag:xyz">
+	<v-text-field label="Filter" v-model="draft.filter" :rules="[filterRule]" placeholder="e.g. tag:xyz">
 		<template v-if="filterValid !== null" #append-inner>
 			<v-icon v-if="filterValid" icon="mdi-check" color="success" />
 			<v-icon v-else icon="mdi-exclamation" color="warning" />
