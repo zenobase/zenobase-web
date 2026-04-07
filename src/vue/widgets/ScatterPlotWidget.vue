@@ -5,6 +5,7 @@ import { compactDuration, compactNumber } from '../../utils/helpers';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
+import { downloadCsv } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
@@ -323,30 +324,19 @@ function downloadCSV() {
 	const headerX = props.settings.label_x || (props.settings.statistic_x || 'count') + '_' + props.settings.field_x + (props.settings.unit_x ? '_' + props.settings.unit_x : '');
 	const headerY = props.settings.label_y || (props.settings.statistic_y || 'count') + '_' + props.settings.field_y + (props.settings.unit_y ? '_' + props.settings.unit_y : '');
 	const hasB = dataB.value?.length > 0;
-	const rows = [[headerX, headerY, hasB ? 'dataset' : ''].filter(Boolean).join(',')];
+	const header = hasB ? [headerX, headerY, 'dataset'] : [headerX, headerY];
+	const rows: string[][] = [header];
 	if (data.value) {
 		for (const point of data.value) {
-			const row = [point[0], point[1]];
-			if (hasB) row.push('A' as unknown as number);
-			rows.push(row.join(','));
+			rows.push(hasB ? [String(point[0]), String(point[1]), 'A'] : [String(point[0]), String(point[1])]);
 		}
 	}
 	if (dataB.value) {
 		for (const point of dataB.value) {
-			const row = [point[0], point[1]];
-			if (hasB) row.push('B' as unknown as number);
-			rows.push(row.join(','));
+			rows.push(hasB ? [String(point[0]), String(point[1]), 'B'] : [String(point[0]), String(point[1])]);
 		}
 	}
-	const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = `${props.settings.id}.csv`;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	downloadCsv(rows, `${props.settings.id}.csv`);
 }
 
 defineExpose({

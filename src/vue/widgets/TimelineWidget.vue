@@ -7,6 +7,7 @@ import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
+import { downloadCsv, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 function pad(n: number): string {
@@ -635,21 +636,13 @@ function activateBrush(instance: ECharts) {
 function downloadCSV() {
 	if (!times.value?.length) return;
 	const statistic = props.settings.statistic || 'count';
-	const rows = [['time', statistic].join(',')];
-	const field = findField(props.settings.field);
+	const unit = unwrapValue(times.value[0][statistic]).unit;
+	const header = unit ? `${statistic}_${unit}` : statistic;
+	const rows = [['time', header]];
 	for (const entry of times.value) {
-		const value = entry[statistic];
-		rows.push([entry.label, value !== undefined ? field.toText(value) : ''].join(','));
+		rows.push([entry.label, unwrapValue(entry[statistic]).value]);
 	}
-	const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = `${props.settings.id}.csv`;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	downloadCsv(rows, `${props.settings.id}.csv`);
 }
 
 defineExpose({

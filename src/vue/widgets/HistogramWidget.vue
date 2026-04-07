@@ -5,6 +5,7 @@ import type { HistogramInterval, HistogramParams, SearchResult } from '../../typ
 import { compactDuration, compactNumber } from '../../utils/helpers';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
+import { downloadCsv } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
@@ -117,20 +118,11 @@ function onChartReady(instance: ECharts) {
 
 function downloadCSV() {
 	if (!intervals.value?.length) return;
-	const rows = [[props.settings.field, 'count'].join(',')];
+	const rows: string[][] = [[props.settings.field, 'count']];
 	for (const interval of intervals.value) {
-		const value = `[${fieldToText(interval.from)}..${fieldToText(interval.to)})`;
-		rows.push([value, interval.count].join(','));
+		rows.push([`[${fieldToText(interval.from)}..${fieldToText(interval.to)})`, String(interval.count)]);
 	}
-	const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = `${props.settings.id}.csv`;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	downloadCsv(rows, `${props.settings.id}.csv`);
 }
 
 defineExpose({

@@ -4,6 +4,7 @@ import { inject, nextTick, onMounted, ref } from 'vue';
 import type { FieldInfo, PolarEntry, PolarParams, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
+import { downloadCsv, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
@@ -199,22 +200,13 @@ function onChartReady(instance: ECharts) {
 function downloadCSV() {
 	if (!times.value?.length) return;
 	const statistic = props.settings.statistic || 'count';
-	const field = findField(props.settings.value_field);
-	const header = statistic + '_' + props.settings.value_field + (props.settings.unit ? '_' + props.settings.unit : '');
-	const rows = [[props.settings.interval, header].join(',')];
+	const unit = unwrapValue(times.value[0][statistic]).unit || props.settings.unit;
+	const header = statistic + '_' + props.settings.value_field + (unit ? '_' + unit : '');
+	const rows = [[props.settings.interval, header]];
 	for (const time of times.value) {
-		const value = time[statistic];
-		rows.push([time.value, value !== undefined ? field.toNumber(value as number) : ''].join(','));
+		rows.push([time.value, unwrapValue(time[statistic]).value]);
 	}
-	const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = `${props.settings.id}.csv`;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+	downloadCsv(rows, `${props.settings.id}.csv`);
 }
 
 defineExpose({
