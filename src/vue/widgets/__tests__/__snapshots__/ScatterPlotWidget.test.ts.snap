@@ -7,12 +7,10 @@ exports[`ScatterPlotWidget > matches snapshot 1`] = `
     {
       "type": "inside",
       "xAxisIndex": 0,
-      "zoomOnMouseWheel": false,
     },
     {
       "type": "inside",
       "yAxisIndex": 0,
-      "zoomOnMouseWheel": false,
     },
   ],
   "grid": {

@@ -192,8 +192,8 @@ function draw() {
 			},
 		},
 		dataZoom: [
-			{ type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: false },
-			{ type: 'inside', yAxisIndex: 0, zoomOnMouseWheel: false },
+			{ type: 'inside', xAxisIndex: 0 },
+			{ type: 'inside', yAxisIndex: 0 },
 		],
 		series: allSeries,
 		legend: { show: false },

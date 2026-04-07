@@ -114,15 +114,25 @@ function onClickOutside() {
 	focused.value = false;
 }
 
+function onWheel(e: WheelEvent) {
+	if (e.metaKey || e.ctrlKey) {
+		e.preventDefault();
+	} else {
+		e.stopPropagation();
+	}
+}
+
 onMounted(() => {
 	if (chartEl.value) {
 		resizeObserver = new ResizeObserver(() => chart?.resize());
 		resizeObserver.observe(chartEl.value);
+		chartEl.value.addEventListener('wheel', onWheel, { capture: true });
 	}
 	document.addEventListener('click', onClickOutside);
 });
 
 onBeforeUnmount(() => {
+	chartEl.value?.removeEventListener('wheel', onWheel, { capture: true });
 	resizeObserver?.disconnect();
 	resizeObserver = null;
 	if (chart) {

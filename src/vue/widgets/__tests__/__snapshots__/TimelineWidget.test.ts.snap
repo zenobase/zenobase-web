@@ -15,7 +15,6 @@ exports[`TimelineWidget > matches snapshot 1`] = `
       "moveOnMouseWheel": false,
       "type": "inside",
       "xAxisIndex": 0,
-      "zoomOnMouseWheel": false,
     },
   ],
   "grid": {

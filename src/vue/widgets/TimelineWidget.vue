@@ -563,7 +563,7 @@ function draw() {
 				return `<b>${labelMap[params.value[0] as number] ?? ''}</b>: ${isDuration ? compactDuration(v as number) : field.toText(v)}`;
 			},
 		},
-		dataZoom: [{ type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: false, moveOnMouseMove: false, moveOnMouseWheel: false }],
+		dataZoom: [{ type: 'inside', xAxisIndex: 0, moveOnMouseMove: false, moveOnMouseWheel: false }],
 		toolbox: { show: false, feature: { brush: { type: ['lineX'] } } },
 		brush: {
 			xAxisIndex: 0,
