@@ -8,6 +8,10 @@ export function unwrapValue(v: unknown): { value: string; unit: string } {
 	return { value: String(v ?? ''), unit: '' };
 }
 
+export function toFilename(label: string): string {
+	return label.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_|_$/g, '') || 'export';
+}
+
 export function downloadCsv(rows: string[][], filename: string) {
 	const blob = new Blob([rows.map((r) => r.join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
 	const url = URL.createObjectURL(blob);

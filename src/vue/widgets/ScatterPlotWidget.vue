@@ -5,12 +5,13 @@ import { compactDuration, compactNumber } from '../../utils/helpers';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
-import { downloadCsv } from './csv';
+import { downloadCsv, toFilename } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
 	settings: {
 		id: string;
+		label?: string;
 		key_field?: string;
 		field_x: string;
 		unit_x?: string;
@@ -336,7 +337,7 @@ function downloadCSV() {
 			rows.push(hasB ? [String(point[0]), String(point[1]), 'B'] : [String(point[0]), String(point[1])]);
 		}
 	}
-	downloadCsv(rows, `${props.settings.id}.csv`);
+	downloadCsv(rows, `${toFilename(props.settings.label || props.settings.id)}.csv`);
 }
 
 defineExpose({

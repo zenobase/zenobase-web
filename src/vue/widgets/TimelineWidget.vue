@@ -7,7 +7,7 @@ import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
-import { downloadCsv, unwrapValue } from './csv';
+import { downloadCsv, toFilename, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 function pad(n: number): string {
@@ -66,6 +66,7 @@ function subtractDate(unit: string, n: number): Date {
 const props = defineProps<{
 	settings: {
 		id: string;
+		label?: string;
 		key_field?: string;
 		field: string;
 		unit?: string;
@@ -642,7 +643,7 @@ function downloadCSV() {
 	for (const entry of times.value) {
 		rows.push([entry.label, unwrapValue(entry[statistic]).value]);
 	}
-	downloadCsv(rows, `${props.settings.id}.csv`);
+	downloadCsv(rows, `${toFilename(props.settings.label || props.settings.id)}.csv`);
 }
 
 defineExpose({

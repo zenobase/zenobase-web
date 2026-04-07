@@ -4,12 +4,13 @@ import { inject, nextTick, onMounted, ref } from 'vue';
 import type { FieldInfo, PolarEntry, PolarParams, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
-import { downloadCsv, unwrapValue } from './csv';
+import { downloadCsv, toFilename, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
 	settings: {
 		id: string;
+		label?: string;
 		key_field?: string;
 		value_field: string;
 		unit?: string;
@@ -206,7 +207,7 @@ function downloadCSV() {
 	for (const time of times.value) {
 		rows.push([time.value, unwrapValue(time[statistic]).value]);
 	}
-	downloadCsv(rows, `${props.settings.id}.csv`);
+	downloadCsv(rows, `${toFilename(props.settings.label || props.settings.id)}.csv`);
 }
 
 defineExpose({

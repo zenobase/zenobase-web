@@ -5,12 +5,13 @@ import type { HistogramInterval, HistogramParams, SearchResult } from '../../typ
 import { compactDuration, compactNumber } from '../../utils/helpers';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
-import { downloadCsv } from './csv';
+import { downloadCsv, toFilename } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
 	settings: {
 		id: string;
+		label?: string;
 		field: string;
 		interval: number;
 		unit?: string;
@@ -122,7 +123,7 @@ function downloadCSV() {
 	for (const interval of intervals.value) {
 		rows.push([`[${fieldToText(interval.from)}..${fieldToText(interval.to)})`, String(interval.count)]);
 	}
-	downloadCsv(rows, `${props.settings.id}.csv`);
+	downloadCsv(rows, `${toFilename(props.settings.label || props.settings.id)}.csv`);
 }
 
 defineExpose({
