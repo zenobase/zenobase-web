@@ -4,8 +4,9 @@ import type { ZenoEvent } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { loadGoogleMaps } from '../composables/useGoogleMaps';
-import { formatDuration, formatRelativeTime, getFieldIcon, locationText } from '../utils/eventFormatter';
+import { formatDuration, getFieldIcon, locationText } from '../utils/eventFormatter';
 import { getNumericFieldNames, getTextFieldNames, getUnitsForField } from '../utils/fieldRegistry';
+import { formatAge } from '../utils/formatAge';
 
 let maps: typeof google.maps;
 
@@ -221,7 +222,7 @@ function rebuildEntries() {
 		const values = Array.isArray(value) ? value : [value];
 		for (const v of values) {
 			if (field === 'timestamp') {
-				result.push({ field, value: formatRelativeTime(String(v)) });
+				result.push({ field, value: formatAge(String(v)) });
 			} else if (field === 'duration') {
 				result.push({ field, value: formatDuration(Number(v)) });
 			} else if (field === 'rating') {

@@ -16,7 +16,7 @@ exports[`GanttWidget > matches snapshot 1`] = `
         <tbody>
           <tr>
             <td><a>exercise</a></td>
-            <td style="text-align: right;"><abbr title="2025-06-15T00:00:00Z">16d ago</abbr></td>
+            <td style="text-align: right;"><abbr title="2025-06-15T00:00:00Z">2w ago</abbr></td>
             <td style="text-align: right;"><span>3d</span></td>
           </tr>
           <tr>

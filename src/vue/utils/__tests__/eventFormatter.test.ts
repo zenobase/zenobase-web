@@ -98,19 +98,19 @@ describe('FIELD_REGISTRY toHtml', () => {
 		});
 
 		it('shows 1 minute ago', () => {
-			expect(toHtml('timestamp', '2025-01-15T11:59:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:59:00Z">1 minute ago</abbr>'));
+			expect(toHtml('timestamp', '2025-01-15T11:59:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:59:00Z">1m ago</abbr>'));
 		});
 
 		it('shows minutes ago', () => {
-			expect(toHtml('timestamp', '2025-01-15T11:50:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:50:00Z">10 minutes ago</abbr>'));
+			expect(toHtml('timestamp', '2025-01-15T11:50:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:50:00Z">10m ago</abbr>'));
 		});
 
 		it('shows 1 hour ago', () => {
-			expect(toHtml('timestamp', '2025-01-15T11:00:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:00:00Z">1 hour ago</abbr>'));
+			expect(toHtml('timestamp', '2025-01-15T11:00:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:00:00Z">1h ago</abbr>'));
 		});
 
 		it('shows hours ago', () => {
-			expect(toHtml('timestamp', '2025-01-15T09:00:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T09:00:00Z">3 hours ago</abbr>'));
+			expect(toHtml('timestamp', '2025-01-15T09:00:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T09:00:00Z">3h ago</abbr>'));
 		});
 	});
 

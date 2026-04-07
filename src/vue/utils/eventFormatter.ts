@@ -1,4 +1,5 @@
 import type { ResourceRef, UnitValue, ZenoEvent } from '../../types';
+import { formatAge } from './formatAge';
 import { getUserName } from './userNames';
 
 function esc(value: unknown): string {
@@ -28,19 +29,6 @@ function formatDuration(ms: number): string {
 	if (s && parts.length < 2) parts.push(s + 's');
 	if (parts.length === 0) parts.push(ms + 'ms');
 	return parts.slice(0, 2).join(' ');
-}
-
-function formatRelativeTime(isoStr: string): string {
-	const diff = Math.abs(Date.now() - new Date(isoStr).getTime());
-	if (diff < 60000) return 'just now';
-	if (diff >= 79200000) {
-		const d = new Date(isoStr);
-		return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-	}
-	const minutes = Math.floor(diff / 60000);
-	if (minutes < 60) return minutes + (minutes === 1 ? ' minute ago' : ' minutes ago');
-	const hours = Math.floor(minutes / 60);
-	return hours + (hours === 1 ? ' hour ago' : ' hours ago');
 }
 
 function ratingStarsHtml(value: number): string {
@@ -116,7 +104,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 		'timestamp',
 		'mdi-calendar-outline',
 		'Timestamp',
-		(v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' <abbr title="' + esc(v) + '">' + esc(formatRelativeTime(String(v))) + '</abbr></span>',
+		(v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' <abbr title="' + esc(v) + '">' + esc(formatAge(String(v), 79200000)) + '</abbr></span>',
 	),
 	simple('velocity', 'mdi-speedometer', 'Velocity', (v) => esc(textWithUnit(v))),
 	simple('pace', 'mdi-timer-outline', 'Pace', (v) => esc(formatPace(v))),
@@ -141,7 +129,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 	}),
 ];
 
-export { esc, formatDuration, formatRelativeTime, locationText, ratingStarsHtml, textWithUnit };
+export { esc, formatDuration, locationText, ratingStarsHtml, textWithUnit };
 
 export function getFieldIcon(fieldName: string): string {
 	const dot = fieldName.indexOf('.');
