@@ -89,14 +89,14 @@ const templates: WidgetTemplate[] = [
 	{
 		type: 'gantt',
 		label: 'Frequency',
-		description: 'Shows how long ago and how often certain events occur.',
+		description: 'Shows how long ago and how often events occur.',
 		thumbnail: '/img/widgets/gantt.png',
 		settings: { field: 'tag', order: '-max', limit: 10 },
 	},
 	{
 		type: 'polar',
 		label: 'Polar Chart',
-		description: 'Plots values by month of year, day of week, or hour of day.',
+		description: 'Plots by month of year, day of week, or hour of day.',
 		thumbnail: '/img/widgets/polar.png',
 		settings: { interval: 'day_of_week', value_field: 'timestamp' },
 	},
@@ -164,13 +164,13 @@ watch(
 			</v-card-title>
 			<v-card-text>
 				<v-row>
-					<v-col v-for="template in findTemplates()" :key="template.type" cols="4">
+					<v-col v-for="template in findTemplates()" :key="template.type" cols="12" sm="6">
 						<v-card variant="outlined" hover style="cursor: pointer" @click="add(template)">
 							<v-card-text class="text-center">
 								<strong>{{ template.label }}</strong>
 							</v-card-text>
-							<v-img :src="template.thumbnail" :alt="template.label" width="300" height="200" />
-							<v-card-text class="text-body-2">{{ template.description }}</v-card-text>
+							<v-img :src="template.thumbnail" :alt="template.label" width="300" height="200" class="mx-auto" />
+							<v-card-text class="text-body-2 text-center">{{ template.description }}</v-card-text>
 						</v-card>
 					</v-col>
 				</v-row>
