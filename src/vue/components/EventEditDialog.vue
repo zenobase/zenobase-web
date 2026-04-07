@@ -29,7 +29,10 @@ const message = ref('');
 const entries = ref<Array<{ field: string; value: string; stars?: number }>>([]);
 const newField = ref('');
 
-const EDITABLE_FIELDS = [...getTextFieldNames().filter((f) => f !== 'author' && f !== 'source'), 'location', 'timestamp', ...getNumericFieldNames()].sort();
+const COMMON_FIELDS = ['tag', 'timestamp'];
+const OTHER_FIELDS = [...getTextFieldNames().filter((f) => f !== 'author' && f !== 'source' && f !== 'tag'), 'location', ...getNumericFieldNames().filter((f) => f !== 'timestamp')].sort();
+const ALL_FIELD_NAMES = [...COMMON_FIELDS, ...OTHER_FIELDS];
+const FIELD_SELECT_ITEMS = [...COMMON_FIELDS, ...OTHER_FIELDS];
 
 const newValue = ref('');
 const newNumValue = ref<number | null>(null);
@@ -216,7 +219,7 @@ function init(event: ZenoEvent | null) {
 
 function rebuildEntries() {
 	const result: Array<{ field: string; value: string; stars?: number }> = [];
-	for (const field of EDITABLE_FIELDS) {
+	for (const field of ALL_FIELD_NAMES) {
 		const value = eventData.value[field];
 		if (value === undefined || value === null) continue;
 		const values = Array.isArray(value) ? value : [value];
@@ -492,14 +495,22 @@ watch(
 	<v-dialog v-model="visible" max-width="700" @update:model-value="!$event && close()">
 		<v-card>
 			<v-card-title class="d-flex align-center">
-				Event
+				{{ isNew ? 'Create Event' : 'Update Event' }}
 				<v-spacer />
 				<v-btn icon="mdi-close" variant="text" density="compact" @click="close()" />
 			</v-card-title>
 			<v-card-text>
 				<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
 
-				<v-select label="Field" :items="EDITABLE_FIELDS" v-model="newField" clearable style="max-width: 300px" />
+				<v-select label="Field" :items="FIELD_SELECT_ITEMS" v-model="newField" clearable style="max-width: 300px">
+						<template #item="{ item, props: itemProps }">
+							<v-list-item v-bind="itemProps">
+								<template v-if="COMMON_FIELDS.includes(String(itemProps.title))" #title>
+									<span style="font-weight: bold">{{ itemProps.title }}</span>
+								</template>
+							</v-list-item>
+						</template>
+					</v-select>
 
 				<v-card v-if="newField" class="mb-4" variant="outlined">
 					<v-card-text>
@@ -610,7 +621,7 @@ watch(
 				</v-card>
 
 				<div class="mt-4">
-					<em v-if="entries.length === 0">Add one or more fields, then save.</em>
+					<em v-if="entries.length === 0">Add one or more fields.</em>
 					<span v-for="(entry, i) in entries" :key="i" class="editable">
 						<template v-if="entry.stars !== undefined">
 							<span class="text-no-wrap" :title="entry.value"><v-icon v-for="s in 5" :key="s" :icon="entry.stars >= s ? 'mdi-star' : 'mdi-star-outline'" size="small" /></span>
@@ -626,7 +637,7 @@ watch(
 			<v-card-actions>
 				<v-btn v-if="!isNew" variant="text" color="error" @click="() => { emit('deleted', eventData['@id'] as string); close() }">Delete</v-btn>
 				<v-spacer />
-				<v-btn color="primary" :disabled="!!newField || entries.length === 0" @click="save()">Save</v-btn>
+				<v-btn color="primary" :disabled="!!newField || entries.length === 0" @click="save()">{{ isNew ? 'Create' : 'Update' }}</v-btn>
 				<v-btn variant="text" @click="close()">Cancel</v-btn>
 			</v-card-actions>
 		</v-card>
