@@ -374,6 +374,9 @@ watch(
 
 			<template v-slot:append>
 				<v-list nav>
+					<v-list-item href="https://ko-fi.com/zenobase" target="_blank" prepend-icon="mdi-coffee-outline">
+						<v-list-item-title class="font-weight-bold">Support us...</v-list-item-title>
+					</v-list-item>
 					<v-list-item v-if="auth.user.value?.name" to="/settings" prepend-icon="mdi-cog-outline">
 						<v-list-item-title class="font-weight-bold">Settings</v-list-item-title>
 					</v-list-item>
