@@ -44,6 +44,12 @@ export default createVuetify({
 			color: 'primary',
 			clearIcon: 'mdi-close',
 		},
+		VAutocomplete: {
+			variant: 'underlined',
+			density: 'default',
+			color: 'primary',
+			clearIcon: 'mdi-close',
+		},
 		VTextarea: {
 			variant: 'underlined',
 			density: 'default',

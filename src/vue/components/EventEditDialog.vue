@@ -502,7 +502,7 @@ watch(
 			<v-card-text>
 				<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
 
-				<v-select label="Field" :items="FIELD_SELECT_ITEMS" v-model="newField" clearable style="max-width: 300px">
+				<v-autocomplete label="Field" :items="FIELD_SELECT_ITEMS" v-model="newField" clearable style="max-width: 300px">
 						<template #item="{ item, props: itemProps }">
 							<v-list-item v-bind="itemProps">
 								<template v-if="COMMON_FIELDS.includes(String(itemProps.title))" #title>
@@ -510,7 +510,7 @@ watch(
 								</template>
 							</v-list-item>
 						</template>
-					</v-select>
+					</v-autocomplete>
 
 				<v-card v-if="newField" class="mb-4" variant="outlined">
 					<v-card-text>
