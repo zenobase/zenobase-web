@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const alertApi = inject<AlertApi>(alertKey)!;
 
-const CSV_LIMIT = 16000;
+const CSV_LIMIT = 10000;
 
 const visible = ref(false);
 const media = ref('json');
