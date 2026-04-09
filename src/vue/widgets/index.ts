@@ -1,5 +1,4 @@
 import type { Component } from 'vue';
-import { defineAsyncComponent } from 'vue';
 import type { WidgetType } from '../../types';
 
 export { default as CountWidget } from './CountWidget.vue';
@@ -13,16 +12,28 @@ export { default as ScatterPlotWidget } from './ScatterPlotWidget.vue';
 export { default as ScoreboardWidget } from './ScoreboardWidget.vue';
 export { default as TimelineWidget } from './TimelineWidget.vue';
 
+import CountSettingsDialog from './CountSettingsDialog.vue';
+import GanttSettingsDialog from './GanttSettingsDialog.vue';
+import HeatmapSettingsDialog from './HeatmapSettingsDialog.vue';
+import HistogramSettingsDialog from './HistogramSettingsDialog.vue';
+import ListSettingsDialog from './ListSettingsDialog.vue';
+import MapSettingsDialog from './MapSettingsDialog.vue';
+import PolarSettingsDialog from './PolarSettingsDialog.vue';
+import RatingsSettingsDialog from './RatingsSettingsDialog.vue';
+import ScatterplotSettingsDialog from './ScatterplotSettingsDialog.vue';
+import ScoreboardSettingsDialog from './ScoreboardSettingsDialog.vue';
+import TimelineSettingsDialog from './TimelineSettingsDialog.vue';
+
 export const SETTINGS_DIALOGS: Record<WidgetType, Component> = {
-	count: defineAsyncComponent(() => import('./CountSettingsDialog.vue')),
-	list: defineAsyncComponent(() => import('./ListSettingsDialog.vue')),
-	gantt: defineAsyncComponent(() => import('./GanttSettingsDialog.vue')),
-	ratings: defineAsyncComponent(() => import('./RatingsSettingsDialog.vue')),
-	histogram: defineAsyncComponent(() => import('./HistogramSettingsDialog.vue')),
-	scoreboard: defineAsyncComponent(() => import('./ScoreboardSettingsDialog.vue')),
-	timeline: defineAsyncComponent(() => import('./TimelineSettingsDialog.vue')),
-	polar: defineAsyncComponent(() => import('./PolarSettingsDialog.vue')),
-	scatterplot: defineAsyncComponent(() => import('./ScatterplotSettingsDialog.vue')),
-	map: defineAsyncComponent(() => import('./MapSettingsDialog.vue')),
-	heatmap: defineAsyncComponent(() => import('./HeatmapSettingsDialog.vue')),
+	count: CountSettingsDialog,
+	list: ListSettingsDialog,
+	gantt: GanttSettingsDialog,
+	ratings: RatingsSettingsDialog,
+	histogram: HistogramSettingsDialog,
+	scoreboard: ScoreboardSettingsDialog,
+	timeline: TimelineSettingsDialog,
+	polar: PolarSettingsDialog,
+	scatterplot: ScatterplotSettingsDialog,
+	map: MapSettingsDialog,
+	heatmap: HeatmapSettingsDialog,
 };

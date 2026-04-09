@@ -27,10 +27,18 @@ export default defineConfig({
 	build: {
 		cssMinify: false,
 
-		rollupOptions: {
-			input: {
-				main: 'index.html',
-				admin: 'admin/index.html',
+		// @ts-expect-error codeSplitting types not yet in vite's RolldownOptions
+		rolldownOptions: {
+			output: {
+				codeSplitting: {
+					groups: [
+						{
+							name: 'vendor',
+							test: /node_modules/,
+							priority: 0,
+						},
+					],
+				},
 			},
 		},
 
