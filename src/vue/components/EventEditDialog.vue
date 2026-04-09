@@ -4,7 +4,7 @@ import type { ZenoEvent } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { loadGoogleMaps } from '../composables/useGoogleMaps';
-import { formatDuration, getFieldIcon, locationText } from '../utils/eventFormatter';
+import { formatDuration, getFieldIcon, locationText, textWithUnit } from '../utils/eventFormatter';
 import { getNumericFieldNames, getTextFieldNames, getUnitsForField } from '../utils/fieldRegistry';
 import { formatAge } from '../utils/formatAge';
 
@@ -223,16 +223,18 @@ function rebuildEntries() {
 		const value = eventData.value[field];
 		if (value === undefined || value === null) continue;
 		const values = Array.isArray(value) ? value : [value];
-		for (const v of values) {
+		for (const v of values as unknown[]) {
 			if (field === 'timestamp') {
 				result.push({ field, value: formatAge(String(v)) });
 			} else if (field === 'duration') {
 				result.push({ field, value: formatDuration(Number(v)) });
 			} else if (field === 'rating') {
 				result.push({ field, value: `${v}%`, stars: Math.round((Number(v) || 0) / 20) });
+			} else if (typeof v === 'number') {
+				result.push({ field, value: v.toLocaleString() });
 			} else if (typeof v === 'object' && v !== null) {
 				if ('@value' in v) {
-					result.push({ field, value: `${v['@value']} ${v['unit'] || ''}`.trim() });
+					result.push({ field, value: textWithUnit(v) });
 				} else if ('lat' in v && 'lon' in v) {
 					result.push({ field, value: locationText(v as { lat: number; lon: number }) });
 				} else if ('url' in v && 'title' in v) {

@@ -11,7 +11,7 @@ function esc(value: unknown): string {
 function textWithUnit(value: unknown): string {
 	if (typeof value === 'object' && value !== null && '@value' in value) {
 		const obj = value as UnitValue;
-		return obj['@value'] + ' ' + (obj.unit || '');
+		return Number(obj['@value']).toLocaleString() + ' ' + (obj.unit || '');
 	}
 	return String(value);
 }
@@ -119,7 +119,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 	simple('light', 'mdi-white-balance-sunny', 'Light', (v) => esc(textWithUnit(v))),
 	simple('temperature', 'mdi-fire', 'Temperature', (v) => esc(textWithUnit(v))),
 	{ name: 'rating', icon: 'mdi-star', title: 'Rating', toHtml: (v) => ratingStarsHtml(Number(v)) },
-	simple('currency', 'mdi-currency-usd', 'Currency', (v) => Number(v).toFixed(2)),
+	simple('currency', 'mdi-currency-usd', 'Currency', (v) => Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })),
 	field('note', 'mdi-comment-outline', 'Note', (v, i, t) => '<span>' + ic(i, t) + '&nbsp;' + esc(v) + '</span>'),
 	field('author', 'mdi-account', 'User', (v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' ' + esc(getUserName(String(v))) + '</span>'),
 	field('source', 'mdi-open-in-new', 'Source', (v, i, t) => {

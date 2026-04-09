@@ -69,7 +69,7 @@ describe('FIELD_REGISTRY toHtml', () => {
 	});
 
 	it('pressure', () => {
-		expect(toHtml('pressure', { '@value': 1013, unit: 'hPa' })).toBe(span('mdi-arrow-expand-all', 'Pressure', '1013 hPa'));
+		expect(toHtml('pressure', { '@value': 1013, unit: 'hPa' })).toBe(span('mdi-arrow-expand-all', 'Pressure', (1013).toLocaleString() + ' hPa'));
 	});
 
 	it('sound', () => {
@@ -143,7 +143,7 @@ describe('FIELD_REGISTRY toHtml', () => {
 	});
 
 	it('bits', () => {
-		expect(toHtml('bits', { '@value': 1024, unit: 'MB' })).toBe(span('mdi-database', 'Bits', '1024 MB'));
+		expect(toHtml('bits', { '@value': 1024, unit: 'MB' })).toBe(span('mdi-database', 'Bits', (1024).toLocaleString() + ' MB'));
 	});
 
 	it('count', () => {
