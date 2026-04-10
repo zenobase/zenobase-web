@@ -93,9 +93,9 @@ const securityHeadersPolicy = new aws.cloudfront.ResponseHeadersPolicy("zenobase
             contentSecurityPolicy: [
                 "default-src 'none'",
                 "script-src 'self' https://maps.googleapis.com",
-                "style-src 'self' 'unsafe-inline'",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                 "img-src 'self' https://maps.gstatic.com https://maps.googleapis.com https://*.ggpht.com https://*.google.com https://*.googleusercontent.com data:",
-                "font-src 'self'",
+                "font-src 'self' https://fonts.gstatic.com",
                 "connect-src 'self' https://api.zenobase.com https://*.sentry.io https://maps.googleapis.com",
                 "worker-src blob:",
                 "child-src blob:",
