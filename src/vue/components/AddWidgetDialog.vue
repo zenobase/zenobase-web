@@ -158,7 +158,7 @@ watch(
 	<v-dialog v-model="visible" max-width="900" @update:model-value="!$event && close()">
 		<v-card>
 			<v-card-title class="d-flex align-center">
-				Add Widget
+				Add
 				<v-spacer />
 				<v-btn icon="mdi-close" variant="text" density="compact" @click="close()" />
 			</v-card-title>

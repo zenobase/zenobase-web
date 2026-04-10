@@ -311,13 +311,9 @@ function openAddWidget(placement: string) {
 }
 
 function onWidgetAdded(settings: WidgetSettings) {
-	if (bucket.value?.widgets) {
-		bucket.value.widgets.push(settings);
-		activeTabs.value[settings.placement || 'top'] = settings.id;
-		dashboard.setExpectedWidgetCount(bucket.value.widgets.length);
-		setDirty();
-		nextTick(() => openWidgetSettings(settings.id));
-	}
+	editingWidgetSettings.value = settings;
+	editingWidgetType.value = settings.type as WidgetType;
+	showWidgetSettingsDialog.value = true;
 }
 
 function openSettings() {
@@ -380,10 +376,13 @@ function onWidgetSettingsSaved(updated: WidgetSettings) {
 		const index = bucket.value.widgets.findIndex((w) => w.id === updated.id);
 		if (index !== -1) {
 			bucket.value.widgets[index] = updated;
-			setDirty();
-			// Wait for Vue to propagate the new settings to widget props before refreshing
-			nextTick(() => dashboard.refresh());
+		} else {
+			bucket.value.widgets.push(updated);
+			activeTabs.value[updated.placement || 'top'] = updated.id;
+			dashboard.setExpectedWidgetCount(bucket.value.widgets.length);
 		}
+		setDirty();
+		nextTick(() => dashboard.refresh());
 	}
 }
 
@@ -572,7 +571,7 @@ watch(
 
 		<ExportDialog v-model="showExportDialog" :bucket-id="bucketId" :total="dashboard.total.value" :constraints="dashboard.constraints.value" />
 
-		<WidgetSettingsDialog v-if="editingWidgetSettings" v-model="showWidgetSettingsDialog" :settings="editingWidgetSettings" :title="WIDGET_TITLES[editingWidgetType as WidgetType]" @save="onWidgetSettingsSaved" @remove="onWidgetRemoved">
+		<WidgetSettingsDialog v-if="editingWidgetSettings" v-model="showWidgetSettingsDialog" :settings="editingWidgetSettings" :title="WIDGET_TITLES[editingWidgetType as WidgetType]" :is-new="!bucket?.widgets?.some((w) => w.id === editingWidgetSettings?.id)" @save="onWidgetSettingsSaved" @remove="onWidgetRemoved">
 				<component :is="SETTINGS_DIALOGS[editingWidgetType as WidgetType]" />
 			</WidgetSettingsDialog>
 	</div>

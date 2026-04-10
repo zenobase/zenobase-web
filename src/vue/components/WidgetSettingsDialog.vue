@@ -7,6 +7,7 @@ const props = defineProps<{
 	modelValue: boolean;
 	settings: WidgetSettings;
 	title: string;
+	isNew?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -96,7 +97,7 @@ watch(
 				<v-card-actions>
 					<v-btn variant="text" color="error" @click="remove()">Remove</v-btn>
 					<v-spacer />
-					<v-btn type="submit" color="primary" :disabled="!dirty || formValid === false || !canSubmit">Update</v-btn>
+					<v-btn type="submit" color="primary" :disabled="(!dirty && !isNew) || formValid === false || !canSubmit">Save</v-btn>
 					<v-btn variant="text" @click="close()">Cancel</v-btn>
 				</v-card-actions>
 			</v-form>
