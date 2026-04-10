@@ -1,8 +1,14 @@
 <template>
-	<div>
-		<v-alert type="error" variant="tonal">
-			<h4>Not Found</h4>
-			<p>This page doesn't exist.</p>
-		</v-alert>
-	</div>
+	<v-empty-state
+		icon="mdi-magnify"
+		headline="Nothing here"
+		action-text="Go home"
+		@click:action="router.push('/')"
+	/>
 </template>
+
+<script setup lang="ts">
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+</script>
