@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue';
+import { inject, onMounted, type Ref, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { AdminBucket, AdminTask, AdminUser, Authorization, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
 import { param } from '../../utils/helpers';
@@ -490,9 +490,8 @@ function blurOnEnter(event: KeyboardEvent) {
 	}
 }
 
-// --- Active tab tracking for v-tabs ---
-const mainTab = ref('widget-journal');
-const sideTab = ref('widget-scheduler');
+// --- Active section from drawer ---
+const section = inject<Ref<string>>('adminSection', ref('journal'));
 </script>
 
 <template>
@@ -500,13 +499,13 @@ const sideTab = ref('widget-scheduler');
 
 		<Teleport to="#page-toolbar">
 			<span class="text-subtitle-1 font-weight-bold mr-1">Admin</span>
-			<v-btn icon size="small" variant="text" @click="refreshAll()" title="Refresh">
+			<v-btn icon size="small" variant="text" @click="refreshAll()" title="Refresh" style="--v-btn-size: 1rem">
 				<v-icon icon="mdi-refresh" :class="outstanding > 0 && 'mdi-spin'" />
 			</v-btn>
-			<v-btn v-if="status?.read_only" icon size="small" variant="text" @click="setReadOnly(false)" title="in read-only mode">
+			<v-btn v-if="status?.read_only" icon size="small" variant="text" @click="setReadOnly(false)" title="in read-only mode" style="--v-btn-size: 1rem">
 				<v-icon icon="mdi-lock" />
 			</v-btn>
-			<v-btn v-if="status && !status.read_only" icon size="small" variant="text" @click="setReadOnly(true)" title="in normal mode">
+			<v-btn v-if="status && !status.read_only" icon size="small" variant="text" @click="setReadOnly(true)" title="in normal mode" style="--v-btn-size: 1rem">
 				<v-icon icon="mdi-lock-open" />
 			</v-btn>
 		</Teleport>
@@ -519,23 +518,10 @@ const sideTab = ref('widget-scheduler');
 			</v-chip>
 		</div>
 
-		<v-row>
-
-			<v-col cols="8">
-
-				<v-tabs v-model="mainTab">
-					<v-tab value="widget-journal">History</v-tab>
-					<v-tab value="widget-buckets">Buckets</v-tab>
-					<v-tab value="widget-users">Users</v-tab>
-					<v-tab value="widget-authorizations">Authorizations</v-tab>
-					<v-tab value="widget-credentials">Credentials</v-tab>
-					<v-tab value="widget-tasks">Tasks</v-tab>
-				</v-tabs>
-
-				<v-tabs-window v-model="mainTab" class="mt-4">
+		<div>
 
 					<!-- Journal -->
-					<v-tabs-window-item value="widget-journal" :transition="false" :reverse-transition="false">
+					<div v-show="section === 'journal'">
 						<div v-if="!constraint" class="mb-2">
 							<v-text-field
 								prepend-inner-icon="mdi-magnify"
@@ -593,10 +579,10 @@ const sideTab = ref('widget-scheduler');
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ journal.offset + 1 }}</b>&ndash;<b>{{ journal.offset + journal.commands.length }}</b> of <b>{{ formatNumber(journal.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshJournal({ offset: journal.offset + journal.limit })" :disabled="journal.offset + journal.limit >= journal.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</v-tabs-window-item>
+					</div>
 
 					<!-- Buckets -->
-					<v-tabs-window-item value="widget-buckets" :transition="false" :reverse-transition="false">
+					<div v-show="section === 'buckets'">
 						<div v-if="!constraint" class="mb-2">
 							<v-text-field
 								prepend-inner-icon="mdi-magnify"
@@ -661,10 +647,10 @@ const sideTab = ref('widget-scheduler');
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ buckets.offset + 1 }}</b>&ndash;<b>{{ buckets.offset + buckets.items.length }}</b> of <b>{{ formatNumber(buckets.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshBuckets({ offset: buckets.offset + buckets.limit })" :disabled="buckets.offset + buckets.limit >= buckets.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</v-tabs-window-item>
+					</div>
 
 					<!-- Users -->
-					<v-tabs-window-item value="widget-users" :transition="false" :reverse-transition="false">
+					<div v-show="section === 'users'">
 						<div v-if="!constraint" class="mb-2">
 							<v-text-field
 								prepend-inner-icon="mdi-magnify"
@@ -757,10 +743,10 @@ const sideTab = ref('widget-scheduler');
 								</form>
 							</v-card>
 						</v-dialog>
-					</v-tabs-window-item>
+					</div>
 
 					<!-- Authorizations -->
-					<v-tabs-window-item value="widget-authorizations" :transition="false" :reverse-transition="false">
+					<div v-show="section === 'authorizations'">
 						<div v-if="!constraint" class="mb-2">
 							<v-text-field
 								prepend-inner-icon="mdi-magnify"
@@ -816,10 +802,10 @@ const sideTab = ref('widget-scheduler');
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ authorizations.offset + 1 }}</b>&ndash;<b>{{ authorizations.offset + authorizations.items.length }}</b> of <b>{{ formatNumber(authorizations.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshAuthorizations({ offset: authorizations.offset + authorizations.limit })" :disabled="authorizations.offset + authorizations.limit >= authorizations.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</v-tabs-window-item>
+					</div>
 
 					<!-- Credentials -->
-					<v-tabs-window-item value="widget-credentials" :transition="false" :reverse-transition="false">
+					<div v-show="section === 'credentials'">
 						<div v-if="!constraint" class="mb-2">
 							<v-text-field
 								prepend-inner-icon="mdi-magnify"
@@ -869,10 +855,10 @@ const sideTab = ref('widget-scheduler');
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ credentials.offset + 1 }}</b>&ndash;<b>{{ credentials.offset + credentials.items.length }}</b> of <b>{{ formatNumber(credentials.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshCredentials({ offset: credentials.offset + credentials.limit })" :disabled="credentials.offset + credentials.limit >= credentials.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</v-tabs-window-item>
+					</div>
 
 					<!-- Tasks -->
-					<v-tabs-window-item value="widget-tasks" :transition="false" :reverse-transition="false">
+					<div v-show="section === 'tasks'">
 						<div v-if="!constraint" class="mb-2">
 							<v-text-field
 								prepend-inner-icon="mdi-magnify"
@@ -931,22 +917,10 @@ const sideTab = ref('widget-scheduler');
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ tasks.offset + 1 }}</b>&ndash;<b>{{ tasks.offset + tasks.items.length }}</b> of <b>{{ formatNumber(tasks.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshTasks({ offset: tasks.offset + tasks.limit })" :disabled="tasks.offset + tasks.limit >= tasks.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</v-tabs-window-item>
-
-				</v-tabs-window>
-			</v-col>
-
-			<v-col cols="4">
-
-				<v-tabs v-model="sideTab">
-					<v-tab value="widget-scheduler">Scheduler</v-tab>
-					<v-tab value="widget-snapshots">Snapshots</v-tab>
-				</v-tabs>
-
-				<v-tabs-window v-model="sideTab" class="mt-4">
+					</div>
 
 					<!-- Scheduler -->
-					<v-tabs-window-item value="widget-scheduler" :transition="false" :reverse-transition="false">
+					<div v-show="section === 'scheduler'">
 						<v-table>
 							<thead>
 								<tr>
@@ -973,10 +947,10 @@ const sideTab = ref('widget-scheduler');
 							<v-btn v-if="status && !status.scheduler_disabled" icon variant="text" @click="disableScheduler(true)" title="Pause"><v-icon icon="mdi-pause" /></v-btn>
 							<v-btn v-if="status?.scheduler_disabled" icon variant="text" @click="disableScheduler(false)" title="Resume"><v-icon icon="mdi-play" /></v-btn>
 						</div>
-					</v-tabs-window-item>
+					</div>
 
 					<!-- Snapshots -->
-					<v-tabs-window-item value="widget-snapshots" :transition="false" :reverse-transition="false">
+					<div v-show="section === 'snapshots'">
 						<v-table>
 							<thead>
 								<tr>
@@ -1014,12 +988,8 @@ const sideTab = ref('widget-scheduler');
 							<span style="color: rgba(0,0,0,0.5)" v-if="snapshots.items?.length"><b>{{ snapshots.offset + 1 }}</b>&ndash;<b>{{ snapshots.offset + snapshots.items.length }}</b> of <b>{{ formatNumber(snapshots.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" v-if="snapshots.items?.length" @click="refreshSnapshots({ offset: snapshots.offset + snapshots.limit })" :disabled="snapshots.offset + snapshots.limit >= snapshots.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
-					</v-tabs-window-item>
+					</div>
 
-				</v-tabs-window>
-
-			</v-col>
-
-		</v-row>
+		</div>
 	</div>
 </template>
