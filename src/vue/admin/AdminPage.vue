@@ -444,27 +444,35 @@ async function createSnapshot() {
 	});
 }
 
-// --- Refresh all on key change ---
+// --- Active section from drawer ---
+const section = inject<Ref<string>>('adminSection', ref('journal'));
+
+function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
+	switch (name) {
+		case 'journal': return refreshJournal(overrides);
+		case 'buckets': return refreshBuckets(overrides);
+		case 'users': return refreshUsers(overrides);
+		case 'authorizations': return refreshAuthorizations(overrides);
+		case 'credentials': return refreshCredentials(overrides);
+		case 'tasks': return refreshTasks(overrides);
+		case 'scheduler': return refreshScheduler();
+		case 'snapshots': return refreshSnapshots(overrides);
+	}
+}
+
+// --- Refresh on key change ---
 
 watch(refreshKey, () => {
 	fetchStatus();
-	refreshJournal({ offset: 0 });
-	refreshBuckets({ offset: 0 });
-	refreshUsers({ offset: 0 });
-	refreshAuthorizations({ offset: 0 });
-	refreshCredentials({ offset: 0 });
-	refreshTasks({ offset: 0 });
-	refreshScheduler();
-	refreshSnapshots({ offset: 0 });
+	refreshSection(section.value, { offset: 0 });
 });
 
 watch(constraint, () => {
-	refreshJournal({ offset: 0 });
-	refreshBuckets({ offset: 0 });
-	refreshUsers({ offset: 0 });
-	refreshAuthorizations({ offset: 0 });
-	refreshCredentials({ offset: 0 });
-	refreshTasks({ offset: 0 });
+	refreshSection(section.value, { offset: 0 });
+});
+
+watch(section, (name) => {
+	refreshSection(name, { offset: 0 });
 });
 
 // --- Initial load ---
@@ -472,14 +480,7 @@ watch(constraint, () => {
 onMounted(() => {
 	if (constraint.value) resolveUserNames([constraint.value]);
 	fetchStatus();
-	refreshJournal({});
-	refreshBuckets({});
-	refreshUsers({});
-	refreshAuthorizations({});
-	refreshCredentials({});
-	refreshTasks({});
-	refreshScheduler();
-	refreshSnapshots({});
+	refreshSection(section.value, {});
 });
 
 // --- Filter blur-on-enter helper ---
@@ -489,9 +490,6 @@ function blurOnEnter(event: KeyboardEvent) {
 		(event.target as HTMLInputElement).blur();
 	}
 }
-
-// --- Active section from drawer ---
-const section = inject<Ref<string>>('adminSection', ref('journal'));
 </script>
 
 <template>
