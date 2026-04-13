@@ -16,6 +16,8 @@ please <a href="mailto:info@zenobase.com?subject=Zenobase+API">drop us a note</a
 so we can let you know about upcoming changes.</p>
 
 <dl>
+    <dt>April 14, 2026</dt>
+    <dd>Authentication migrated to Auth0. Access tokens are now JWTs that expire. Password grants and the <code>DELETE /authorizations/</code> endpoint have been removed, as has the <code>?code=</code> query-parameter form — tokens must be supplied via the <em>Authorization</em> header.</dd>
     <dt>May 15, 2018</dt>
     <dd>Archived state for buckets.</dd>
 	<dt>January 6, 2015</dt>
@@ -72,8 +74,6 @@ so we can let you know about upcoming changes.</p>
 			<ul class="nav nav-list">
 				<li class="nav-header"><a href="/#/api/auth">Authentication</a></li>
 				<li><a href="/#/api/implicit-grant">Create an implicit grant</a></li>
-				<li><a href="/#/api/password-grant">Create a password grant</a></li>
-				<li><a href="/#/api/revoke-grant">Revoke a grant</a></li>
 			</ul>
 		</div>
 		<div class="span3">
@@ -113,18 +113,13 @@ so we can let you know about upcoming changes.</p>
 
 <h2>Authentication</h2>
 
-<p>Requests for protected resources must either include an <a href="http://oauth.net/2/">OAuth 2</a> <em>Authorization</em> header:</p>
+<p>Requests for protected resources must include an <a href="http://oauth.net/2/">OAuth 2</a> <em>Authorization</em> header:</p>
 
 <pre>Authorization: Bearer <em>&lt;access_token&gt;</em></pre>
 
-<p>...or append the access token as a query parameter:</p>
+<p>Access tokens are JWTs and expire: tokens issued via the implicit grant below are valid for 31 days, while tokens for signed-in users are controlled by the Auth0 session policy.</p>
 
-<pre>https://zenobase.com/...?code=<em>&lt;access_token&gt;</em></pre>
-
-<p>Access tokens do not expire, but can be revoked any time.</p>
-
-<p>Access tokens can be obtained by an <a href="/#/api/implicit-grant">implicit grant</a>
-or a <a href="/#/api/password-grant">password grant</a>.</p>
+<p>Access tokens for a single bucket can be obtained by an <a href="/#/api/implicit-grant">implicit grant</a>. End-user tokens are issued through the Auth0 hosted login flow used by the Zenobase web app.</p>
 
 <section id="api-implicit-grant">
 
@@ -181,65 +176,6 @@ or a <a href="/#/api/password-grant">password grant</a>.</p>
 <dt>description</dt>
 <dd>Optional description of the error.</dd>
 </dl>
-
-</section>
-
-<section id="api-password-grant">
-
-<h3>Create a password grant</h3>
-
-<p>This authentication method grants full access to a user's account. Tokens expire after 31 days.</p>
-
-<pre>POST /oauth/token
-Host: api.zenobase.com
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=password&amp;username=<em>&lt;username&gt;</em>&amp;password=<em>&lt;password&gt;</em></pre>
-
-<dl>
-<dt>username</dt>
-<dd>The user's name.</dd>
-<dt>password</dt>
-<dd>The user's password.</dd>
-</dl>
-
-<h5>Example:</h5>
-
-<pre><code data-ui-highlight class="lang-bash">curl -i -X POST 'https://api.zenobase.com/oauth/token' \
-  -d 'grant_type=password&amp;username=jdoe&amp;password=secret1337'</code></pre>
-
-<pre>HTTP/1.1 200 OK
-Content-Type: application/json
-<code data-ui-highlight class="lang-json">{
-  "access_token" : "e7975e8bb6mabc3ek567",
-  "client_id" : "args4iqh2c",
-  "expires_in" : 2678400
-}</code></pre>
-
-</section>
-
-<section id="api-revoke-grant">
-
-<h3>Revoke a grant</h3>
-
-<pre>DELETE /authorizations/<em>&lt;access_token&gt;</em>
-Host: api.zenobase.com
-Authorization: Bearer <em>&lt;access_token&gt;</em>
-</pre>
-
-<dl>
-<dt>access_token</dt>
-<dd>The access token associated with the grant to revoke.</dd>
-</dl>
-
-<h5>Example:</h5>
-
-<pre><code data-ui-highlight class="lang-bash">curl -i -X DELETE 'https://api.zenobase.com/authorizations/e7975e8bb6eabc3ef567' \
-  -H 'Authorization: Bearer e7975e8bb6eabc3ef567'</code></pre>
-
-<pre>
-HTTP/1.1 204 No Content
-</pre>
 
 </section>
 

@@ -47,8 +47,11 @@ export default defineConfig({
 	server: {
 		port: 5173,
 		proxy: {
+			'/localauth0': {
+				target: 'http://localhost:3000',
+				rewrite: (path) => path.replace(/^\/localauth0/, ''),
+			},
 			'/who': 'http://localhost:9000',
-			'/reset': 'http://localhost:9000',
 			'/status': 'http://localhost:9000',
 			'/users': 'http://localhost:9000',
 			'/buckets': 'http://localhost:9000',

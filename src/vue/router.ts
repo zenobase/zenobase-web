@@ -6,10 +6,7 @@ import HomePage from './pages/HomePage.vue';
 import LegalPage from './pages/LegalPage.vue';
 import NotFoundPage from './pages/NotFoundPage.vue';
 import OAuthAuthorizePage from './pages/OAuthAuthorizePage.vue';
-import PasswordResetPage from './pages/PasswordResetPage.vue';
 import SettingsPage from './pages/SettingsPage.vue';
-
-import VerificationPage from './pages/VerificationPage.vue';
 
 const router = createRouter({
 	history: createWebHashHistory(),
@@ -22,8 +19,8 @@ const router = createRouter({
 		{ path: '/api/:section?', component: ApiDocsPage },
 		{ path: '/settings', component: SettingsPage },
 		{ path: '/users/:username', redirect: '/' },
-		{ path: '/users/:username/reset', component: PasswordResetPage, props: true },
-		{ path: '/users/:username/verify', component: VerificationPage, props: true },
+		{ path: '/users/:username/reset', redirect: '/' },
+		{ path: '/users/:username/verify', redirect: '/' },
 		{ path: '/:pathMatch(.*)*', component: NotFoundPage },
 	],
 });

@@ -6,9 +6,7 @@ import type { Bucket, WidgetSettings } from '../types';
 import { Constraint } from '../utils/constraint';
 import { param } from '../utils/helpers';
 import api from './api';
-import LostPasswordDialog from './components/LostPasswordDialog.vue';
-import SignInDialog from './components/SignInDialog.vue';
-import SignUpDialog from './components/SignUpDialog.vue';
+import { isLocalDev } from './authClient';
 import { alertKey, useAlert } from './composables/useAlert';
 import { authKey, useAuth } from './composables/useAuth';
 import { reloadBucketsKey } from './composables/useBuckets';
@@ -23,22 +21,29 @@ const alertApi = useAlert(async (commandId: string) => {
 });
 provide(alertKey, alertApi);
 
-const showSignIn = ref(false);
-const showSignUp = ref(false);
-const showLostPassword = ref(false);
-provide('showSignIn', showSignIn);
+// Handle Auth0 redirect callback (auto-handled by @auth0/auth0-vue), then load user
+async function initAuth() {
+	const params = new URLSearchParams(window.location.search);
+	if (params.has('code') && params.has('state')) {
+		try {
+			await auth.handleCallback();
+		} catch (e) {
+			console.error('Auth callback failed:', e);
+		}
+	}
+	await auth.whoami();
+}
+initAuth();
 
-auth.whoami();
-
-const showFooter = true;
 
 async function signOut() {
 	alertApi.clear();
 	await auth.signOut();
-	if (route.path === '/') {
-		router.go(0);
-	} else {
+	// Auth0 SDK redirects to logout endpoint, then back to origin.
+	// For local dev (localauth0), redirect manually.
+	if (isLocalDev) {
 		router.push('/');
+		router.go(0);
 	}
 }
 
@@ -289,14 +294,9 @@ watch(
 
 <template>
 	<v-app>
-		<v-system-bar v-if="auth.user.value && !auth.user.value.name" color="warning" variant="tonal" style="cursor: pointer; height: auto; padding: 8px 16px; justify-content: flex-start" @click="showSignUp = true">
+		<v-system-bar v-if="auth.user.value && !auth.user.value.name" color="warning" variant="tonal" style="cursor: pointer; height: auto; padding: 8px 16px; justify-content: flex-start" @click="auth.signUp()">
 			<v-icon icon="$warning" class="mr-2" />
 			<span>Please <strong>sign up</strong> to preserve your data.</span>
-		</v-system-bar>
-
-		<v-system-bar v-if="auth.user.value?.name && !auth.user.value.verified" color="warning" style="cursor: pointer; height: auto; padding: 8px 16px; justify-content: flex-start" @click="router.push('/settings')">
-			<v-icon icon="$warning" class="mr-2" />
-			<span>Please <strong>verify your email address</strong>, so we can contact you if your data is on fire (or you need to reset your password).</span>
 		</v-system-bar>
 
 		<v-system-bar v-if="auth.user.value?.suspended" color="error" variant="tonal" style="height: auto; padding: 8px 16px; justify-content: flex-start">
@@ -324,7 +324,7 @@ watch(
 				</v-list>
 			</v-menu>
 			<div class="mr-3" v-else-if="!auth.loading.value">
-				<a @click="showSignIn = true">Sign in</a>
+				<a @click="auth.signIn()">Sign in</a>
 			</div>
 		</v-app-bar>
 
@@ -400,7 +400,7 @@ watch(
 				</div>
 			</v-container>
 
-			<v-footer v-if="showFooter" class="zeno-footer text-disabled pa-4 flex-column align-center ga-2">
+			<v-footer class="zeno-footer text-disabled pa-4 flex-column align-center ga-2">
 				<div class="d-flex justify-center">
 					<span>&copy; 2012&ndash;{{ new Date().getFullYear() }} Zenobase &middot; Built with <v-icon icon="mdi-heart" size="small" />&nbsp;in Seattle</span>
 				</div>
@@ -416,10 +416,6 @@ watch(
 				</div>
 			</v-footer>
 		</v-main>
-
-		<SignInDialog v-model="showSignIn" @lost-password="() => { showSignIn = false; showLostPassword = true }" />
-		<SignUpDialog v-model="showSignUp" />
-		<LostPasswordDialog v-model="showLostPassword" />
 
 		<!-- Create Bucket Dialog -->
 		<v-dialog v-model="showCreateBucket" max-width="600">

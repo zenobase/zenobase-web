@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
 import { param } from '../../utils/helpers';
-import api, { ApiError } from '../api';
+import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { formatDuration } from '../utils/eventFormatter';
 
-const router = useRouter();
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
 
@@ -44,22 +42,17 @@ async function loadQuota() {
 	}
 }
 
-async function saveSettings() {
+async function saveEmail() {
 	alertApi.clear();
 	settingsMessage.value = '';
-	const data: Record<string, string> = {};
-	const currentEmail = (auth.user.value as typeof auth.user.value & { email?: string })?.email || '';
-	if ((settingsEmail.value && settingsEmail.value !== currentEmail) || !auth.user.value?.verified) {
-		data.email = settingsEmail.value;
-	}
-	if (Object.keys(data).length === 0) return;
+	if (!emailDirty.value) return;
 	try {
-		const response = await api.post(`/users/@${auth.user.value!.name}`, data);
-		alertApi.show('Updated account settings.', 'success', response.headers('X-Command-ID') || '');
+		const response = await api.post(`/users/@${auth.user.value!.name}`, { email: settingsEmail.value });
+		alertApi.show('Email updated. Please check your inbox to verify your new address.', 'success', response.headers('X-Command-ID') || '');
 		await auth.whoami();
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
-		settingsMessage.value = status && status < 500 ? "Can't save these changes." : "Couldn't save these changes. Try again later or contact support.";
+		settingsMessage.value = status && status < 500 ? "Can't update this email address." : "Couldn't update email. Try again later or contact support.";
 	}
 }
 
@@ -191,7 +184,7 @@ watch(
 				<v-card-title>Email</v-card-title>
 				<v-card-text>
 					<v-alert v-if="settingsMessage" type="error" variant="tonal" class="mb-4">{{ settingsMessage }}</v-alert>
-					<form @submit.prevent="saveSettings()">
+					<form @submit.prevent="saveEmail()">
 						<v-text-field
 							type="email"
 							label="Email"
@@ -209,7 +202,7 @@ watch(
 				</v-card-text>
 				<v-card-actions>
 					<v-spacer />
-					<v-btn color="primary" :disabled="!emailDirty" @click="saveSettings()">Save &amp; Verify</v-btn>
+					<v-btn color="primary" :disabled="!emailDirty" @click="saveEmail()">Save</v-btn>
 				</v-card-actions>
 			</v-card>
 

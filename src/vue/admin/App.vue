@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { provide, ref } from 'vue';
 import api from '../api';
-import SignInDialog from '../components/SignInDialog.vue';
 import { authKey, useAuth } from '../composables/useAuth';
 
 const auth = useAuth();
 provide(authKey, auth);
-const showSignIn = ref(false);
 const drawer = ref(true);
 
 const sectionKey = 'adminSection';
@@ -59,7 +57,7 @@ async function signOut() {
 				</v-list>
 			</v-menu>
 			<div class="mr-3" v-else-if="!auth.loading.value">
-				<a @click="showSignIn = true">Sign in</a>
+				<a @click="auth.signIn()">Sign in</a>
 			</div>
 		</v-app-bar>
 
@@ -82,7 +80,5 @@ async function signOut() {
 			</v-container>
 
 		</v-main>
-
-		<SignInDialog v-model="showSignIn" />
 	</v-app>
 </template>

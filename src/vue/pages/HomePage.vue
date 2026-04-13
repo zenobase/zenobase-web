@@ -1,22 +1,18 @@
 <script setup lang="ts">
 import { inject, type Ref } from 'vue';
-import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { FIELD_REGISTRY } from '../utils/eventFormatter';
 
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
-const showSignIn = inject<Ref<boolean>>('showSignIn')!;
 const openCreateBucket = inject<() => void>('openCreateBucket')!;
 const drawer = inject<Ref<boolean>>('drawer')!;
 
 async function start() {
 	alertApi.clear();
 	try {
-		const response = await api.postForm<{ access_token: string }>('/oauth/token', 'grant_type=client_credentials');
-		api.setToken(response.data.access_token);
-		await auth.whoami();
+		await auth.startGuest();
 		setTimeout(() => openCreateBucket(), 1000);
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
@@ -113,7 +109,7 @@ const integrations: Record<string, string[]> = {
 								<v-icon end icon="mdi-arrow-right" />
 							</v-btn>
 							<div class="mt-3 text-body-2">
-								or <a @click="showSignIn = true">sign in</a>
+								or <a @click="auth.signIn()">sign in</a>
 							</div>
 						</template>
 					</div>
