@@ -31,6 +31,7 @@
     "@deck.gl/aggregation-layers": "^9.2.11",
     "@deck.gl/core": "^9.2.11",
     "@deck.gl/google-maps": "^9.2.11",
+    "@deck.gl/layers": "~9.2.0",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@mdi/font": "^7.4.47",
     "@sentry/vite-plugin": "^5.1.1",
