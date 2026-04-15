@@ -6,7 +6,6 @@ import type { Bucket, WidgetSettings } from '../types';
 import { Constraint } from '../utils/constraint';
 import { param } from '../utils/helpers';
 import api from './api';
-import { isLocalDev } from './authClient';
 import { alertKey, useAlert } from './composables/useAlert';
 import { authKey, useAuth } from './composables/useAuth';
 import { reloadBucketsKey } from './composables/useBuckets';
@@ -38,13 +37,8 @@ initAuth();
 
 async function signOut() {
 	alertApi.clear();
+	await router.push('/');
 	await auth.signOut();
-	// Auth0 SDK redirects to logout endpoint, then back to origin.
-	// For local dev (localauth0), redirect manually.
-	if (isLocalDev) {
-		router.push('/');
-		router.go(0);
-	}
 }
 
 // Navigation drawer
