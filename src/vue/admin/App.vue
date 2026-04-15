@@ -26,7 +26,10 @@ function selectSection(value: string) {
 	localStorage.setItem(sectionKey, value);
 }
 
-auth.whoami();
+const authReady = ref(false);
+auth.whoami().finally(() => {
+	authReady.value = true;
+});
 
 async function signOut() {
 	await auth.signOut();
@@ -75,7 +78,8 @@ async function signOut() {
 
 		<v-main>
 			<v-container fluid class="pa-4 pt-2">
-				<RouterView />
+				<RouterView v-if="authReady" />
+				<div v-else class="mt-4 text-medium-emphasis">Loading...</div>
 			</v-container>
 
 		</v-main>

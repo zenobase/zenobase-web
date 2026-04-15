@@ -20,6 +20,8 @@ const alertApi = useAlert(async (commandId: string) => {
 });
 provide(alertKey, alertApi);
 
+const authReady = ref(false);
+
 // Handle Auth0 redirect callback (auto-handled by @auth0/auth0-vue), then load user
 async function initAuth() {
 	const params = new URLSearchParams(window.location.search);
@@ -32,7 +34,9 @@ async function initAuth() {
 	}
 	await auth.whoami();
 }
-initAuth();
+initAuth().finally(() => {
+	authReady.value = true;
+});
 
 
 async function signOut() {
@@ -384,8 +388,8 @@ watch(
 				</v-snackbar>
 
 				<div v-if="!auth.user.value?.suspended">
-					<RouterView />
-					<div v-if="auth.loading.value" class="mt-4 text-medium-emphasis">Loading...</div>
+					<RouterView v-if="authReady" />
+					<div v-else class="mt-4 text-medium-emphasis">Loading...</div>
 				</div>
 			</v-container>
 
