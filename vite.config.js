@@ -57,7 +57,6 @@ export default defineConfig({
 			'/buckets': 'http://localhost:9000',
 			'/events': 'http://localhost:9000',
 			'/credentials': 'http://localhost:9000',
-			'/authorizations': 'http://localhost:9000',
 			'/tasks': 'http://localhost:9000',
 			'/jobs': 'http://localhost:9000',
 			'/journal': 'http://localhost:9000',

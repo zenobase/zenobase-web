@@ -26,12 +26,6 @@ const credOffset = ref(0);
 const credLimit = 10;
 const credTotal = ref(0);
 
-// Authorizations
-const authorizations = ref<Array<{ '@id': string; client: string; scope?: string }> | null>(null);
-const authzOffset = ref(0);
-const authzLimit = 10;
-const authzTotal = ref(0);
-const bucketLabels = ref<Record<string, string>>({});
 
 async function loadQuota() {
 	try {
@@ -90,47 +84,6 @@ async function deleteCredentials(id: string) {
 	}
 }
 
-async function loadAuthorizations() {
-	try {
-		const response = await api.get<{ total: number; authorizations: typeof authorizations.value }>(
-			`/users/${auth.user.value!['@id']}/authorizations/?${param({ has_client: true, offset: authzOffset.value, limit: authzLimit })}`,
-		);
-		authzTotal.value = response.data.total;
-		authorizations.value = response.data.authorizations;
-		if (authorizations.value) {
-			for (const a of authorizations.value) {
-				if (a.scope) resolveBucketLabel(a.scope);
-			}
-		}
-	} catch {
-		// silently fail
-	}
-}
-
-async function revokeAuthorization(id: string) {
-	alertApi.clear();
-	try {
-		const response = await api.del(`/authorizations/${id}`);
-		alertApi.show('Revoked an authorization.', 'success', response.headers('X-Command-ID') || '');
-		authzOffset.value = 0;
-		await loadAuthorizations();
-	} catch (e: unknown) {
-		const status = (e as { status?: number }).status;
-		alertApi.show(status && status < 500 ? "Can't revoke the authorization." : "Couldn't revoke the authorization. Try again later or contact support.", 'error');
-	}
-}
-
-async function resolveBucketLabel(id: string): Promise<string> {
-	if (bucketLabels.value[id]) return bucketLabels.value[id];
-	try {
-		const response = await api.get<{ label: string }>(`/buckets/${id}/label`);
-		bucketLabels.value[id] = response.data.label;
-		return response.data.label;
-	} catch {
-		return id;
-	}
-}
-
 const longPressedRowId = ref<string | null>(null);
 
 function onRowLongPress(id: string) {
@@ -138,15 +91,9 @@ function onRowLongPress(id: string) {
 	setTimeout(() => { longPressedRowId.value = null; }, 3000);
 }
 
-function formatClient(client: string): string {
-	if (!client) return '';
-	return client.replace(/^\/users\//, '');
-}
-
 function refresh() {
 	loadQuota();
 	loadCredentials();
-	loadAuthorizations();
 }
 
 watch(
@@ -154,7 +101,7 @@ watch(
 	async () => {
 		if (!auth.user.value?.name) return;
 		settingsEmail.value = (auth.user.value as typeof auth.user.value & { email?: string }).email || '';
-		await Promise.all([loadQuota(), loadCredentials(), loadAuthorizations()]);
+		await Promise.all([loadQuota(), loadCredentials()]);
 	},
 	{ immediate: true },
 );
@@ -231,34 +178,6 @@ watch(
 					<v-btn icon variant="text" title="Previous" :disabled="credOffset <= 0" @click="() => { credOffset -= credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-left" /></v-btn>
 					<span style="color: rgba(0,0,0,0.5)"><b>{{ credOffset + 1 }}</b>&ndash;<b>{{ credOffset + (credentials?.length ?? 0) }}</b> of <b>{{ credTotal }}</b></span>
 					<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="() => { credOffset += credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-right" /></v-btn>
-				</v-card-actions>
-			</v-card>
-
-			<!-- Authorizations -->
-			<v-card variant="elevated" elevation="1" class="mb-6">
-				<v-card-title>Authorizations</v-card-title>
-				<v-card-subtitle>These services have been granted access to data in Zenobase</v-card-subtitle>
-				<v-card-text>
-					<v-table>
-						<tbody>
-							<tr v-if="authorizations === null"><td colspan="2"><i>Loading</i></td></tr>
-							<tr v-else-if="authorizations.length === 0"><td colspan="2"><i>None</i></td></tr>
-							<tr v-for="a in authorizations" :key="a['@id']" @contextmenu.prevent="onRowLongPress(a['@id'])">
-								<td>{{ formatClient(a.client) }} {{ ' ' }} <span v-if="a.scope">({{ bucketLabels[a.scope] || a.scope }})</span><span v-else>(*)</span></td>
-								<td style="text-align: right; position: relative; overflow: visible">
-									<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === a['@id'] }">
-										<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Revoke" @click.stop="revokeAuthorization(a['@id'])" />
-									</div>
-								</td>
-							</tr>
-						</tbody>
-					</v-table>
-				</v-card-text>
-				<v-card-actions v-if="authorizations?.length">
-					<v-spacer />
-					<v-btn icon variant="text" title="Previous" :disabled="authzOffset <= 0" @click="() => { authzOffset -= authzLimit; loadAuthorizations() }"><v-icon icon="mdi-chevron-left" /></v-btn>
-					<span style="color: rgba(0,0,0,0.5)"><b>{{ authzOffset + 1 }}</b>&ndash;<b>{{ authzOffset + (authorizations?.length ?? 0) }}</b> of <b>{{ authzTotal }}</b></span>
-					<v-btn icon variant="text" title="Next" :disabled="authzOffset + authzLimit >= authzTotal" @click="() => { authzOffset += authzLimit; loadAuthorizations() }"><v-icon icon="mdi-chevron-right" /></v-btn>
 				</v-card-actions>
 			</v-card>
 
