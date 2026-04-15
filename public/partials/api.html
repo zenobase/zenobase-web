@@ -16,8 +16,10 @@ please <a href="mailto:info@zenobase.com?subject=Zenobase+API">drop us a note</a
 so we can let you know about upcoming changes.</p>
 
 <dl>
-    <dt>April 14, 2026</dt>
-    <dd>Authentication migrated to Auth0. Access tokens are now JWTs that expire. Password grants and the <code>DELETE /authorizations/</code> endpoint have been removed, as has the <code>?code=</code> query-parameter form — tokens must be supplied via the <em>Authorization</em> header.</dd>
+    <dt>April 15, 2026</dt>
+    <dd>API access tokens are now JWTs that expire.<br/>
+		Support for password and implicit grants has been removed.<br/>
+		The <code>?code=</code> query-parameter is no longer supported; tokens must be supplied via the <em>Authorization</em> header.</dd>
     <dt>May 15, 2018</dt>
     <dd>Archived state for buckets.</dd>
 	<dt>January 6, 2015</dt>
@@ -116,7 +118,7 @@ so we can let you know about upcoming changes.</p>
 
 <pre>Authorization: Bearer <em>&lt;access_token&gt;</em></pre>
 
-<p>Access tokens are JWTs issued through the Auth0 hosted login flow used by the Zenobase web app, and expire according to the Auth0 session policy.</p>
+<p>Access tokens are JWTs issued through the Auth0 hosted login flow used by the Zenobase web app, and expire according to the Auth0 session policy. Sign in to the web app and copy your current token from the <a href="/#/settings">settings page</a>.</p>
 
 </section>
 

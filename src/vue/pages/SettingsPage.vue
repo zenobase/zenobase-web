@@ -20,6 +20,35 @@ const quotaResetLabel = computed(() => {
 	return 'Resets in ' + formatDuration(nextReset.getTime() - now.getTime());
 });
 
+// API token
+const tokenExpiry = computed(() => {
+	const token = api.getToken();
+	if (!token) return null;
+	try {
+		const payload = JSON.parse(atob(token.split('.')[1]));
+		return typeof payload.exp === 'number' ? new Date(payload.exp * 1000) : null;
+	} catch {
+		return null;
+	}
+});
+const tokenExpiryLabel = computed(() => {
+	const exp = tokenExpiry.value;
+	if (!exp) return '';
+	const diff = exp.getTime() - Date.now();
+	return diff > 0 ? `Expires in ${formatDuration(diff)}` : 'Expired';
+});
+
+async function copyToken() {
+	const token = api.getToken();
+	if (!token) return;
+	try {
+		await navigator.clipboard.writeText(token);
+		alertApi.show('API token copied to clipboard.', 'success', '');
+	} catch {
+		alertApi.show("Couldn't copy token to clipboard.", 'error');
+	}
+}
+
 // Credentials
 const credentials = ref<Array<{ '@id': string; type: string; authorizationUrl?: string }> | null>(null);
 const credOffset = ref(0);
@@ -178,6 +207,19 @@ watch(
 					<v-btn icon variant="text" title="Previous" :disabled="credOffset <= 0" @click="() => { credOffset -= credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-left" /></v-btn>
 					<span style="color: rgba(0,0,0,0.5)"><b>{{ credOffset + 1 }}</b>&ndash;<b>{{ credOffset + (credentials?.length ?? 0) }}</b> of <b>{{ credTotal }}</b></span>
 					<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="() => { credOffset += credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-right" /></v-btn>
+				</v-card-actions>
+			</v-card>
+
+			<!-- API token -->
+			<v-card variant="elevated" elevation="1" class="mb-6">
+				<v-card-title>API Token</v-card-title>
+				<v-card-subtitle>
+					Use this token for <a href="/#/api">API calls</a>.
+					<span class="text-body-2" v-if="tokenExpiryLabel">{{ tokenExpiryLabel }}.</span>
+				</v-card-subtitle>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn color="primary" :disabled="!tokenExpiry" @click="copyToken()">Copy token</v-btn>
 				</v-card-actions>
 			</v-card>
 
