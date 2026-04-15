@@ -15,7 +15,6 @@ const sections = [
 	{ value: 'journal', title: 'History', icon: 'mdi-history' },
 	{ value: 'buckets', title: 'Buckets', icon: 'mdi-view-dashboard' },
 	{ value: 'users', title: 'Users', icon: 'mdi-account-group' },
-	{ value: 'authorizations', title: 'Authorizations', icon: 'mdi-shield-key' },
 	{ value: 'credentials', title: 'Credentials', icon: 'mdi-key' },
 	{ value: 'tasks', title: 'Tasks', icon: 'mdi-cog-sync' },
 	{ value: 'scheduler', title: 'Scheduler', icon: 'mdi-calendar-clock' },

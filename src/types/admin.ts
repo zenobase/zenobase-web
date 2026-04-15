@@ -33,14 +33,6 @@ export interface JournalCommand {
 	[key: string]: unknown;
 }
 
-export interface Authorization {
-	'@id': string;
-	principal: string;
-	client: string;
-	scope?: string;
-	created?: string;
-}
-
 export interface Credential {
 	'@id': string;
 	principal: string;

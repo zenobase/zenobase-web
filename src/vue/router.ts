@@ -5,7 +5,6 @@ import DashboardPage from './pages/DashboardPage.vue';
 import HomePage from './pages/HomePage.vue';
 import LegalPage from './pages/LegalPage.vue';
 import NotFoundPage from './pages/NotFoundPage.vue';
-import OAuthAuthorizePage from './pages/OAuthAuthorizePage.vue';
 import SettingsPage from './pages/SettingsPage.vue';
 
 const router = createRouter({
@@ -14,7 +13,6 @@ const router = createRouter({
 		{ path: '/', component: HomePage },
 		{ path: '/buckets/:bucketId/', component: DashboardPage, props: true },
 		{ path: '/credentials/:credentialsId', component: CredentialsPage },
-		{ path: '/oauth/authorize', component: OAuthAuthorizePage },
 		{ path: '/legal/:section?', component: LegalPage },
 		{ path: '/api/:section?', component: ApiDocsPage },
 		{ path: '/settings', component: SettingsPage },

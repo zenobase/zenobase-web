@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, type Ref, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { AdminBucket, AdminTask, AdminUser, Authorization, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
+import type { AdminBucket, AdminTask, AdminUser, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
 import { param } from '../../utils/helpers';
 import api, { ApiError } from '../api';
 import { formatAge } from '../utils/formatAge';
@@ -262,36 +262,6 @@ async function saveQuota() {
 	}
 }
 
-// --- Authorizations ---
-
-const authorizations = reactive({
-	offset: 0,
-	limit: 10,
-	total: 0,
-	items: null as Authorization[] | null,
-	filter: null as string | null,
-});
-
-function authorizationParams(overrides?: Partial<PaginationParams>) {
-	const params: PaginationParams = { offset: authorizations.offset, limit: authorizations.limit };
-	if (authorizations.filter) params.q = authorizations.filter;
-	return { ...params, ...overrides };
-}
-
-async function refreshAuthorizations(overrides?: Partial<PaginationParams>) {
-	const path = constraint.value ? `/users/${constraint.value}/authorizations/` : '/authorizations/';
-	const response = await api.get<{ total: number; authorizations: Authorization[] }>(path + '?' + param(authorizationParams(overrides)));
-	if (overrides) Object.assign(authorizations, overrides);
-	authorizations.total = response.data.total;
-	authorizations.items = response.data.authorizations;
-	resolveUserNames(response.data.authorizations.flatMap((a) => [a.principal, a.client]));
-}
-
-async function removeAuthorization(authId: string) {
-	await api.del('/authorizations/' + authId);
-	delay(() => refreshAll());
-}
-
 // --- Credentials ---
 
 const credentials = reactive({
@@ -452,7 +422,6 @@ function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
 		case 'journal': return refreshJournal(overrides);
 		case 'buckets': return refreshBuckets(overrides);
 		case 'users': return refreshUsers(overrides);
-		case 'authorizations': return refreshAuthorizations(overrides);
 		case 'credentials': return refreshCredentials(overrides);
 		case 'tasks': return refreshTasks(overrides);
 		case 'scheduler': return refreshScheduler();
@@ -741,65 +710,6 @@ function blurOnEnter(event: KeyboardEvent) {
 								</form>
 							</v-card>
 						</v-dialog>
-					</div>
-
-					<!-- Authorizations -->
-					<div v-show="section === 'authorizations'">
-						<div v-if="!constraint" class="mb-2">
-							<v-text-field
-								prepend-inner-icon="mdi-magnify"
-								v-model="authorizations.filter"
-								@keydown="blurOnEnter"
-								@blur="refreshAuthorizations({ offset: 0 })"
-								placeholder="@id, client, scope"
-								variant="plain"
-								density="compact"
-								hide-details
-								clearable
-								@click:clear="() => { authorizations.filter = null; refreshAuthorizations({ offset: 0 }) }"
-							/>
-						</div>
-						<v-table>
-							<thead>
-								<tr>
-									<th style="width: 0">Authorization</th>
-									<th style="width: 99%">User</th>
-									<th style="width: 0">Created</th>
-									<th style="width: 0">Client</th>
-									<th style="width: 0">Scope</th>
-									<th style="width: 0"></th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="auth in authorizations.items" :key="auth['@id'] as string">
-									<td>{{ auth['@id'] }}</td>
-									<td>
-										<a @click="setConstraint(auth.principal as string)">{{ formatUsername(auth.principal as string) }}</a>
-									</td>
-									<td class="text-no-wrap">
-										<abbr :title="String(auth.created)">{{ formatAge(auth.created as string) }}</abbr>
-									</td>
-									<td>
-										<a v-if="auth.client" @click="setConstraint(auth.client as string)">{{ formatUsername(auth.client as string) }}</a>
-									</td>
-									<td>{{ auth.scope }}</td>
-									<td style="text-align: right">
-										<a class="action" @click="removeAuthorization(auth['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
-									</td>
-								</tr>
-								<tr v-if="authorizations.items === null">
-									<td colspan="6"><i>Loading</i></td>
-								</tr>
-								<tr v-if="authorizations.items?.length === 0">
-									<td colspan="6"><i>None</i></td>
-								</tr>
-							</tbody>
-						</v-table>
-						<div class="d-flex align-center justify-end" v-if="authorizations.items?.length">
-							<v-btn icon variant="text" title="Previous" @click="refreshAuthorizations({ offset: authorizations.offset - authorizations.limit })" :disabled="authorizations.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
-							<span style="color: rgba(0,0,0,0.5)"><b>{{ authorizations.offset + 1 }}</b>&ndash;<b>{{ authorizations.offset + authorizations.items.length }}</b> of <b>{{ formatNumber(authorizations.total) }}</b></span>
-							<v-btn icon variant="text" title="Next" @click="refreshAuthorizations({ offset: authorizations.offset + authorizations.limit })" :disabled="authorizations.offset + authorizations.limit >= authorizations.total"><v-icon icon="mdi-chevron-right" /></v-btn>
-						</div>
 					</div>
 
 					<!-- Credentials -->

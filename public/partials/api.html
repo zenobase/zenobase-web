@@ -73,7 +73,6 @@ so we can let you know about upcoming changes.</p>
 		<div class="span3">
 			<ul class="nav nav-list">
 				<li class="nav-header"><a href="/#/api/auth">Authentication</a></li>
-				<li><a href="/#/api/implicit-grant">Create an implicit grant</a></li>
 			</ul>
 		</div>
 		<div class="span3">
@@ -117,67 +116,7 @@ so we can let you know about upcoming changes.</p>
 
 <pre>Authorization: Bearer <em>&lt;access_token&gt;</em></pre>
 
-<p>Access tokens are JWTs and expire: tokens issued via the implicit grant below are valid for 31 days, while tokens for signed-in users are controlled by the Auth0 session policy.</p>
-
-<p>Access tokens for a single bucket can be obtained by an <a href="/#/api/implicit-grant">implicit grant</a>. End-user tokens are issued through the Auth0 hosted login flow used by the Zenobase web app.</p>
-
-<section id="api-implicit-grant">
-
-<h3>Create an implicit grant</h3>
-
-<p>This authentication method allows a user to grant an application access to a single bucket.</p>
-
-<p>In order to use this authentication method, an account with a validated email address is required.</p>
-
-<p>The first step is to redirect the user to an authorization page:</p>
-
-<pre>https://zenobase.com/#/oauth/authorize?response_type=token&amp;client_id=<em>&lt;client_id&gt;</em>&amp;redirect_uri=<em>&lt;redirect_uri&gt;</em></pre>
-
-<dl>
-<dt>client_id</dt>
-<dd>Your user ID (can be found in the account settings dialog).</dd>
-<dt>redirect_uri</dt>
-<dd>The page to which the user should be redirected back to. The domain must match the domain of your verified email address, unless the URI has a custom scheme that is prefixed with <code>x-</code>. If the address does not end with either <code>#</code> or <code>?</code>, <code>#</code> is appended.</dd>
-</dl>
-
-<p>Upon authorization, the user is redirected to:</p>
-
-<pre class="hljs"><em>&lt;redirect_uri#&gt;</em>access_token=<em>&lt;access_token&gt;</em>&amp;scope=<em>&lt;scope&gt;</em></pre>
-
-<dl>
-<dt>access_token</dt>
-<dd>The access token to use in the <em>Authorization</em> header.</dd>
-<dt>scope</dt>
-<dd>The bucket to which you have been granted access.</dd>
-</dl>
-
-<p>If the authorization fails for any reason other than an invalid <em>redirect_uri</em>, the user is redirected to:</p>
-
-<pre><em>&lt;redirect_uri#&gt;</em>error=<em>&lt;error&gt;</em>&amp;error_message=<em>&lt;description&gt;</em></pre>
-
-<dl>
-<dt>error</dt>
-<dd>The error code:
-<blockquote>
-  <dl>
-  <dt>invalid_request</dt>
-  <dd>The request is missing a required parameter.</dd>
-  <dt>unauthorized_client</dt>
-  <dd>The client is not authorized to request an access token using this method.</dd>
-  <dt>access_denied</dt>
-  <dd>The user denied the request.</dd>
-  <dt>unsupported_response_type</dt>
-  <dd>The <em>response_type</em> parameter must be set to <em>token</em>.</dd>
-  <dt>server_error</dt>
-  <dd>The request could not be processed. Try again later or contact support.</dd>
-  </dl>
-</blockquote>
-</dd>
-<dt>description</dt>
-<dd>Optional description of the error.</dd>
-</dl>
-
-</section>
+<p>Access tokens are JWTs issued through the Auth0 hosted login flow used by the Zenobase web app, and expire according to the Auth0 session policy.</p>
 
 </section>
 
