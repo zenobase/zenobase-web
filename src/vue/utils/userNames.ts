@@ -11,7 +11,7 @@ export async function resolveUserNames(ids: string[]): Promise<void> {
 				const promise = api
 					.get<{ name?: string }>(`/users/${id}`)
 					.then((response) => {
-						cache.set(id, response.data.name || 'guest');
+						cache.set(id, response.data.name || id);
 					})
 					.catch(() => {
 						cache.set(id, id);

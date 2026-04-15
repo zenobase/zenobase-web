@@ -294,11 +294,6 @@ watch(
 
 <template>
 	<v-app>
-		<v-system-bar v-if="auth.user.value && !auth.user.value.name" color="warning" variant="tonal" style="cursor: pointer; height: auto; padding: 8px 16px; justify-content: flex-start" @click="auth.signUp()">
-			<v-icon icon="$warning" class="mr-2" />
-			<span>Please <strong>sign up</strong> to preserve your data.</span>
-		</v-system-bar>
-
 		<v-system-bar v-if="auth.user.value?.suspended" color="error" variant="tonal" style="height: auto; padding: 8px 16px; justify-content: flex-start">
 			<v-icon icon="$error" class="mr-2" />
 			<span>This account has been suspended. Please contact support.</span>
@@ -314,7 +309,7 @@ watch(
 				<template v-slot:activator="{ props }">
 					<v-btn size="small" variant="text" v-bind="props" class="mr-1 text-body-2">
 						<v-icon icon="mdi-account" size="small" class="text-medium-emphasis" />
-						<span class="ml-1">{{ auth.user.value.name || 'guest' }}</span>
+						<span class="ml-1">{{ auth.user.value.name }}</span>
 					</v-btn>
 				</template>
 				<v-list density="compact">

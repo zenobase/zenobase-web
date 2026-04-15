@@ -1,28 +1,10 @@
 <script setup lang="ts">
 import { inject, type Ref } from 'vue';
-import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { FIELD_REGISTRY } from '../utils/eventFormatter';
 
 const auth = inject<AuthApi>(authKey)!;
-const alertApi = inject<AlertApi>(alertKey)!;
-const openCreateBucket = inject<() => void>('openCreateBucket')!;
 const drawer = inject<Ref<boolean>>('drawer')!;
-
-async function start() {
-	alertApi.clear();
-	try {
-		await auth.startGuest();
-		setTimeout(() => openCreateBucket(), 1000);
-	} catch (e: unknown) {
-		const status = (e as { status?: number }).status;
-		if (status && status < 500) {
-			alertApi.show("Can't create a guest account.", 'error');
-		} else {
-			alertApi.show("Couldn't create a guest account. Try again later or contact support.", 'error');
-		}
-	}
-}
 
 const excludeFields = new Set(['source', 'author', 'moon', 'percentage']);
 
@@ -104,7 +86,7 @@ const integrations: Record<string, string[]> = {
 							</v-btn>
 						</template>
 						<template v-else>
-							<v-btn size="large" variant="outlined" class="hero-btn" @click="start()">
+							<v-btn size="large" variant="outlined" class="hero-btn" @click="auth.signUp()">
 								Get Started
 								<v-icon end icon="mdi-arrow-right" />
 							</v-btn>

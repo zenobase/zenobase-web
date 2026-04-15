@@ -68,9 +68,9 @@ async function resolveUserNames(ids: string[]) {
 		unknown.map(async (id) => {
 			try {
 				const response = await api.get<AdminUser>('/users/' + id);
-				userNameCache.set(id, (response.data.name as string) || 'guest');
+				userNameCache.set(id, (response.data.name as string) || id);
 			} catch {
-				userNameCache.set(id, 'guest');
+				userNameCache.set(id, id);
 			}
 		}),
 	);

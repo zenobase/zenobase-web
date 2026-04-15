@@ -11,7 +11,6 @@ export interface AuthApi {
 	signUp: () => Promise<void>;
 	signOut: () => Promise<void>;
 	handleCallback: () => Promise<void>;
-	startGuest: () => Promise<void>;
 }
 
 export const authKey: InjectionKey<AuthApi> = Symbol('auth');
@@ -66,12 +65,6 @@ export function useAuth() {
 		await whoami();
 	}
 
-	async function startGuest(): Promise<void> {
-		const response = await api.postForm<{ access_token: string }>('/oauth/token', 'grant_type=client_credentials');
-		api.setToken(response.data.access_token);
-		await whoami();
-	}
-
 	const auth: AuthApi = {
 		user,
 		loading,
@@ -80,7 +73,6 @@ export function useAuth() {
 		signUp,
 		signOut,
 		handleCallback,
-		startGuest,
 	};
 
 	return auth;

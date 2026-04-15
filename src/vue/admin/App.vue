@@ -47,7 +47,7 @@ async function signOut() {
 				<template v-slot:activator="{ props }">
 					<v-btn size="small" variant="text" v-bind="props" class="mr-1" style="--v-btn-size: 1rem">
 						<v-icon icon="mdi-account" size="small" class="text-medium-emphasis" />
-						<span class="ml-1">{{ auth.user.value.name || 'guest' }}</span>
+						<span class="ml-1">{{ auth.user.value.name }}</span>
 					</v-btn>
 				</template>
 				<v-list density="compact">
