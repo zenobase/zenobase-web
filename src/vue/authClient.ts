@@ -2,7 +2,7 @@ import { useAuth0 } from '@auth0/auth0-vue';
 import { watch } from 'vue';
 
 export interface AuthClient {
-	loginWithRedirect(options?: { screen_hint?: string; zenobase_id?: string }): Promise<void>;
+	loginWithRedirect(options?: { screen_hint?: string }): Promise<void>;
 	handleRedirectCallback(): Promise<void>;
 	getTokenSilently(): Promise<string>;
 	logout(): Promise<void>;
@@ -115,7 +115,6 @@ export function useAuthClient(): AuthClient {
 			await auth0.loginWithRedirect({
 				authorizationParams: {
 					...(options?.screen_hint ? { screen_hint: options.screen_hint } : {}),
-					...(options?.zenobase_id ? { zenobase_id: options.zenobase_id } : {}),
 				},
 			});
 		},

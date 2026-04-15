@@ -48,8 +48,7 @@ export function useAuth() {
 	}
 
 	async function signUp(): Promise<void> {
-		const zenobase_id = user.value?.['@id'];
-		await authClient.loginWithRedirect({ screen_hint: 'signup', zenobase_id: zenobase_id || undefined });
+		await authClient.loginWithRedirect({ screen_hint: 'signup' });
 	}
 
 	async function signOut(): Promise<void> {
