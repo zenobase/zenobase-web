@@ -1,5 +1,4 @@
 import '@mdi/font/css/materialdesignicons.css';
-// @ts-expect-error vuetify/styles has no type declarations
 import 'vuetify/styles';
 import { createVuetify } from 'vuetify';
 

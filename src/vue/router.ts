@@ -1,12 +1,9 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import ApiDocsPage from './pages/ApiDocsPage.vue';
 import CredentialsPage from './pages/CredentialsPage.vue';
 import DashboardPage from './pages/DashboardPage.vue';
 import HomePage from './pages/HomePage.vue';
 import NotFoundPage from './pages/NotFoundPage.vue';
-import PrivacyPage from './pages/PrivacyPage.vue';
 import SettingsPage from './pages/SettingsPage.vue';
-import TermsPage from './pages/TermsPage.vue';
 
 const router = createRouter({
 	history: createWebHashHistory(),
@@ -14,9 +11,9 @@ const router = createRouter({
 		{ path: '/', component: HomePage },
 		{ path: '/buckets/:bucketId/', component: DashboardPage, props: true },
 		{ path: '/credentials/:credentialsId', component: CredentialsPage },
-		{ path: '/terms', component: TermsPage },
-		{ path: '/privacy', component: PrivacyPage },
-		{ path: '/api/:section?', component: ApiDocsPage },
+		{ path: '/terms', component: () => import('./pages/TermsPage.vue') },
+		{ path: '/privacy', component: () => import('./pages/PrivacyPage.vue') },
+		{ path: '/api/:section?', component: () => import('./pages/ApiDocsPage.vue') },
 		{ path: '/settings', component: SettingsPage },
 		{ path: '/users/:username', redirect: '/' },
 		{ path: '/users/:username/reset', redirect: '/' },
