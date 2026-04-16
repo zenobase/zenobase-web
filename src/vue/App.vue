@@ -400,8 +400,9 @@ watch(
 					<span>&copy; 2012&ndash;{{ new Date().getFullYear() }} Zenobase &middot; Built with <v-icon icon="mdi-heart" size="small" />&nbsp;in Seattle</span>
 				</div>
 				<div class="d-flex justify-center ga-4">
-					<router-link to="/legal/" class="text-disabled">Legal</router-link>
-					<router-link to="/api/" class="text-disabled">API</router-link>
+					<router-link to="/terms" class="text-disabled">Terms</router-link>
+					<router-link to="/privacy" class="text-disabled">Privacy</router-link>
+					<router-link to="/api" class="text-disabled">API</router-link>
 					<a href="mailto:info@zenobase.com" class="text-disabled">Contact</a>
 				</div>
 				<div class="d-flex justify-center ga-4">
