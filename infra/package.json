@@ -2,6 +2,7 @@
   "name": "zenobase-web-infra",
   "private": true,
   "main": "index.ts",
+  "packageManager": "pnpm@10.33.0",
   "dependencies": {
     "@pulumi/aws": "^7.0.0",
     "@pulumi/pulumi": "^3.0.0"

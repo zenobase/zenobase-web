@@ -5,7 +5,7 @@
 - AWS account with CLI configured
 - GitHub repo (zenobase/zenobase-web)
 - [Pulumi Cloud](https://app.pulumi.com/) account
-- Node.js 18+
+- Node.js 24 (see `../.nvmrc`) with pnpm via Corepack (`corepack enable`)
 
 ## AWS: GitHub OIDC Identity Provider
 
@@ -42,7 +42,7 @@ Complete DNS validation by adding the CNAME records shown in the output. Note th
 
 ```sh
 cd infra
-npm install
+pnpm install
 pulumi stack init prod
 ```
 
