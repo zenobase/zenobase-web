@@ -377,8 +377,8 @@ watch(
 			</template>
 		</v-navigation-drawer>
 
-		<v-main>
-			<v-container fluid :class="route.path === '/' ? 'pa-0' : 'pa-4 pt-2'">
+		<v-main class="d-flex flex-column">
+			<v-container fluid :class="route.path === '/' ? 'pa-0' : 'pa-4 pt-2'" class="flex-grow-1">
 				<v-snackbar :model-value="!!alertApi.alert.value.message" :timeout="alertApi.alert.value.level === 'error' ? -1 : 5000" :color="alertApi.alert.value.level || 'info'" @update:model-value="alertApi.clear()">
 					{{ alertApi.alert.value.message }}
 					<template #actions>
@@ -389,11 +389,13 @@ watch(
 
 				<div v-if="!auth.user.value?.suspended">
 					<RouterView v-if="authReady" />
-					<div v-else class="mt-4 text-medium-emphasis">Loading...</div>
+					<div v-else class="d-flex justify-center mt-8">
+						<v-progress-circular indeterminate />
+					</div>
 				</div>
 			</v-container>
 
-			<v-footer class="zeno-footer text-disabled pa-4 flex-column align-center ga-2">
+			<v-footer v-if="authReady" class="zeno-footer text-disabled pa-4 flex-column align-center ga-2">
 				<div class="d-flex justify-center">
 					<span>&copy; 2012&ndash;{{ new Date().getFullYear() }} Zenobase &middot; Built with <v-icon icon="mdi-heart" size="small" />&nbsp;in Seattle</span>
 				</div>
