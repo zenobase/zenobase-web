@@ -460,17 +460,211 @@ abbr {
 	margin-top: 20px;
 }
 
+/* Block code — dark, terminal-like, for full request/response examples */
 #api pre {
-	background-color: #232323;
+	background-color: #1f2428;
 	color: #e6e1dc;
-	padding: 1em;
-	border-radius: 4px;
+	padding: 1em 1.25em;
+	border-radius: 6px;
+	overflow-x: auto;
+	font-size: 0.875rem;
+	line-height: 1.55;
+	font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
+/* Inline code — subtle light chip */
 #api code {
-	background-color: #232323;
-	color: #e6e1dc;
+	background-color: rgba(var(--v-theme-primary), 0.08);
+	color: rgb(var(--v-theme-primary));
 	border: none;
+	padding: 0.1em 0.4em;
+	border-radius: 4px;
+	font-size: 0.9em;
+	word-break: break-word;
+	font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+/* Reset code styling when nested inside a pre block */
+#api pre code {
+	background-color: transparent;
+	color: inherit;
+	padding: 0;
+	border-radius: 0;
+	font-size: inherit;
+	word-break: normal;
+}
+
+/* Changelog — two-column timeline layout */
+#api-changelog dl {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	column-gap: 1.5rem;
+	row-gap: 0;
+	margin: 1.5em 0;
+	align-items: baseline;
+}
+
+#api-changelog dt {
+	font-size: 0.78rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: rgb(var(--v-theme-primary));
+	padding: 1rem 0 0.9rem;
+	white-space: nowrap;
+	border-top: 1px solid rgba(0, 0, 0, 0.06);
+	font-variant-numeric: tabular-nums;
+}
+
+#api-changelog dd {
+	margin: 0;
+	padding: 0.9rem 0;
+	border-top: 1px solid rgba(0, 0, 0, 0.06);
+	line-height: 1.6;
+}
+
+#api-changelog dt:first-of-type,
+#api-changelog dd:first-of-type {
+	border-top: none;
+	padding-top: 0;
+}
+
+@media (max-width: 540px) {
+	#api-changelog dl {
+		grid-template-columns: 1fr;
+		column-gap: 0;
+	}
+	#api-changelog dt {
+		padding-bottom: 0;
+		border-top: 1px solid rgba(0, 0, 0, 0.06);
+	}
+	#api-changelog dd {
+		border-top: none;
+		padding-top: 0.35em;
+	}
+	#api-changelog dt:first-of-type {
+		border-top: none;
+	}
+}
+
+/* Parameter lists — consistent two-column grid, monospace keys */
+#api section section dl,
+#api > section > dl {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	column-gap: 1.5rem;
+	row-gap: 0.5rem;
+	margin: 1em 0 1.25em;
+	align-items: baseline;
+}
+
+#api section section dt,
+#api > section > dl > dt {
+	font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+	font-size: 0.9em;
+	font-weight: 600;
+	color: rgba(0, 0, 0, 0.82);
+	white-space: nowrap;
+}
+
+#api section section dd,
+#api > section > dl > dd {
+	margin: 0;
+	line-height: 1.55;
+}
+
+@media (max-width: 540px) {
+	#api section section dl,
+	#api > section > dl {
+		grid-template-columns: 1fr;
+		column-gap: 0;
+		row-gap: 0.25rem;
+	}
+	#api section section dd,
+	#api > section > dl > dd {
+		margin-bottom: 0.5rem;
+	}
+}
+
+/* Undo the generic param-list style for the changelog */
+#api-changelog dl {
+	row-gap: 0;
+	margin: 1.5em 0;
+}
+#api-changelog dt {
+	font-family: inherit;
+}
+#api-changelog dd {
+	margin-bottom: 0;
+}
+
+/* Overview TOC — card with nested hierarchy */
+#api .well {
+	background: rgba(0, 0, 0, 0.02);
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	border-radius: 10px;
+	padding: 1.5rem 1.75rem;
+	margin: 2rem 0;
+}
+
+#api .well > h3 {
+	margin-top: 0;
+	margin-bottom: 1.25rem;
+	font-size: 0.78rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: rgba(0, 0, 0, 0.55);
+}
+
+#api .row-fluid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5rem 2rem;
+}
+
+#api .span3 {
+	flex: 1 1 180px;
+	min-width: 0;
+}
+
+#api .nav-list {
+	list-style: none;
+	padding-left: 0;
+	margin: 0;
+}
+
+#api .nav-header {
+	font-weight: 700;
+	font-size: 1rem;
+	letter-spacing: 0.01em;
+	margin-bottom: 0.5rem;
+	padding-bottom: 0.4rem;
+	border-bottom: 2px solid rgb(var(--v-theme-primary));
+}
+
+#api .nav-header a {
+	color: inherit;
+}
+
+#api .nav-list li:not(.nav-header) {
+	padding: 0.2rem 0 0.2rem 0.85rem;
+	font-size: 0.9rem;
+	border-left: 2px solid rgba(0, 0, 0, 0.08);
+	margin-left: 0.1rem;
+	transition: border-color 0.15s ease;
+}
+
+#api .nav-list li:not(.nav-header):hover {
+	border-left-color: rgb(var(--v-theme-primary));
+}
+
+#api .nav-list li:not(.nav-header) a {
+	color: rgba(0, 0, 0, 0.72);
+}
+
+#api .nav-list li:not(.nav-header) a:hover {
+	color: rgb(var(--v-theme-primary));
 }
 
 /* ── Pricing table ── */
