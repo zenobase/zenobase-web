@@ -7,6 +7,12 @@ import SettingsPage from './pages/SettingsPage.vue';
 
 const router = createRouter({
 	history: createWebHashHistory(),
+	scrollBehavior(to, _from, savedPosition) {
+		if (savedPosition) return savedPosition;
+		// API page has its own scroll-to-section logic for the :section? param.
+		if (to.params.section) return false;
+		return { top: 0 };
+	},
 	routes: [
 		{ path: '/', component: HomePage },
 		{ path: '/buckets/:bucketId/', component: DashboardPage, props: true },
