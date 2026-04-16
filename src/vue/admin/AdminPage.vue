@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, type Ref, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { AdminBucket, AdminTask, AdminUser, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
 import { param } from '../../utils/helpers';
@@ -414,8 +414,8 @@ async function createSnapshot() {
 	});
 }
 
-// --- Active section from drawer ---
-const section = inject<Ref<string>>('adminSection', ref('journal'));
+// --- Active section from route ---
+const section = computed(() => (route.params.section as string) || 'journal');
 
 function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
 	switch (name) {

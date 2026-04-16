@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { provide, ref } from 'vue';
+import { computed, provide, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import api from '../api';
 import { authKey, useAuth } from '../composables/useAuth';
 
@@ -7,9 +8,9 @@ const auth = useAuth();
 provide(authKey, auth);
 const drawer = ref(true);
 
-const sectionKey = 'adminSection';
-const section = ref(localStorage.getItem(sectionKey) || 'journal');
-provide('adminSection', section);
+const route = useRoute();
+const router = useRouter();
+const currentSection = computed(() => (route.params.section as string) || 'journal');
 
 const sections = [
 	{ value: 'journal', title: 'History', icon: 'mdi-history' },
@@ -20,11 +21,6 @@ const sections = [
 	{ value: 'scheduler', title: 'Scheduler', icon: 'mdi-calendar-clock' },
 	{ value: 'snapshots', title: 'Snapshots', icon: 'mdi-camera' },
 ];
-
-function selectSection(value: string) {
-	section.value = value;
-	localStorage.setItem(sectionKey, value);
-}
 
 const authReady = ref(false);
 auth.whoami().finally(() => {
@@ -70,8 +66,8 @@ async function signOut() {
 					:key="s.value"
 					:prepend-icon="s.icon"
 					:title="s.title"
-					:active="section === s.value"
-					@click="selectSection(s.value)"
+					:active="currentSection === s.value"
+					@click="router.push('/' + s.value)"
 				/>
 			</v-list>
 		</v-navigation-drawer>
