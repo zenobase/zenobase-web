@@ -31,11 +31,14 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Verify lockfile is in sync
+        run: pnpm install --frozen-lockfile --lockfile-only
 
       - name: Lint
         run: pnpm lint
@@ -47,6 +50,7 @@ jobs:
         run: pnpm build
         env:
           VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - uses: aws-actions/configure-aws-credentials@v6
         with:
