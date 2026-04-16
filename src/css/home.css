@@ -1,0 +1,188 @@
+/* ── Home page hero ── */
+
+.hero-unit {
+	background-image: url(/img/home/tracks.jpg);
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center top;
+	border-radius: 0 !important;
+}
+
+.hero-overlay {
+	background: rgba(255, 255, 255, 0.5);
+	padding: 80px 24px 72px;
+}
+
+.hero-content {
+	max-width: 640px;
+	margin: 0 auto;
+}
+
+.hero-logo {
+	margin-bottom: 24px;
+}
+
+.hero-title {
+	color: rgba(0, 0, 0, 0.82);
+	font-size: 2.75rem;
+	font-weight: 300;
+	letter-spacing: -0.5px;
+	line-height: 1.15;
+	margin-bottom: 12px;
+}
+
+.hero-subtitle {
+	color: rgba(0, 0, 0, 0.55);
+	font-size: 1.15rem;
+	font-weight: 400;
+	margin-bottom: 32px;
+}
+
+.hero-btn {
+	letter-spacing: 0.5px;
+	font-weight: 500;
+	padding: 0 28px !important;
+	text-decoration: none !important;
+}
+
+@media (max-width: 600px) {
+	.hero-overlay {
+		padding: 56px 16px 48px;
+	}
+
+	.hero-title {
+		font-size: 1.75rem;
+	}
+
+	.hero-subtitle {
+		font-size: 1rem;
+	}
+}
+
+/* ── Landing page sections ── */
+
+.landing-section {
+	padding: 40px 24px;
+}
+
+.landing-section--tinted {
+	background-color: rgba(59, 134, 198, 0.04);
+}
+
+.section-header {
+	max-width: 640px;
+	margin: 0 auto 24px;
+	text-align: center;
+}
+
+.section-header h2 {
+	font-size: 1.75rem;
+	font-weight: 400;
+	letter-spacing: -0.3px;
+	margin-bottom: 8px;
+	color: rgba(0, 0, 0, 0.82);
+}
+
+.section-desc {
+	color: rgba(0, 0, 0, 0.5);
+	font-size: 1rem;
+}
+
+/* ── Field cloud ── */
+
+.field-cloud {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 24px;
+	padding: 16px 0;
+	justify-items: center;
+	align-items: center;
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.field-cloud-item {
+	transition: opacity 0.15s ease;
+	opacity: 0.72;
+}
+
+.field-cloud-item:hover {
+	opacity: 1;
+}
+
+.field-cloud-item a {
+	color: inherit;
+	pointer-events: none;
+	text-decoration: none;
+}
+
+@media (max-width: 600px) {
+	.field-cloud {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 16px;
+	}
+}
+
+@media (max-width: 450px) {
+	.field-cloud {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 12px;
+	}
+}
+
+/* ── Widget carousel ── */
+
+.widget-carousel {
+	max-width: 640px;
+	margin: 0 auto;
+}
+
+.widget-slide {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 24px 16px;
+}
+
+.widget-thumbnail {
+	max-height: 360px;
+	width: auto;
+	border-radius: 6px;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.widget-label {
+	margin-top: 16px;
+	font-size: 1.1rem;
+	font-weight: 500;
+	color: rgba(0, 0, 0, 0.72);
+	letter-spacing: 0.3px;
+}
+
+/* ── Integration matrix ── */
+
+.integration-matrix {
+	overflow-x: auto;
+	max-width: 900px;
+	margin: 0 auto;
+}
+
+.integration-matrix .integration-header {
+	font-size: 0.7rem !important;
+	padding: 6px 4px !important;
+	color: rgba(0, 0, 0, 0.5) !important;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+.integration-matrix td {
+	padding: 6px 8px !important;
+}
+
+.integration-matrix tbody tr {
+	transition: background-color 0.1s ease;
+}
+
+.integration-matrix tbody tr:hover {
+	background-color: rgba(59, 134, 198, 0.04);
+}

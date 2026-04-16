@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '../../css/home.css';
+
 import { inject, type Ref } from 'vue';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { FIELD_REGISTRY } from '../utils/eventFormatter';

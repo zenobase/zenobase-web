@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '../../css/api.css';
+
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
