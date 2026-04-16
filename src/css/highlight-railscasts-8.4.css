@@ -185,3 +185,55 @@ Railscasts-like style (c) Visoft, Inc. (Damien White)
 .xml .hljs-cdata {
   opacity: 0.7;
 }
+
+/* ── Modern hljs class names (10+) mapped to the Railscasts palette ── */
+
+/* JSON keys, HTML attrs → light blue, matches hljs-attribute */
+.hljs-attr {
+  color: #6d9cbe;
+}
+
+/* true / false / null → red-orange, matches hljs-constant */
+.hljs-literal {
+  color: #da4939;
+}
+
+/* Built-in functions/commands (curl, GET, etc.) — light blue */
+.hljs-built_in,
+.hljs-bullet,
+.hljs-code {
+  color: #6d9cbe;
+}
+
+/* Bash shebangs, shell prompts, pragmas → muted gold */
+.hljs-meta {
+  color: #bc9458;
+}
+
+.hljs-meta .hljs-keyword,
+.hljs-meta .hljs-string {
+  color: inherit;
+}
+
+/* Function / class names → gold */
+.hljs-name,
+.hljs-function .hljs-title,
+.hljs-section {
+  color: #ffc66d;
+}
+
+/* Operators — same orange as keywords */
+.hljs-operator {
+  color: #c26230;
+}
+
+/* Selectors / properties — gold */
+.hljs-selector-tag,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-property {
+  color: #e8bf6a;
+}
+
+/* Punctuation stays in default foreground (#e6e1dc) — no rule needed */
+
