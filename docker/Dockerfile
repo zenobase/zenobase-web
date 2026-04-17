@@ -1,7 +1,7 @@
 FROM node:24.15.0-alpine3.23 AS build
 WORKDIR /app
 RUN corepack enable
-COPY package.json pnpm-lock.yaml .npmrc pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 ARG VITE_API_BASE_URL
