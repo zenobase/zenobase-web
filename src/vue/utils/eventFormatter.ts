@@ -77,7 +77,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 	simple('tag', 'mdi-tag', 'Tag', (v) => esc(v)),
 	field('resource', 'mdi-bookmark', 'Resource', (v, i, t) => {
 		const obj = v as ResourceRef;
-		if (!obj || !obj.title) return '';
+		if (!obj?.title) return '';
 		return '<span>' + ic(i, t) + '&nbsp;<a href="/to?url=' + esc(obj.url) + '" target="_blank" rel="nofollow noopener noreferrer">' + esc(obj['title']) + '</a></span>';
 	}),
 	simple('distance', 'mdi-arrow-left-right', 'Distance', (v) => esc(textWithUnit(v))),
@@ -124,7 +124,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 	field('author', 'mdi-account', 'User', (v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' ' + esc(getUserName(String(v))) + '</span>'),
 	field('source', 'mdi-open-in-new', 'Source', (v, i, t) => {
 		const obj = v as ResourceRef;
-		if (!obj || !obj.title) return '';
+		if (!obj?.title) return '';
 		return '<span class="text-no-wrap">' + ic(i, t) + ' <a href="/to?url=' + esc(obj.url) + '" target="_blank" rel="nofollow noopener noreferrer">' + esc(obj.title) + '</a></span>';
 	}),
 ];
