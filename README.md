@@ -5,14 +5,7 @@ Web app frontend for Zenobase.
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/) (v24, see `.nvmrc`)
-- [pnpm](https://pnpm.io/) — enable via Corepack (bundled with Node):
-
-  ```sh
-  corepack enable
-  ```
-
-  The exact pnpm version is pinned in `package.json` via the `packageManager` field.
+- Node.js 24 (see `.nvmrc`) with pnpm via Corepack (`corepack enable`)
 
 
 ## Setup
@@ -30,7 +23,7 @@ Start the Vite dev server:
 pnpm dev
 ```
 
-This serves the app at http://localhost:5173. API requests are proxied to the Play backend at http://localhost:9000, which must be running separately.
+This serves the app at http://localhost:5173. API requests are proxied to the backend at http://localhost:9000, which must be running separately.
 
 To instead build and run the app locally in a production-like environment using Docker:
 
@@ -38,7 +31,7 @@ To instead build and run the app locally in a production-like environment using 
 ./run.sh
 ```
 
-Then visit http://localhost:8080. API calls are directed to the Play backend at http://localhost:9000, which must be running separately.
+Then visit http://localhost:8080. API calls are directed to the backend at http://localhost:9000, which must be running separately.
 
 
 ## Deployment
