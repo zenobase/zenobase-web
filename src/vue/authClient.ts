@@ -4,7 +4,7 @@ import { watch } from 'vue';
 export interface AuthClient {
 	loginWithRedirect(options?: { screen_hint?: string }): Promise<void>;
 	handleRedirectCallback(): Promise<void>;
-	getTokenSilently(): Promise<string>;
+	getTokenSilently(options?: { ignoreCache?: boolean }): Promise<string>;
 	logout(): Promise<void>;
 	isAuthenticated(): Promise<boolean>;
 }
@@ -27,6 +27,7 @@ export const auth0Config = {
 		audience,
 	},
 	cacheLocation: 'localstorage' as const,
+	useRefreshTokens: true,
 };
 
 class LocalAuthClient implements AuthClient {
@@ -71,7 +72,11 @@ class LocalAuthClient implements AuthClient {
 		window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
 	}
 
-	async getTokenSilently(): Promise<string> {
+	async getTokenSilently(options?: { ignoreCache?: boolean }): Promise<string> {
+		if (options?.ignoreCache) {
+			await this.loginWithRedirect();
+			return new Promise<string>(() => {});
+		}
 		if (this.token) return this.token;
 		const stored = localStorage.getItem('access_token');
 		if (stored) {
@@ -121,9 +126,9 @@ export function useAuthClient(): AuthClient {
 		async handleRedirectCallback() {
 			await waitForInit();
 		},
-		async getTokenSilently() {
+		async getTokenSilently(options) {
 			await waitForInit();
-			return auth0.getAccessTokenSilently();
+			return auth0.getAccessTokenSilently({ cacheMode: options?.ignoreCache ? 'off' : 'on' });
 		},
 		async logout() {
 			await auth0.logout({ logoutParams: { returnTo: window.location.origin } });

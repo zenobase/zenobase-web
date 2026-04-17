@@ -20,6 +20,17 @@ export function useAuth() {
 	const user = ref<User | null>(null);
 	const loading = ref(true);
 
+	api.setAuthRefresher(async () => {
+		try {
+			const fresh = await authClient.getTokenSilently({ ignoreCache: true });
+			api.setToken(fresh);
+		} catch (e) {
+			api.setToken(null);
+			user.value = null;
+			throw e;
+		}
+	});
+
 	async function whoami(): Promise<void> {
 		if (!api.getToken()) {
 			try {

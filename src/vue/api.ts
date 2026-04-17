@@ -16,6 +16,24 @@ function setToken(token: string | null): void {
 	}
 }
 
+type AuthRefresher = () => Promise<void>;
+let authRefresher: AuthRefresher | null = null;
+let refreshInFlight: Promise<void> | null = null;
+
+function setAuthRefresher(fn: AuthRefresher | null): void {
+	authRefresher = fn;
+}
+
+async function refreshOnce(): Promise<void> {
+	if (!authRefresher) throw new Error('no auth refresher registered');
+	if (!refreshInFlight) {
+		refreshInFlight = authRefresher().finally(() => {
+			refreshInFlight = null;
+		});
+	}
+	return refreshInFlight;
+}
+
 interface RequestOptions {
 	method?: string;
 	body?: unknown;
@@ -40,7 +58,7 @@ class ApiError extends Error {
 	}
 }
 
-async function request<T = unknown>(url: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+async function request<T = unknown>(url: string, options: RequestOptions = {}, retried = false): Promise<ApiResponse<T>> {
 	const baseUrl = getBaseUrl();
 	const fullUrl = baseUrl ? baseUrl + url : url;
 	const headers: Record<string, string> = { ...options.headers };
@@ -73,6 +91,15 @@ async function request<T = unknown>(url: string, options: RequestOptions = {}): 
 	const response = await fetch(fullUrl, fetchOptions);
 	const responseHeaders = response.headers;
 
+	if (response.status === 401 && !retried && authRefresher) {
+		try {
+			await refreshOnce();
+		} catch {
+			throw new ApiError(401, await readBody(response));
+		}
+		return request<T>(url, options, true);
+	}
+
 	let data: T;
 	const contentType = response.headers.get('content-type');
 	if (contentType?.includes('application/json')) {
@@ -92,7 +119,19 @@ async function request<T = unknown>(url: string, options: RequestOptions = {}): 
 	};
 }
 
-async function download(url: string, filename: string): Promise<void> {
+async function readBody(response: Response): Promise<unknown> {
+	try {
+		const contentType = response.headers.get('content-type');
+		if (contentType?.includes('application/json')) {
+			return await response.json();
+		}
+		return await response.text();
+	} catch {
+		return null;
+	}
+}
+
+async function download(url: string, filename: string, retried = false): Promise<void> {
 	const baseUrl = getBaseUrl();
 	const fullUrl = baseUrl ? baseUrl + url : url;
 	const headers: Record<string, string> = {};
@@ -108,6 +147,16 @@ async function download(url: string, filename: string): Promise<void> {
 	}
 
 	const response = await fetch(fullUrl, fetchOptions);
+
+	if (response.status === 401 && !retried && authRefresher) {
+		try {
+			await refreshOnce();
+		} catch {
+			throw new ApiError(401, await response.text());
+		}
+		return download(url, filename, true);
+	}
+
 	if (!response.ok) {
 		throw new ApiError(response.status, await response.text());
 	}
@@ -127,9 +176,10 @@ const api = {
 	postForm: <T = unknown>(url: string, body: string) => request<T>(url, { method: 'POST', body, contentType: 'application/x-www-form-urlencoded' }),
 	put: <T = unknown>(url: string, body?: unknown) => request<T>(url, { method: 'PUT', body }),
 	del: <T = unknown>(url: string) => request<T>(url, { method: 'DELETE' }),
-	download,
+	download: (url: string, filename: string) => download(url, filename),
 	getToken,
 	setToken,
+	setAuthRefresher,
 	ApiError,
 };
 

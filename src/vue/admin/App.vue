@@ -23,7 +23,18 @@ const sections = [
 ];
 
 const authReady = ref(false);
-auth.whoami().finally(() => {
+async function initAuth() {
+	const params = new URLSearchParams(window.location.search);
+	if (params.has('code') && params.has('state')) {
+		try {
+			await auth.handleCallback();
+		} catch (e) {
+			console.error('Auth callback failed:', e);
+		}
+	}
+	await auth.whoami();
+}
+initAuth().finally(() => {
 	authReady.value = true;
 });
 
