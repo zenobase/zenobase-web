@@ -30,6 +30,7 @@ vi.mock('../../composables/useGoogleMaps', () => {
 	}
 
 	return {
+		GOOGLE_MAPS_MAP_ID: 'test-map-id',
 		loadGoogleMaps: vi.fn().mockResolvedValue({
 			LatLng: class {
 				constructor(

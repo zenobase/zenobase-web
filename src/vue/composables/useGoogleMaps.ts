@@ -1,5 +1,7 @@
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
 
+export const GOOGLE_MAPS_MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined;
+
 let initialized = false;
 let mapsPromise: Promise<typeof google.maps> | null = null;
 

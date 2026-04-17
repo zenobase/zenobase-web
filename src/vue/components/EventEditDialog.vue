@@ -3,7 +3,7 @@ import { computed, inject, nextTick, ref, watch } from 'vue';
 import type { ZenoEvent } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
-import { loadGoogleMaps } from '../composables/useGoogleMaps';
+import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
 import { formatDuration, getFieldIcon, locationText, textWithUnit } from '../utils/eventFormatter';
 import { getNumericFieldNames, getTextFieldNames, getUnitsForField } from '../utils/fieldRegistry';
 import { formatAge } from '../utils/formatAge';
@@ -52,11 +52,11 @@ const newDate = ref('');
 const newTime = ref('');
 const newTimezone = ref('');
 
-const locationSearchEl = ref<HTMLInputElement | null>(null);
+const locationSearchEl = ref<HTMLElement | null>(null);
 const locationMapEl = ref<HTMLElement | null>(null);
 
 let map: google.maps.Map | null = null;
-let marker: google.maps.Marker | null = null;
+let marker: google.maps.marker.AdvancedMarkerElement | null = null;
 
 const tags = ref<string[]>([]);
 
@@ -384,26 +384,7 @@ function setLocationFromLatLng(lat: number, lng: number) {
 	newLat.value = lat;
 	newLon.value = lng;
 	if (marker && map) {
-		const pos = new maps.LatLng(lat, lng);
-		marker.setPosition(pos);
-	}
-}
-
-function parseLatLng(value: string): { lat: number; lng: number } | null {
-	const p = value.indexOf(',');
-	if (p === -1) return null;
-	const lat = parseFloat(value.substring(0, p));
-	const lng = parseFloat(value.substring(p + 1));
-	return !Number.isNaN(lat) && !Number.isNaN(lng) ? { lat, lng } : null;
-}
-
-function onLocationSearchInput() {
-	if (!locationSearchEl.value) return;
-	const parsed = parseLatLng(locationSearchEl.value.value);
-	if (parsed) {
-		setLocationFromLatLng(parsed.lat, parsed.lng);
-		marker!.setMap(map);
-		map!.setCenter(new maps.LatLng(parsed.lat, parsed.lng));
+		marker.position = { lat, lng };
 	}
 }
 
@@ -411,38 +392,49 @@ async function initLocationMap() {
 	maps = await loadGoogleMaps();
 	if (!locationMapEl.value) return;
 	map = new maps.Map(locationMapEl.value, {
+		mapId: GOOGLE_MAPS_MAP_ID,
 		center: new maps.LatLng(0, 0),
 		zoom: 2,
 		mapTypeId: maps.MapTypeId.ROADMAP,
 		draggableCursor: 'crosshair',
 		streetViewControl: false,
 	});
-	marker = new maps.Marker({
+	marker = new maps.marker.AdvancedMarkerElement({
 		map: null,
-		draggable: true,
+		gmpDraggable: true,
 	});
 	maps.event.addListener(map, 'click', (...args: unknown[]) => {
 		const e = args[0] as { latLng: google.maps.LatLng };
 		setLocationFromLatLng(e.latLng.lat(), e.latLng.lng());
-		marker!.setMap(map);
+		marker!.map = map;
 	});
-	maps.event.addListener(marker, 'dragend', (...args: unknown[]) => {
+	marker.addListener('dragend', (...args: unknown[]) => {
 		const e = args[0] as { latLng: google.maps.LatLng };
 		newLat.value = e.latLng.lat();
 		newLon.value = e.latLng.lng();
 	});
 	if (locationSearchEl.value) {
-		const autocomplete = new maps.places.Autocomplete(locationSearchEl.value);
-		autocomplete.bindTo('bounds', map);
-		maps.event.addListener(autocomplete, 'place_changed', () => {
-			const place = autocomplete.getPlace();
-			if (place.geometry?.location) {
-				const loc = place.geometry.location;
-				setLocationFromLatLng(loc.lat(), loc.lng());
-				marker!.setMap(map);
-				map!.setCenter(loc);
+		const autocomplete = new maps.places.PlaceAutocompleteElement({});
+		autocomplete.style.width = '100%';
+		locationSearchEl.value.appendChild(autocomplete);
+
+		autocomplete.addEventListener('gmp-select', async (event: Event) => {
+			const { placePrediction } = event as unknown as { placePrediction: google.maps.places.PlacePrediction };
+			const place = placePrediction.toPlace();
+			await place.fetchFields({ fields: ['location'] });
+			if (place.location) {
+				const lat = place.location.lat();
+				const lng = place.location.lng();
+				setLocationFromLatLng(lat, lng);
+				marker!.map = map;
+				map!.setCenter(place.location);
 				map!.setZoom(14);
 			}
+		});
+
+		autocomplete.locationBias = map.getBounds() ?? null;
+		maps.event.addListener(map, 'bounds_changed', () => {
+			autocomplete.locationBias = map!.getBounds() ?? null;
 		});
 	}
 	geolocate();
@@ -454,7 +446,7 @@ function geolocate() {
 		const lat = pos.coords.latitude;
 		const lng = pos.coords.longitude;
 		setLocationFromLatLng(lat, lng);
-		marker!.setMap(map);
+		marker!.map = map;
 		map!.setCenter(new maps.LatLng(lat, lng));
 		map!.setZoom(10);
 	});
@@ -556,7 +548,7 @@ watch(
 
 					<!-- Location -->
 					<template v-else-if="fieldCategory === 'location'">
-						<input ref="locationSearchEl" type="text" class="v-field__input" style="width: 100%; border: 1px solid #ccc; padding: 8px; border-radius: 4px; margin-bottom: 8px" @input="onLocationSearchInput()" />
+						<div ref="locationSearchEl" style="margin-bottom: 8px"></div>
 						<div ref="locationMapEl" style="height: 200px; margin-bottom: 10px"></div>
 					</template>
 

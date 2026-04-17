@@ -4,7 +4,7 @@ import { GoogleMapsOverlay } from '@deck.gl/google-maps';
 import { inject, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { GeoBounds, HeatmapParams, HeatmapPoint, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
-import { loadGoogleMaps } from '../composables/useGoogleMaps';
+import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
 
 let maps: typeof google.maps;
 
@@ -173,13 +173,13 @@ function drawMap() {
 
 	if (!mapEl.value) return;
 
-	const mapOptions = {
+	const mapOptions: google.maps.MapOptions = {
+		mapId: GOOGLE_MAPS_MAP_ID,
 		mapTypeId: maps.MapTypeId.ROADMAP,
 		streetViewControl: false,
 		mapTypeControlOptions: {
 			style: maps.MapTypeControlStyle.DROPDOWN_MENU,
 		},
-		styles: [{ stylers: [{ saturation: -100 }] }],
 		minZoom: 1,
 	};
 

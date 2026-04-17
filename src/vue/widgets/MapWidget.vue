@@ -2,7 +2,7 @@
 import { inject, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { GeoBounds, MapParams, MapPoint, SearchResult } from '../../types/search';
 import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
-import { loadGoogleMaps } from '../composables/useGoogleMaps';
+import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
 
 let maps: typeof google.maps;
 
@@ -20,7 +20,7 @@ const mapEl = ref<HTMLDivElement | null>(null);
 let map: google.maps.Map | null = null;
 let bounds: google.maps.LatLngBounds | null = null;
 let boundsB: google.maps.LatLngBounds | null = null;
-let markers: Array<google.maps.Marker | google.maps.Rectangle> = [];
+let markers: Array<google.maps.marker.AdvancedMarkerElement | google.maps.Rectangle> = [];
 let factor = 1.0;
 let boundsUpdateTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -96,27 +96,39 @@ async function refreshPoints() {
 	addPoints(points, []);
 }
 
-function addPoints(points: MapPoint[], pointsB: MapPoint[]) {
-	// Clear existing markers
+function clearMarkers() {
 	markers.forEach((marker) => {
-		marker.setMap(null);
+		if (marker instanceof maps.Rectangle) {
+			marker.setMap(null);
+		} else {
+			marker.map = null;
+		}
 	});
 	markers = [];
+}
+
+function createDot(color: string, count: number): HTMLDivElement {
+	const dot = document.createElement('div');
+	dot.style.width = '10px';
+	dot.style.height = '10px';
+	dot.style.borderRadius = '50%';
+	dot.style.backgroundColor = color;
+	dot.style.opacity = String(1 - 1 / (count + 1));
+	return dot;
+}
+
+function addPoints(points: MapPoint[], pointsB: MapPoint[]) {
+	clearMarkers();
 
 	if (!map || (!points.length && !pointsB.length)) return;
 
 	points.forEach((point) => {
-		const marker = new maps.Marker({
-			position: new maps.LatLng(point.lat, point.lon),
+		const dot = createDot('rgb(47, 126, 216)', point.count);
+		const marker = new maps.marker.AdvancedMarkerElement({
+			position: { lat: point.lat, lng: point.lon },
 			map,
 			title: point.count + (point.count === 1 ? ' event' : ' events'),
-			icon: {
-				path: maps.SymbolPath.CIRCLE,
-				fillOpacity: 1 - 1 / (point.count + 1),
-				fillColor: 'rgb(47, 126, 216)',
-				strokeWeight: 0,
-				scale: 5,
-			},
+			content: dot,
 		});
 		markers.push(marker);
 
@@ -146,7 +158,8 @@ function addPoints(points: MapPoint[], pointsB: MapPoint[]) {
 			maps.event.addListener(filterRectangle, 'click', () => {
 				dashboard.addConstraint(locationField, filterBounds.toUrlValue(6), true);
 			});
-			maps.event.addListener(marker, 'click', () => {
+			dot.style.cursor = 'pointer';
+			dot.addEventListener('click', () => {
 				dashboard.addConstraint(locationField, filterBounds.toUrlValue(6), true);
 			});
 			markers.push(filterRectangle);
@@ -154,17 +167,11 @@ function addPoints(points: MapPoint[], pointsB: MapPoint[]) {
 	});
 
 	pointsB.forEach((point) => {
-		const marker = new maps.Marker({
-			position: new maps.LatLng(point.lat, point.lon),
+		const marker = new maps.marker.AdvancedMarkerElement({
+			position: { lat: point.lat, lng: point.lon },
 			map,
 			title: point.count + (point.count === 1 ? ' event' : ' events'),
-			icon: {
-				path: maps.SymbolPath.CIRCLE,
-				fillOpacity: 1 - 1 / (point.count + 1),
-				fillColor: 'rgb(204, 102, 0)',
-				strokeWeight: 0,
-				scale: 5,
-			},
+			content: createDot('rgb(204, 102, 0)', point.count),
 		});
 		markers.push(marker);
 	});
@@ -178,13 +185,13 @@ function drawMap() {
 
 	if (!mapEl.value) return;
 
-	const mapOptions = {
+	const mapOptions: google.maps.MapOptions = {
+		mapId: GOOGLE_MAPS_MAP_ID,
 		mapTypeId: maps.MapTypeId.ROADMAP,
 		streetViewControl: false,
 		mapTypeControlOptions: {
 			style: maps.MapTypeControlStyle.DROPDOWN_MENU,
 		},
-		styles: [{ stylers: [{ saturation: -100 }] }],
 		minZoom: 1,
 	};
 
@@ -246,11 +253,7 @@ async function update(result: SearchResult, resultB?: SearchResult) {
 }
 
 function init() {
-	// Clear existing markers
-	markers.forEach((marker) => {
-		marker.setMap(null);
-	});
-	markers = [];
+	clearMarkers();
 	map = null;
 	bounds = null;
 	boundsB = null;
@@ -261,9 +264,7 @@ function init() {
 
 onBeforeUnmount(() => {
 	if (boundsUpdateTimeout) clearTimeout(boundsUpdateTimeout);
-	markers.forEach((marker) => {
-		marker.setMap(null);
-	});
+	clearMarkers();
 });
 
 const registration: WidgetRegistration = { params, update, init };
