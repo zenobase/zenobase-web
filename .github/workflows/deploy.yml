@@ -30,6 +30,8 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - uses: pnpm/action-setup@v5
+        with:
+          package_json_file: infra/package.json
 
       - uses: actions/setup-node@v6
         with:
