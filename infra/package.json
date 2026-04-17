@@ -8,12 +8,12 @@
     "pnpm": "10.33.0"
   },
   "dependencies": {
-    "@pulumi/aws": "^7.0.0",
-    "@pulumi/pulumi": "^3.0.0"
+    "@pulumi/aws": "^7.26.0",
+    "@pulumi/pulumi": "^3.231.0"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "^24",
+    "typescript": "^5"
   },
   "pnpm": {
     "ignoredBuiltDependencies": ["protobufjs"]
