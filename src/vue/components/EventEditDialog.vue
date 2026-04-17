@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, ref, watch } from 'vue';
-import type { ZenoEvent } from '../../types';
+import { computed, inject, nextTick, ref, watch } from 'vue';import type { ZenoEvent } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
@@ -29,10 +28,12 @@ const message = ref('');
 const entries = ref<Array<{ field: string; value: string; stars?: number }>>([]);
 const newField = ref('');
 
-const COMMON_FIELDS = ['tag', 'timestamp'];
+const DEFAULT_COMMON_FIELDS = ['tag', 'timestamp'];
 const OTHER_FIELDS = [...getTextFieldNames().filter((f) => f !== 'author' && f !== 'source' && f !== 'tag'), 'location', ...getNumericFieldNames().filter((f) => f !== 'timestamp')].sort();
-const ALL_FIELD_NAMES = [...COMMON_FIELDS, ...OTHER_FIELDS];
-const FIELD_SELECT_ITEMS = [...COMMON_FIELDS, ...OTHER_FIELDS];
+const EDITABLE_FIELDS = new Set([...DEFAULT_COMMON_FIELDS, ...OTHER_FIELDS]);
+
+const commonFields = ref<string[]>([...DEFAULT_COMMON_FIELDS]);
+const allFieldNames = computed(() => [...commonFields.value, ...OTHER_FIELDS.filter((f) => !commonFields.value.includes(f))]);
 
 const newValue = ref('');
 const newNumValue = ref<number | null>(null);
@@ -217,9 +218,21 @@ function init(event: ZenoEvent | null) {
 	rebuildEntries();
 }
 
+function loadSchema() {
+	commonFields.value = [...DEFAULT_COMMON_FIELDS];
+	api.get<{ properties?: Record<string, unknown> }>(`/buckets/${props.bucketId}/schema`)
+		.then((response) => {
+			const names = Object.keys(response.data.properties ?? {}).filter((f) => EDITABLE_FIELDS.has(f));
+			if (names.length > 0) {
+				commonFields.value = names;
+			}
+		})
+		.catch(() => {});
+}
+
 function rebuildEntries() {
 	const result: Array<{ field: string; value: string; stars?: number }> = [];
-	for (const field of ALL_FIELD_NAMES) {
+	for (const field of allFieldNames.value) {
 		const value = eventData.value[field];
 		if (value === undefined || value === null) continue;
 		const values = Array.isArray(value) ? value : [value];
@@ -474,6 +487,7 @@ watch(
 	() => props.modelValue,
 	(open) => {
 		if (open) {
+			loadSchema();
 			init(props.event);
 			nextTick(() => {
 				visible.value = true;
@@ -496,10 +510,10 @@ watch(
 			<v-card-text>
 				<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
 
-				<v-autocomplete label="Field" :items="FIELD_SELECT_ITEMS" v-model="newField" clearable style="max-width: 300px">
+				<v-autocomplete label="Field" :items="allFieldNames" v-model="newField" clearable style="max-width: 300px">
 						<template #item="{ item, props: itemProps }">
 							<v-list-item v-bind="itemProps">
-								<template v-if="COMMON_FIELDS.includes(String(itemProps.title))" #title>
+								<template v-if="commonFields.includes(String(itemProps.title))" #title>
 									<span style="font-weight: bold">{{ itemProps.title }}</span>
 								</template>
 							</v-list-item>
