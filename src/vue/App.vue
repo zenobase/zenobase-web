@@ -9,6 +9,7 @@ import api from './api';
 import { alertKey, useAlert } from './composables/useAlert';
 import { authKey, useAuth } from './composables/useAuth';
 import { reloadBucketsKey } from './composables/useBuckets';
+import { useVersionCheck } from './composables/useVersionCheck';
 
 const router = useRouter();
 const route = useRoute();
@@ -19,6 +20,12 @@ const alertApi = useAlert(async (commandId: string) => {
 	router.go(0);
 });
 provide(alertKey, alertApi);
+
+const { isStale } = useVersionCheck();
+
+function reload() {
+	window.location.reload();
+}
 
 const authReady = ref(false);
 
@@ -292,9 +299,15 @@ watch(
 
 <template>
 	<v-app>
-		<v-system-bar v-if="auth.user.value?.suspended" color="error" variant="tonal" style="height: auto; padding: 8px 16px; justify-content: flex-start">
+		<v-system-bar v-if="auth.user.value?.suspended" :height="40" color="error" variant="tonal" style="padding: 8px 16px; justify-content: flex-start">
 			<v-icon icon="$error" class="mr-2" />
 			<span>This account has been suspended. Please contact support.</span>
+		</v-system-bar>
+
+		<v-system-bar v-if="isStale" :height="40" color="info" variant="tonal" style="padding: 8px 16px; justify-content: flex-start">
+			<v-icon icon="mdi-update" class="mr-2" />
+			<span>A new version is available.</span>
+			<v-btn class="ml-3" size="small" variant="tonal" @click="reload">Refresh</v-btn>
 		</v-system-bar>
 
 		<v-app-bar v-if="auth.user.value || route.path !== '/'" density="compact" color="surface" flat>
