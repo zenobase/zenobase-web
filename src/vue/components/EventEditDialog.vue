@@ -570,19 +570,19 @@ watch(
 
 					<!-- Duration -->
 					<template v-else-if="fieldCategory === 'duration'">
-						<div class="d-flex ga-2">
-							<v-text-field type="number" v-model.number="newDays" suffix="d" style="max-width: 100px" />
-							<v-text-field type="number" min="0" max="23" v-model.number="newHours" suffix="h" style="max-width: 100px" />
-							<v-text-field type="number" min="0" max="59" v-model.number="newMinutes" suffix="min" style="max-width: 100px" />
-							<v-text-field type="number" min="0" max="59" v-model.number="newSeconds" suffix="s" style="max-width: 100px" />
+						<div class="d-flex ga-4">
+							<v-text-field class="right-input" type="number" min="0" v-model.number="newDays" suffix="d" style="max-width: 70px" />
+							<v-text-field class="right-input" type="number" min="0" max="59" v-model.number="newHours" suffix="h" style="max-width: 70px" />
+							<v-text-field class="right-input" type="number" min="0" max="59" v-model.number="newMinutes" suffix="min" style="max-width: 80px" />
+							<v-text-field class="right-input" type="number" min="0" max="59" v-model.number="newSeconds" suffix="s" style="max-width: 70px" />
 						</div>
 					</template>
 
 					<!-- Pace -->
 					<template v-else-if="fieldCategory === 'pace'">
-						<div class="d-flex ga-2 align-center">
-							<v-text-field type="number" min="0" v-model.number="newMinutes" suffix="'" style="max-width: 100px" />
-							<v-text-field type="number" min="0" max="59" v-model.number="newSeconds" suffix="&quot;" style="max-width: 100px" />
+						<div class="d-flex ga-4 align-center">
+							<v-text-field class="right-input" type="number" min="0" max="59" v-model.number="newMinutes" suffix="'" style="max-width: 70px" />
+							<v-text-field class="right-input" type="number" min="0" max="59" v-model.number="newSeconds" suffix="&quot;" style="max-width: 70px" />
 							<span>/</span>
 							<v-select :items="fieldUnits" v-model="newUnit" style="max-width: 120px" />
 						</div>
@@ -645,3 +645,9 @@ watch(
 		</v-card>
 	</v-dialog>
 </template>
+
+<style scoped>
+.right-input :deep(input) {
+	text-align: right;
+}
+</style>
