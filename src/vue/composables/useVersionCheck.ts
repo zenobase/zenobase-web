@@ -7,7 +7,8 @@ async function fetchEtag(): Promise<string | null> {
 	try {
 		const res = await fetch(INDEX_URL, { method: 'HEAD', cache: 'no-cache' });
 		if (!res.ok) return null;
-		return res.headers.get('etag');
+		const etag = res.headers.get('etag');
+		return etag ? etag.replace(/^W\//, '') : null;
 	} catch {
 		return null;
 	}
@@ -26,6 +27,7 @@ export function useVersionCheck() {
 			return;
 		}
 		if (etag !== initialEtag) {
+			console.log(`Version check: ETag changed from ${initialEtag} to ${etag}`);
 			isStale.value = true;
 		}
 	}
