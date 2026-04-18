@@ -23,7 +23,7 @@ describe('ListWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(ListWidget, settings);
-		expect(wrapper.find('.none').text()).toBe('Loading...');
+		expect(wrapper.find('.widget-state').text()).toContain('Loading');
 	});
 
 	it('renders events after update', async () => {
@@ -39,7 +39,7 @@ describe('ListWidget', () => {
 		await feedListData(dashboard, [], 0);
 		await vi.dynamicImportSettled();
 
-		expect(wrapper.text()).toContain('None');
+		expect(wrapper.text()).toContain('No data');
 	});
 
 	it('shows pagination info', async () => {

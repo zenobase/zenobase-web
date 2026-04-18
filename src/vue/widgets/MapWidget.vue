@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, nextTick, onBeforeUnmount, ref, toRef } from 'vue';
 import type { GeoBounds, MapParams, MapPoint, SearchResult } from '../../types/search';
+import WidgetState from '../components/WidgetState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
 import { useWidgetData } from '../composables/useWidgetData';
@@ -275,8 +276,8 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 <template>
 	<div>
 		<div ref="mapEl" :id="settings.id + '-map'" style="height: 400px" v-show="!loading && !empty" />
-		<p v-if="failed" class="none">Failed</p>
-		<p v-else-if="loading" class="none">Loading...</p>
-		<p v-else-if="empty" class="none">None</p>
+		<WidgetState v-if="failed" state="failed" />
+		<WidgetState v-else-if="loading" state="loading" />
+		<WidgetState v-else-if="empty" state="empty" />
 	</div>
 </template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, ref, toRef } from 'vue';
 import type { CountParams, CountTerm, SearchResult } from '../../types/search';
+import WidgetState from '../components/WidgetState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { getUserName, resolveUserNames } from '../utils/userNames';
@@ -112,9 +113,9 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 			</tbody>
 		</v-table>
 
-		<p v-if="failed" class="none">Failed</p>
-		<p v-else-if="terms === null" class="none">Loading...</p>
-		<p v-else-if="terms.length === 0" class="none">None</p>
+		<WidgetState v-if="failed" state="failed" />
+		<WidgetState v-else-if="terms === null" state="loading" />
+		<WidgetState v-else-if="terms.length === 0" state="empty" />
 
 		<div class="d-flex align-center justify-end" v-show="hasPrev() || hasNext()">
 			<v-btn icon variant="text" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" /></v-btn>

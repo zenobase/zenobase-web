@@ -3,6 +3,7 @@ import { inject, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
 import type { GeoPoint, ZenoEvent } from '../../types';
 import type { ListParams, SearchResult } from '../../types/search';
 import { Constraint } from '../../utils/constraint';
+import WidgetState from '../components/WidgetState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { esc, formatEventHtml, locationText } from '../utils/eventFormatter';
@@ -226,9 +227,9 @@ onBeforeUnmount(() => {
 			</tbody>
 		</v-table>
 
-		<p v-if="failed" class="none">Failed</p>
-		<p v-else-if="items === null" class="none">Loading...</p>
-		<p v-else-if="items.length === 0" class="none">None</p>
+		<WidgetState v-if="failed" state="failed" />
+		<WidgetState v-else-if="items === null" state="loading" />
+		<WidgetState v-else-if="items.length === 0" state="empty" />
 
 		<div class="d-flex align-center justify-end" v-show="items?.length">
 			<v-btn icon variant="text" title="Previous" :disabled="!hasPrev()" @click="prev()"><v-icon icon="mdi-chevron-left" /></v-btn>

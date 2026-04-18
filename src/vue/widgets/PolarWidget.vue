@@ -2,6 +2,7 @@
 import type { ECharts } from 'echarts/core';
 import { inject, nextTick, ref, toRef } from 'vue';
 import type { FieldInfo, PolarEntry, PolarParams, SearchResult } from '../../types/search';
+import WidgetState from '../components/WidgetState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
@@ -260,8 +261,8 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 			</div>
 		</v-row>
 		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
-		<p v-if="failed" class="none">Failed</p>
-		<p v-else-if="times === null" class="none">Loading...</p>
-		<p v-else-if="times.length === 0 && timesB.length === 0" class="none">None</p>
+		<WidgetState v-if="failed" state="failed" />
+		<WidgetState v-else-if="times === null" state="loading" />
+		<WidgetState v-else-if="times.length === 0 && timesB.length === 0" state="empty" />
 	</div>
 </template>

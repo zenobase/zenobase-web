@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, ref, toRef } from 'vue';
 import type { Rating, RatingsParams, SearchResult } from '../../types/search';
+import WidgetState from '../components/WidgetState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 
@@ -68,8 +69,8 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 			</tbody>
 		</v-table>
 
-		<p v-if="failed" class="none">Failed</p>
-		<p v-else-if="ratings === null" class="none">Loading...</p>
-		<p v-else-if="ratings.length === 0" class="none">None</p>
+		<WidgetState v-if="failed" state="failed" />
+		<WidgetState v-else-if="ratings === null" state="loading" />
+		<WidgetState v-else-if="ratings.length === 0" state="empty" />
 	</div>
 </template>

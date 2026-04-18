@@ -83,7 +83,7 @@ describe('HeatmapWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(HeatmapWidget, settings);
-		expect(wrapper.find('.none').text()).toBe('Loading...');
+		expect(wrapper.find('.widget-state').text()).toContain('Loading');
 	});
 
 	it('hides loading after update with bounds', async () => {
@@ -100,7 +100,7 @@ describe('HeatmapWidget', () => {
 		await feedData(dashboard, 'w1', {});
 		await flushPromises();
 
-		expect(wrapper.text()).toContain('None');
+		expect(wrapper.text()).toContain('No data');
 	});
 
 	it('resets to loading state on new generation', async () => {
@@ -113,6 +113,6 @@ describe('HeatmapWidget', () => {
 		dashboard.generation.value++;
 		await flushPromises();
 
-		expect(wrapper.find('.none').text()).toBe('Loading...');
+		expect(wrapper.find('.widget-state').text()).toContain('Loading');
 	});
 });

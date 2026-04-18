@@ -23,7 +23,7 @@ describe('PolarWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWithStub();
-		expect(wrapper.find('.none').text()).toBe('Loading...');
+		expect(wrapper.find('.widget-state').text()).toContain('Loading');
 	});
 
 	it('builds chart with correct angle axis labels', async () => {
@@ -63,7 +63,7 @@ describe('PolarWidget', () => {
 		const { wrapper, dashboard } = mountWithStub();
 		await feedData(dashboard, 'w1', []);
 
-		expect(wrapper.text()).toContain('None');
+		expect(wrapper.text()).toContain('No data');
 	});
 
 	it('matches snapshot', async () => {

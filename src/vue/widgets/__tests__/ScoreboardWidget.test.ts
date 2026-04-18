@@ -18,7 +18,7 @@ describe('ScoreboardWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(ScoreboardWidget, settings);
-		expect(wrapper.find('.none').text()).toBe('Loading...');
+		expect(wrapper.find('.widget-state').text()).toContain('Loading');
 	});
 
 	it('renders only selected statistic columns', async () => {
@@ -69,7 +69,7 @@ describe('ScoreboardWidget', () => {
 		const { wrapper, dashboard } = mountWidget(ScoreboardWidget, settings);
 		await feedData(dashboard, 'w1', []);
 
-		expect(wrapper.text()).toContain('None');
+		expect(wrapper.text()).toContain('No data');
 	});
 
 	it('matches snapshot', async () => {

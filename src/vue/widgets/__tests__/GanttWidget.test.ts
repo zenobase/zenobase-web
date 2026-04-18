@@ -21,7 +21,7 @@ describe('GanttWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(GanttWidget, settings);
-		expect(wrapper.find('.none').text()).toBe('Loading...');
+		expect(wrapper.find('.widget-state').text()).toContain('Loading');
 	});
 
 	it('renders label, age, and freq', async () => {
@@ -61,7 +61,7 @@ describe('GanttWidget', () => {
 		const { wrapper, dashboard } = mountWidget(GanttWidget, settings);
 		await feedData(dashboard, 'w1', []);
 
-		expect(wrapper.text()).toContain('None');
+		expect(wrapper.text()).toContain('No data');
 	});
 
 	it('matches snapshot', async () => {
