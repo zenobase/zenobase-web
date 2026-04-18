@@ -3,9 +3,9 @@
 ## Prerequisites
 
 - AWS account with CLI configured
-- GitHub repo (zenobase/zenobase-web)
-- [Pulumi Cloud](https://app.pulumi.com/) account
-- Node.js 24 (see `../.nvmrc`) with pnpm via Corepack (`corepack enable`)
+- Pulumi (`brew install pulumi`) with a Pulumi Cloud account
+- Node.js (see `../.nvmrc`) with pnpm via Corepack (`corepack enable`)
+
 
 ## AWS: GitHub OIDC Identity Provider
 
@@ -36,7 +36,8 @@ aws acm request-certificate \
   --region us-east-1
 ```
 
-Complete DNS validation by adding the CNAME records shown in the output. Note the certificate ARN for Pulumi config.
+Complete DNS validation by adding the CNAME/ALIAS records shown in the output. Note the certificate ARN for Pulumi config.
+
 
 ## Pulumi: Initial Setup
 
@@ -51,6 +52,7 @@ Set the certificate ARN in `Pulumi.prod.yaml`:
 ```sh
 pulumi config set certificateArn <arn>
 ```
+
 
 ## Bootstrap
 
