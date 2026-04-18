@@ -14,6 +14,7 @@ function mockSearchWithTotal(dashboard: ReturnType<typeof mountWidget>['dashboar
 
 async function feedListData(dashboard: ReturnType<typeof mountWidget>['dashboard'], data: unknown[], total: number) {
 	mockSearchWithTotal(dashboard, data, total);
+	dashboard.total.value = total;
 	dashboard.generation.value++;
 	await flushPromises();
 }

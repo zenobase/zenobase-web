@@ -107,9 +107,10 @@ export function useDashboard(
 		updateConstraints();
 		pendingRefresh++;
 		const current = pendingRefresh;
-		const requests: Promise<SearchResult>[] = [doSearch(constraints.value, [])];
+		const countFacet = ['id:_count,type:list,offset:0,limit:0'];
+		const requests: Promise<SearchResult>[] = [doSearch(constraints.value, countFacet)];
 		if (constraintsB.value.length > 0) {
-			requests.push(doSearch(constraintsB.value, []));
+			requests.push(doSearch(constraintsB.value, countFacet));
 		}
 		Promise.all(requests).then(
 			(responses) => {

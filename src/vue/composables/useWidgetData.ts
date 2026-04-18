@@ -23,20 +23,15 @@ export function useWidgetData(
 		const p = params();
 		if (!p) return;
 		try {
-			const requests: Promise<SearchResult>[] = [dashboard.search([p])];
+			const hasA = dashboard.total.value > 0;
+			const hasB = dashboard.constraintsB.value.length > 0 && (dashboard.totalB.value ?? 0) > 0;
+			const requests: Promise<SearchResult>[] = [hasA ? dashboard.search([p]) : Promise.resolve({})];
 			if (dashboard.constraintsB.value.length > 0) {
-				requests.push(dashboard.searchB([p]));
+				requests.push(hasB ? dashboard.searchB([p]) : Promise.resolve({}));
 			}
 			const responses = await Promise.all(requests);
 			if (fetchedGeneration !== gen) return;
-			if (typeof responses[0]['total'] === 'number') {
-				dashboard.total.value = responses[0]['total'];
-			}
-			const resultB = responses.length > 1 ? responses[1] : undefined;
-			if (resultB && typeof resultB['total'] === 'number') {
-				dashboard.totalB.value = resultB['total'];
-			}
-			handlers.update(responses[0], resultB);
+			handlers.update(responses[0], responses.length > 1 ? responses[1] : undefined);
 		} catch {
 			if (fetchedGeneration !== gen) return;
 			failed.value = true;

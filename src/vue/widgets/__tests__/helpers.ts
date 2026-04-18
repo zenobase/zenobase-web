@@ -33,8 +33,11 @@ export async function feedData(dashboard: DashboardApi, widgetId: string, data: 
 	const result = { [widgetId]: data };
 	const resultB = dataB !== undefined ? { [widgetId]: dataB } : undefined;
 	(dashboard.search as ReturnType<typeof vi.fn>).mockResolvedValue(result);
+	dashboard.total.value = 1;
 	if (resultB) {
 		(dashboard.searchB as ReturnType<typeof vi.fn>).mockResolvedValue(resultB);
+		dashboard.constraintsB.value = [{} as never];
+		dashboard.totalB.value = 1;
 	}
 	dashboard.generation.value++;
 	await flushPromises();
