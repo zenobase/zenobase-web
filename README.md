@@ -2,7 +2,6 @@
 
 TypeScript / Vue.js SPA frontend for [zenobase](https://github.com/zenobase/zenobase/), deployed to [zenobase.com](https://zenobase.com/).
 
-
 ## Getting Started
 
 1. Check out and run [the backend](https://github.com/zenobase/zenobase/) with Docker Compose
@@ -10,7 +9,6 @@ TypeScript / Vue.js SPA frontend for [zenobase](https://github.com/zenobase/zeno
 3. Run `pnpm install` to install dependencies
 4. Run `pnpm dev` to start a dev server at http://localhost:5173
 5. `./run.sh` serves a full build at http://localhost:8080
-
 
 ## Development
 
