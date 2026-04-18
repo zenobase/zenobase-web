@@ -484,7 +484,7 @@ watch(
 			</Teleport>
 
 			<!-- Description -->
-			<div class="text-body-2 text-medium-emphasis mb-2" v-if="bucket.description">{{ bucket.description }}</div>
+			<div class="text-body-2 text-medium-emphasis mb-4" v-if="bucket.description">{{ bucket.description }}</div>
 
 			<!-- Constraint chips -->
 			<div class="d-flex align-center flex-wrap ga-1 mb-2" v-if="dashboard.constraints.value.length || dashboard.constraintsB.value.length">
