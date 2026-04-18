@@ -7,7 +7,7 @@ describe('CountWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(CountWidget, settings);
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 
 	it('renders terms after update', async () => {

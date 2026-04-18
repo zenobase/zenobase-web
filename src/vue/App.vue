@@ -6,6 +6,7 @@ import type { Bucket, WidgetSettings } from '../types';
 import { Constraint } from '../utils/constraint';
 import { param } from '../utils/helpers';
 import api from './api';
+import LoadingState from './components/LoadingState.vue';
 import { alertKey, useAlert } from './composables/useAlert';
 import { authKey, useAuth } from './composables/useAuth';
 import { reloadBucketsKey } from './composables/useBuckets';
@@ -402,9 +403,7 @@ watch(
 
 				<div v-if="!auth.user.value?.suspended">
 					<RouterView v-if="authReady" />
-					<div v-else class="d-flex justify-center mt-8">
-						<v-progress-circular indeterminate />
-					</div>
+					<LoadingState v-else state="loading" />
 				</div>
 			</v-container>
 

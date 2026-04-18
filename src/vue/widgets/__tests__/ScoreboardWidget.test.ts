@@ -18,7 +18,7 @@ describe('ScoreboardWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(ScoreboardWidget, settings);
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 
 	it('renders only selected statistic columns', async () => {

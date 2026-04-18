@@ -12,6 +12,7 @@ import ErrorBoundary from '../components/ErrorBoundary.vue';
 import EventEditDialog from '../components/EventEditDialog.vue';
 import ExportDialog from '../components/ExportDialog.vue';
 import ImportDialog from '../components/ImportDialog.vue';
+import LoadingState from '../components/LoadingState.vue';
 import SaveAsViewDialog from '../components/SaveAsViewDialog.vue';
 import TaskListDialog from '../components/TaskListDialog.vue';
 import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
@@ -439,7 +440,7 @@ watch(
 	<div>
 		<v-alert v-if="message" type="error">{{ message }}</v-alert>
 
-		<div v-if="!bucket && !message" class="text-medium-emphasis">Loading...</div>
+		<LoadingState v-if="!bucket && !message" state="loading" />
 
 		<v-alert v-if="dirty && editable" type="info" closable class="mb-3" @click:close="revertBucket()">
 			<strong><a @click="saveBucket()">Save</a></strong> or

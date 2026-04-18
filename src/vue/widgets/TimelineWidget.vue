@@ -5,7 +5,7 @@ import type { FieldInfo, SearchResult, TimeEntry, TimelineParams } from '../../t
 import { compactDuration, compactNumber } from '../../utils/helpers';
 import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
-import WidgetState from '../components/WidgetState.vue';
+import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
@@ -695,9 +695,9 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 
 		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" @updated="activateBrush" />
 		<EChartsChart v-if="effectSizeOptions" :options="effectSizeOptions" />
-		<WidgetState v-if="failed" state="failed" />
-		<WidgetState v-else-if="times === null" state="loading" />
-		<WidgetState v-else-if="times.length === 0 && timesB.length === 0" state="empty" />
+		<LoadingState v-if="failed" state="failed" />
+		<LoadingState v-else-if="times === null" state="loading" />
+		<LoadingState v-else-if="times.length === 0 && timesB.length === 0" state="empty" />
 	</div>
 </template>
 

@@ -3,7 +3,7 @@ import { inject, nextTick, ref, toRef } from 'vue';
 import type { FieldInfo, ScatterPlotParams, SearchResult } from '../../types/search';
 import { compactDuration, compactNumber } from '../../utils/helpers';
 import { statistics } from '../../utils/statistics';
-import WidgetState from '../components/WidgetState.vue';
+import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
@@ -363,8 +363,8 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 		</v-row>
 		<EChartsChart ref="chartRef" v-if="data?.length || dataB?.length" :options="chartOptions" :height="chartHeight" />
 		<EChartsChart v-if="rChartOptions" :options="rChartOptions" />
-		<WidgetState v-if="failed" state="failed" />
-		<WidgetState v-else-if="data === null" state="loading" />
-		<WidgetState v-else-if="data.length === 0 && dataB.length === 0" state="empty" />
+		<LoadingState v-if="failed" state="failed" />
+		<LoadingState v-else-if="data === null" state="loading" />
+		<LoadingState v-else-if="data.length === 0 && dataB.length === 0" state="empty" />
 	</div>
 </template>

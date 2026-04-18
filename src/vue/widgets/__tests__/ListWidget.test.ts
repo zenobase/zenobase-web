@@ -24,7 +24,7 @@ describe('ListWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(ListWidget, settings);
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 
 	it('renders events after update', async () => {

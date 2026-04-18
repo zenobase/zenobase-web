@@ -72,7 +72,7 @@ describe('MapWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(MapWidget, settings);
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 
 	it('hides loading after update with bounds', async () => {
@@ -102,6 +102,6 @@ describe('MapWidget', () => {
 		dashboard.generation.value++;
 		await flushPromises();
 
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 });

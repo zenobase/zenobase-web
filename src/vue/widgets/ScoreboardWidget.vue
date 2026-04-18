@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, ref, toRef } from 'vue';
 import type { ScoreboardParams, ScoreboardTerm, SearchResult } from '../../types/search';
-import WidgetState from '../components/WidgetState.vue';
+import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { getUserName, resolveUserNames } from '../utils/userNames';
@@ -108,8 +108,8 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 			</tbody>
 		</v-table>
 
-		<WidgetState v-if="failed" state="failed" />
-		<WidgetState v-else-if="terms === null" state="loading" />
-		<WidgetState v-else-if="terms.length === 0" state="empty" />
+		<LoadingState v-if="failed" state="failed" />
+		<LoadingState v-else-if="terms === null" state="loading" />
+		<LoadingState v-else-if="terms.length === 0" state="empty" />
 	</div>
 </template>

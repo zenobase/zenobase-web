@@ -11,14 +11,14 @@ const config = {
 </script>
 
 <template>
-	<div class="widget-state" :class="'widget-state--' + state">
+	<div class="loading-state" :class="'loading-state--' + state">
 		<v-icon :icon="config[state].icon" size="20" />
 		<span>{{ config[state].text }}</span>
 	</div>
 </template>
 
 <style scoped>
-.widget-state {
+.loading-state {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -28,12 +28,21 @@ const config = {
 	font-size: 0.8125rem;
 }
 
-.widget-state--loading .v-icon {
+.loading-state--loading {
+	animation: fade-in 150ms ease-in 300ms both;
+}
+
+.loading-state--loading .v-icon {
 	animation: pulse 1.5s ease-in-out infinite;
 }
 
-.widget-state--failed {
+.loading-state--failed {
 	color: rgba(211, 47, 47, 0.6);
+}
+
+@keyframes fade-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
 
 @keyframes pulse {

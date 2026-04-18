@@ -7,7 +7,7 @@ describe('RatingsWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(RatingsWidget, settings);
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 
 	it('renders ratings after update', async () => {

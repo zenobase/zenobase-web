@@ -5,6 +5,7 @@ import { param } from '../../utils/helpers';
 import api, { ApiError } from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { formatAge } from '../utils/formatAge';
+import LoadingState from './LoadingState.vue';
 
 const props = defineProps<{
 	bucketId: string;
@@ -194,7 +195,7 @@ watch(
 				<v-table>
 					<tbody>
 						<tr v-if="tasks === null">
-							<td colspan="3"><em>Loading...</em></td>
+							<td colspan="3"><LoadingState state="loading" /></td>
 						</tr>
 						<tr v-if="tasks && tasks.length === 0">
 							<td colspan="3"><em>None</em></td>

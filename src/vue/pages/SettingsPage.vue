@@ -2,6 +2,7 @@
 import { computed, inject, ref, watch } from 'vue';
 import { param } from '../../utils/helpers';
 import api from '../api';
+import LoadingState from '../components/LoadingState.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { formatDuration } from '../utils/eventFormatter';
@@ -189,7 +190,7 @@ watch(
 				<v-card-text>
 					<v-table>
 						<tbody>
-							<tr v-if="credentials === null"><td colspan="2"><i>Loading...</i></td></tr>
+							<tr v-if="credentials === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
 							<tr v-else-if="credentials.length === 0"><td colspan="2"><i>None</i></td></tr>
 							<tr v-for="c in credentials" :key="c['@id']" class="credentials-row" @contextmenu.prevent="onRowLongPress(c['@id'])">
 								<td><span :class="{ 'credentials-invalid': c.authorizationUrl }">{{ c.type }}</span></td>

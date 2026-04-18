@@ -16,7 +16,7 @@ describe('HistogramWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWithStub();
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 
 	it('builds chart options with correct series data', async () => {

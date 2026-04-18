@@ -23,7 +23,7 @@ describe('TimelineWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWithStub();
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 
 	it('uses bar chart for count statistic', async () => {

@@ -21,7 +21,7 @@ describe('GanttWidget', () => {
 
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(GanttWidget, settings);
-		expect(wrapper.find('.widget-state').text()).toContain('Loading');
+		expect(wrapper.find('.loading-state').text()).toContain('Loading');
 	});
 
 	it('renders label, age, and freq', async () => {
