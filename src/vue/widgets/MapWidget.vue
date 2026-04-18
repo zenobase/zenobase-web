@@ -94,9 +94,14 @@ async function refreshPoints() {
 		factor,
 		filter: getFilter(),
 	};
-	const result = await dashboard.search([pointsParams]);
-	const points = (result[props.settings.id] as MapPoint[]) || [];
-	addPoints(points, []);
+	const requests: Promise<SearchResult>[] = [dashboard.search([pointsParams])];
+	if (dashboard.constraintsB.value.length > 0) {
+		requests.push(dashboard.searchB([pointsParams]));
+	}
+	const responses = await Promise.all(requests);
+	const points = (responses[0][props.settings.id] as MapPoint[]) || [];
+	const pointsB = (responses[1]?.[props.settings.id] as MapPoint[]) || [];
+	addPoints(points, pointsB);
 }
 
 function clearMarkers() {

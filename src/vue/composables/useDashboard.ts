@@ -119,6 +119,8 @@ export function useDashboard(
 				}
 				if (responses.length > 1 && typeof responses[1]['total'] === 'number') {
 					totalB.value = responses[1]['total'];
+				} else {
+					totalB.value = null;
 				}
 				generation.value++;
 			},

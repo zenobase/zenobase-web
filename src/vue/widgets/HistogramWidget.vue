@@ -26,8 +26,10 @@ const props = defineProps<{
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const intervals = ref<HistogramInterval[] | null>(null);
+const intervalsB = ref<HistogramInterval[]>([]);
 const chartOptions = ref<Record<string, unknown> | null>(null);
 const chartHeight = ref<number | undefined>();
+let mergedBins: Array<{ label: string; from: unknown; to: unknown }> = [];
 
 function fieldToText(value: unknown): string {
 	if (props.formatFieldText) return props.formatFieldText(value, props.settings.field);
@@ -50,23 +52,54 @@ function params(): HistogramParams {
 	};
 }
 
-function update(result: SearchResult) {
+function update(result: SearchResult, resultB?: SearchResult) {
 	intervals.value = (result[props.settings.id] as HistogramInterval[]) || [];
+	intervalsB.value = (resultB?.[props.settings.id] as HistogramInterval[]) || [];
 	nextTick(draw);
 }
 
 function init() {
 	intervals.value = null;
+	intervalsB.value = [];
 	chartOptions.value = null;
 }
 
 function draw() {
-	if (!intervals.value?.length) return;
+	if (!intervals.value?.length && !intervalsB.value.length) return;
 
-	const height = Math.max(intervals.value.length * 20, 150);
+	const hasB = intervalsB.value.length > 0;
+	const merged = mergeIntervals(intervals.value || [], intervalsB.value);
+	mergedBins = merged.map(({ label, from, to }) => ({ label, from, to }));
+	const height = Math.max(merged.length * (hasB ? 30 : 20), 150);
 	chartHeight.value = height;
-	const categories = intervals.value.map((i) => `${fieldToText(i.from)}..${fieldToText(i.to)}`);
-	const counts = intervals.value.map((i) => i.count);
+	const categories = merged.map((m) => m.label);
+	const counts = merged.map((m) => m.a);
+	const countsB = merged.map((m) => m.b);
+
+	const series: Record<string, unknown>[] = [
+		{
+			name: 'count',
+			type: 'bar',
+			data: counts,
+			barWidth: 10,
+			itemStyle: {
+				color: `rgba(${BRAND_BLUE_RGB}, 0.4)`,
+				borderRadius: 5,
+			},
+		},
+	];
+	if (hasB) {
+		series.push({
+			name: 'count-B',
+			type: 'bar',
+			data: countsB,
+			barWidth: 10,
+			itemStyle: {
+				color: 'rgba(204, 102, 0, 0.4)',
+				borderRadius: 5,
+			},
+		});
+	}
 
 	const options: Record<string, unknown> = {
 		animation: false,
@@ -89,22 +122,26 @@ function draw() {
 				return `<b>${params.name}</b>: ${params.value}`;
 			},
 		},
-		series: [
-			{
-				name: 'count',
-				type: 'bar',
-				data: counts,
-				barWidth: 10,
-				itemStyle: {
-					color: `rgba(${BRAND_BLUE_RGB}, 0.4)`,
-					borderRadius: 5,
-				},
-			},
-		],
+		series,
 		legend: { show: false },
 	};
 
 	chartOptions.value = options;
+}
+
+function mergeIntervals(a: HistogramInterval[], b: HistogramInterval[]): Array<{ label: string; from: unknown; to: unknown; a: number | null; b: number | null }> {
+	const map = new Map<string, { from: unknown; to: unknown; a: number | null; b: number | null }>();
+	const key = (i: HistogramInterval) => `${fieldToText(i.from)}..${fieldToText(i.to)}`;
+	for (const i of a) map.set(key(i), { from: i.from, to: i.to, a: i.count, b: null });
+	for (const i of b) {
+		const k = key(i);
+		const existing = map.get(k);
+		if (existing) existing.b = i.count;
+		else map.set(k, { from: i.from, to: i.to, a: null, b: i.count });
+	}
+	return Array.from(map.entries())
+		.map(([label, v]) => ({ label, from: v.from, to: v.to, a: v.a, b: v.b }))
+		.sort((x, y) => Number(x.from) - Number(y.from));
 }
 
 const chartRef = ref<InstanceType<typeof EChartsChart> | null>(null);
@@ -112,19 +149,23 @@ const chartRef = ref<InstanceType<typeof EChartsChart> | null>(null);
 function onChartReady(instance: ECharts) {
 	instance.on('click', (params: unknown) => {
 		const { dataIndex } = params as { dataIndex?: number };
-		if (dataIndex !== undefined && intervals.value) {
-			const interval = intervals.value[dataIndex];
-			const range = `[${fieldToText(interval.from)}..${fieldToText(interval.to)})`;
+		if (dataIndex !== undefined && mergedBins[dataIndex]) {
+			const bin = mergedBins[dataIndex];
+			const range = `[${fieldToText(bin.from)}..${fieldToText(bin.to)})`;
 			dashboard.addConstraint(props.settings.field, range, true);
 		}
 	});
 }
 
 function downloadCSV() {
-	if (!intervals.value?.length) return;
-	const rows: string[][] = [[props.settings.field, 'count']];
-	for (const interval of intervals.value) {
-		rows.push([`[${fieldToText(interval.from)}..${fieldToText(interval.to)})`, String(interval.count)]);
+	if (!mergedBins.length) return;
+	const hasB = intervalsB.value.length > 0;
+	const merged = mergeIntervals(intervals.value || [], intervalsB.value);
+	const header = hasB ? [props.settings.field, 'count', 'count-B'] : [props.settings.field, 'count'];
+	const rows: string[][] = [header];
+	for (const m of merged) {
+		const range = `[${fieldToText(m.from)}..${fieldToText(m.to)})`;
+		rows.push(hasB ? [range, String(m.a ?? 0), String(m.b ?? 0)] : [range, String(m.a ?? 0)]);
 	}
 	downloadCsv(rows, `${toFilename(props.settings.label || props.settings.id)}.csv`);
 }
@@ -140,16 +181,16 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 
 <template>
 	<div>
-		<v-row v-show="intervals?.length">
+		<v-row v-show="intervals?.length || intervalsB.length">
 			<v-spacer />
 			<div class="d-flex ga-1">
 				<v-btn variant="text" size="small" class="xbtn" title="Download" @click="downloadCSV"><v-icon icon="mdi-download" size="small" /></v-btn>
 				<v-btn variant="text" size="small" class="xbtn" title="Snapshot" @click="chartRef?.snapshot()"><v-icon icon="mdi-camera" size="small" /></v-btn>
 			</div>
 		</v-row>
-		<EChartsChart ref="chartRef" v-if="intervals?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
+		<EChartsChart ref="chartRef" v-if="intervals?.length || intervalsB.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
 		<WidgetState v-if="failed" state="failed" />
 		<WidgetState v-else-if="intervals === null" state="loading" />
-		<WidgetState v-else-if="intervals.length === 0" state="empty" />
+		<WidgetState v-else-if="intervals.length === 0 && intervalsB.length === 0" state="empty" />
 	</div>
 </template>
