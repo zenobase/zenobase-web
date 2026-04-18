@@ -47,6 +47,7 @@ const keyField = 'timestamp';
 
 const data = ref<number[][] | null>(null);
 const dataB = ref<number[][]>([]);
+const failed = ref(false);
 const chartOptions = ref<Record<string, unknown> | null>(null);
 const chartHeight = ref<number | undefined>();
 const rChartOptions = ref<Record<string, unknown> | null>(null);
@@ -87,6 +88,11 @@ function init() {
 	dataB.value = [];
 	chartOptions.value = null;
 	rChartOptions.value = null;
+	failed.value = false;
+}
+
+function error() {
+	failed.value = true;
 }
 
 function draw() {
@@ -346,7 +352,7 @@ defineExpose({
 	},
 });
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
@@ -361,7 +367,8 @@ onMounted(() => dashboard.register(registration));
 		</v-row>
 		<EChartsChart ref="chartRef" v-if="data?.length || dataB?.length" :options="chartOptions" :height="chartHeight" />
 		<EChartsChart v-if="rChartOptions" :options="rChartOptions" />
-		<p v-if="data === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="data === null" class="none">Loading...</p>
 		<p v-else-if="data.length === 0 && dataB.length === 0" class="none">None</p>
 	</div>
 </template>

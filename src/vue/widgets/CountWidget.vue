@@ -19,6 +19,7 @@ const dashboard = inject<DashboardApi>(dashboardKey)!;
 const offset = ref(0);
 const more = ref(false);
 const terms = ref<Array<{ label: string; count: number }> | null>(null);
+const failed = ref(false);
 
 function classesForOrderBy(column: string): string[] {
 	const classes: string[] = [];
@@ -74,6 +75,11 @@ function init() {
 	offset.value = 0;
 	more.value = false;
 	terms.value = null;
+	failed.value = false;
+}
+
+function error() {
+	failed.value = true;
 }
 
 async function refresh() {
@@ -86,7 +92,7 @@ function filterByTerm(term: { label: string }) {
 	dashboard.addConstraint(props.settings.field, term.label);
 }
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
@@ -111,7 +117,8 @@ onMounted(() => dashboard.register(registration));
 			</tbody>
 		</v-table>
 
-		<p v-if="terms === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="terms === null" class="none">Loading...</p>
 		<p v-else-if="terms.length === 0" class="none">None</p>
 
 		<div class="d-flex align-center justify-end" v-show="hasPrev() || hasNext()">

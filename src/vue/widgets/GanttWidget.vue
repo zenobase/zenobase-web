@@ -18,6 +18,7 @@ const props = defineProps<{
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const terms = ref<GanttTerm[] | null>(null);
+const failed = ref(false);
 
 function classesForOrderBy(column: string): string[] {
 	const classes: string[] = [];
@@ -55,8 +56,13 @@ function update(result: SearchResult) {
 	}
 }
 
+function error() {
+	failed.value = true;
+}
+
 function init() {
 	terms.value = null;
+	failed.value = false;
 }
 
 function filterByTerm(term: GanttTerm) {
@@ -77,7 +83,7 @@ function formatDuration(ms: number): string {
 	return `${days}d`;
 }
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
@@ -102,7 +108,8 @@ onMounted(() => dashboard.register(registration));
 			</tbody>
 		</v-table>
 
-		<p v-if="terms === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="terms === null" class="none">Loading...</p>
 		<p v-else-if="terms.length === 0" class="none">None</p>
 	</div>
 </template>

@@ -94,6 +94,7 @@ const keyField = 'timestamp';
 
 const times = ref<TimeEntry[] | null>(null);
 const timesB = ref<TimeEntry[]>([]);
+const failed = ref(false);
 const chartOptions = ref<Record<string, unknown> | null>(null);
 const chartHeight = ref<number | undefined>();
 const effectSizeOptions = ref<Record<string, unknown> | null>(null);
@@ -352,6 +353,11 @@ function init() {
 	timesB.value = [];
 	chartOptions.value = null;
 	effectSizeOptions.value = null;
+	failed.value = false;
+}
+
+function error() {
+	failed.value = true;
 }
 
 function draw() {
@@ -653,7 +659,7 @@ defineExpose({
 	},
 });
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
@@ -693,7 +699,8 @@ onMounted(() => dashboard.register(registration));
 
 		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" @updated="activateBrush" />
 		<EChartsChart v-if="effectSizeOptions" :options="effectSizeOptions" />
-		<p v-if="times === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="times === null" class="none">Loading...</p>
 		<p v-else-if="times.length === 0 && timesB.length === 0" class="none">None</p>
 	</div>
 </template>

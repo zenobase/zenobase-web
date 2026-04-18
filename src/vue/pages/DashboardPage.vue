@@ -190,14 +190,20 @@ function filterWidgets(widgets: WidgetSettings[]): WidgetSettings[] {
 	});
 }
 
-function _getActiveTab(placement: string): string {
+function getActiveTab(placement: string): string {
 	if (activeTabs.value[placement]) return activeTabs.value[placement];
 	const widgets = getWidgets(placement);
 	return widgets.length > 0 ? widgets[0].id : '';
 }
 
+function getVisibleWidgetIds(): string[] {
+	return ['top', 'left', 'right'].map((p) => getActiveTab(p)).filter((id) => id !== '');
+}
+
 function setActiveTab(placement: string, id: string) {
 	activeTabs.value[placement] = id;
+	dashboard.setVisibleWidgets(getVisibleWidgetIds());
+	dashboard.refresh([id]);
 	nextTick(() => {
 		const widget = widgetRefs.value[id];
 		if (widget && typeof (widget as unknown as { reflow: () => void }).reflow === 'function') {
@@ -382,7 +388,10 @@ function onWidgetSettingsSaved(updated: WidgetSettings) {
 			dashboard.setExpectedWidgetCount(bucket.value.widgets.length);
 		}
 		setDirty();
-		nextTick(() => dashboard.refresh());
+		nextTick(() => {
+			dashboard.setVisibleWidgets(getVisibleWidgetIds());
+			dashboard.refresh();
+		});
 	}
 }
 
@@ -395,6 +404,7 @@ function onWidgetRemoved() {
 		const id = editingWidgetSettings.value.id;
 		bucket.value.widgets = bucket.value.widgets.filter((w) => w.id !== id);
 		setDirty();
+		dashboard.setVisibleWidgets(getVisibleWidgetIds());
 		dashboard.refresh();
 	}
 }
@@ -406,6 +416,7 @@ async function loadBucket() {
 		response.data.widgets = filterWidgets(response.data.widgets ?? []);
 		dashboard.setExpectedWidgetCount(response.data.widgets.length);
 		bucket.value = response.data;
+		dashboard.setVisibleWidgets(getVisibleWidgetIds());
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
@@ -430,6 +441,7 @@ watch(
 	() => route.query,
 	() => {
 		if (bucket.value) {
+			dashboard.setVisibleWidgets(getVisibleWidgetIds());
 			dashboard.refresh();
 		}
 	},

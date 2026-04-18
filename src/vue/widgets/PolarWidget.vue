@@ -38,6 +38,7 @@ const keyField = 'timestamp';
 
 const times = ref<PolarEntry[] | null>(null);
 const timesB = ref<PolarEntry[]>([]);
+const failed = ref(false);
 const chartOptions = ref<Record<string, unknown> | null>(null);
 const chartHeight = ref<number | undefined>();
 
@@ -85,6 +86,11 @@ function init() {
 	times.value = null;
 	timesB.value = [];
 	chartOptions.value = null;
+	failed.value = false;
+}
+
+function error() {
+	failed.value = true;
 }
 
 function draw() {
@@ -216,7 +222,7 @@ defineExpose({
 	},
 });
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
@@ -259,7 +265,8 @@ onMounted(() => dashboard.register(registration));
 			</div>
 		</v-row>
 		<EChartsChart ref="chartRef" v-if="times?.length || timesB?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
-		<p v-if="times === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="times === null" class="none">Loading...</p>
 		<p v-else-if="times.length === 0 && timesB.length === 0" class="none">None</p>
 	</div>
 </template>

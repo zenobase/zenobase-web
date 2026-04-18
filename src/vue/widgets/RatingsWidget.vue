@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const ratings = ref<Rating[] | null>(null);
+const failed = ref(false);
 
 function params(): RatingsParams {
 	return {
@@ -27,6 +28,11 @@ function update(result: SearchResult) {
 
 function init() {
 	ratings.value = null;
+	failed.value = false;
+}
+
+function error() {
+	failed.value = true;
 }
 
 function toStars(value: number | null): number {
@@ -42,7 +48,7 @@ function filterByRating(rating: Rating) {
 	dashboard.addConstraint('rating', `[${formatBound(rating.from)}..${formatBound(rating.to)})`);
 }
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
@@ -67,7 +73,8 @@ onMounted(() => dashboard.register(registration));
 			</tbody>
 		</v-table>
 
-		<p v-if="ratings === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="ratings === null" class="none">Loading...</p>
 		<p v-else-if="ratings.length === 0" class="none">None</p>
 	</div>
 </template>

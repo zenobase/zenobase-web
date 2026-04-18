@@ -26,6 +26,7 @@ let boundsUpdateTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const loading = ref(true);
 const empty = ref(false);
+const failed = ref(false);
 
 function toBounds(result: Partial<GeoBounds>): google.maps.LatLngBounds {
 	if (result.lat_min !== undefined) {
@@ -260,6 +261,12 @@ function init() {
 	factor = 1.0;
 	loading.value = true;
 	empty.value = false;
+	failed.value = false;
+}
+
+function error() {
+	loading.value = false;
+	failed.value = true;
 }
 
 onBeforeUnmount(() => {
@@ -267,14 +274,15 @@ onBeforeUnmount(() => {
 	clearMarkers();
 });
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
 <template>
 	<div>
 		<div ref="mapEl" :id="settings.id + '-map'" style="height: 400px" v-show="!loading && !empty" />
-		<p v-if="loading" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="loading" class="none">Loading...</p>
 		<p v-else-if="empty" class="none">None</p>
 	</div>
 </template>

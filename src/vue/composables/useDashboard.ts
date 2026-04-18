@@ -7,6 +7,7 @@ export interface WidgetRegistration {
 	params: () => BaseWidgetParams | null;
 	update: (result: SearchResult, resultB?: SearchResult) => void;
 	init: () => void;
+	error: () => void;
 }
 
 export interface DashboardApi {
@@ -17,7 +18,7 @@ export interface DashboardApi {
 	search: (params: BaseWidgetParams[]) => Promise<SearchResult>;
 	register: (widget: WidgetRegistration) => void;
 	reduceExpectedWidgetCount: () => void;
-	refresh: () => void;
+	refresh: (widgetIds?: string[]) => void;
 	addConstraint: (field: string, value: string, replace?: boolean, negated?: boolean) => void;
 	addConstraintB: (field: string, value: string, replace?: boolean, negated?: boolean) => void;
 	addConstraints: (constraints: Constraint[]) => void;
@@ -50,6 +51,8 @@ export function useDashboard(
 	const expectedWidgetCount = shallowRef(0);
 	let registeredCount = 0;
 	let generation = 0;
+	let visibleWidgetIds: string[] | null = null;
+	const fetchedWidgetIds = new Set<string>();
 
 	function parseConstraints(value: string | string[] | undefined): Constraint[] {
 		if (!value) return [];
@@ -92,8 +95,8 @@ export function useDashboard(
 		return response.data;
 	}
 
-	async function search(params: BaseWidgetParams[]): Promise<SearchResult> {
-		const facets = params
+	function buildFacets(params: BaseWidgetParams[]): string[] {
+		return params
 			.filter((p) => p != null)
 			.map((p) =>
 				Object.entries(p)
@@ -101,41 +104,71 @@ export function useDashboard(
 					.filter((v) => v != null)
 					.join(','),
 			);
-		const result = await doSearch(constraints.value, facets);
-		return result;
 	}
 
-	function refresh() {
-		updateConstraints();
-		const allParams = widgets.map((w) => w.params());
-		const facets = allParams
-			.filter((p) => p != null)
-			.map((p) =>
-				Object.entries(p)
-					.map(([key, value]) => (value !== undefined && value !== null && value !== '' ? `${key}:${escapeCommas(value)}` : null))
-					.filter((v) => v != null)
-					.join(','),
-			);
-		for (const w of widgets) w.init();
+	async function search(params: BaseWidgetParams[]): Promise<SearchResult> {
+		return doSearch(constraints.value, buildFacets(params));
+	}
+
+	function fetchWidget(w: WidgetRegistration, currentGen: number) {
+		const p = w.params();
+		if (!p) return;
+		fetchedWidgetIds.add(p.id);
+		const facets = buildFacets([p]);
 		const requests: Promise<SearchResult>[] = [doSearch(constraints.value, facets)];
 		if (constraintsB.value.length > 0) {
 			requests.push(doSearch(constraintsB.value, facets));
 		}
-		const currentGen = generation;
 		Promise.all(requests).then(
 			(responses) => {
 				if (currentGen !== generation) return;
-				total.value = (responses[0]['total'] as number) ?? 0;
 				const resultB = responses.length > 1 ? responses[1] : undefined;
-				totalB.value = resultB ? ((resultB['total'] as number) ?? 0) : null;
-				for (const w of widgets) w.update(responses[0], resultB);
+				w.update(responses[0], resultB);
 			},
 			() => {
 				if (currentGen !== generation) return;
-				total.value = -1;
-				totalB.value = null;
+				w.error();
 			},
 		);
+	}
+
+	function widgetsById(widgetIds: string[]): WidgetRegistration[] {
+		return widgets.filter((w) => widgetIds.includes(w.params()?.id ?? ''));
+	}
+
+	function refresh(widgetIds?: string[]) {
+		updateConstraints();
+		if (!widgetIds) {
+			// Full refresh: fetch totals first, then visible widgets
+			generation++;
+			fetchedWidgetIds.clear();
+			const currentGen = generation;
+			for (const w of widgets) w.init();
+			const requests: Promise<SearchResult>[] = [doSearch(constraints.value, [])];
+			if (constraintsB.value.length > 0) {
+				requests.push(doSearch(constraintsB.value, []));
+			}
+			Promise.all(requests).then(
+				(responses) => {
+					if (currentGen !== generation) return;
+					total.value = (responses[0]['total'] as number) ?? 0;
+					totalB.value = responses.length > 1 ? ((responses[1]['total'] as number) ?? 0) : null;
+					const visible = visibleWidgetIds ? widgetsById(visibleWidgetIds) : widgets;
+					for (const w of visible) fetchWidget(w, currentGen);
+				},
+				() => {
+					if (currentGen !== generation) return;
+					total.value = -1;
+					totalB.value = null;
+				},
+			);
+		} else {
+			// Lazy tab activation: skip totals, only fetch widgets not yet fetched this generation
+			const currentGen = generation;
+			const unfetched = widgetsById(widgetIds).filter((w) => !fetchedWidgetIds.has(w.params()?.id ?? ''));
+			for (const w of unfetched) w.init();
+			for (const w of unfetched) fetchWidget(w, currentGen);
+		}
 	}
 
 	function register(widget: WidgetRegistration) {
@@ -157,11 +190,17 @@ export function useDashboard(
 		expectedWidgetCount.value = count;
 	}
 
+	function setVisibleWidgets(ids: string[]) {
+		visibleWidgetIds = ids;
+	}
+
 	function reset() {
 		generation++;
 		widgets.length = 0;
 		registeredCount = 0;
 		expectedWidgetCount.value = 0;
+		visibleWidgetIds = null;
+		fetchedWidgetIds.clear();
 		constraints.value = [];
 		constraintsB.value = [];
 		total.value = 0;
@@ -267,5 +306,5 @@ export function useDashboard(
 		getConstraintsB,
 	};
 
-	return { ...api, setExpectedWidgetCount, reset };
+	return { ...api, setExpectedWidgetCount, setVisibleWidgets, reset };
 }

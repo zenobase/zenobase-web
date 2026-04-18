@@ -51,6 +51,7 @@ const dashboard = inject<DashboardApi>(dashboardKey)!;
 const offset = ref(0);
 const total = ref(0);
 const items = ref<ZenoEvent[] | null>(null);
+const failed = ref(false);
 const filterField = ref<FilterField>(FILTER_FIELDS[0]);
 const filterValue = ref('');
 
@@ -125,6 +126,11 @@ function init() {
 	offset.value = 0;
 	total.value = 0;
 	items.value = null;
+	failed.value = false;
+}
+
+function error() {
+	failed.value = true;
 }
 
 async function refresh() {
@@ -179,7 +185,7 @@ watch(filterValue, () => {
 	filterDebounce = setTimeout(() => refresh(), 300);
 });
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => {
 	dashboard.register(registration);
 	document.addEventListener('click', closeDropdownOnOutsideClick);
@@ -225,7 +231,8 @@ onBeforeUnmount(() => {
 			</tbody>
 		</v-table>
 
-		<p v-if="items === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="items === null" class="none">Loading...</p>
 		<p v-else-if="items.length === 0" class="none">None</p>
 
 		<div class="d-flex align-center justify-end" v-show="items?.length">

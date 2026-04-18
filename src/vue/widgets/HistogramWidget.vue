@@ -23,6 +23,7 @@ const props = defineProps<{
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const intervals = ref<HistogramInterval[] | null>(null);
+const failed = ref(false);
 const chartOptions = ref<Record<string, unknown> | null>(null);
 const chartHeight = ref<number | undefined>();
 
@@ -55,6 +56,11 @@ function update(result: SearchResult) {
 function init() {
 	intervals.value = null;
 	chartOptions.value = null;
+	failed.value = false;
+}
+
+function error() {
+	failed.value = true;
 }
 
 function draw() {
@@ -132,7 +138,7 @@ defineExpose({
 	},
 });
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
@@ -146,7 +152,8 @@ onMounted(() => dashboard.register(registration));
 			</div>
 		</v-row>
 		<EChartsChart ref="chartRef" v-if="intervals?.length" :options="chartOptions" :height="chartHeight" @ready="onChartReady" />
-		<p v-if="intervals === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="intervals === null" class="none">Loading...</p>
 		<p v-else-if="intervals.length === 0" class="none">None</p>
 	</div>
 </template>

@@ -19,6 +19,7 @@ const props = defineProps<{
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const terms = ref<ScoreboardTerm[] | null>(null);
+const failed = ref(false);
 
 const statistics = computed(() => props.settings.statistics ?? ['count', 'sum', 'avg']);
 
@@ -59,6 +60,11 @@ function update(result: SearchResult) {
 
 function init() {
 	terms.value = null;
+	failed.value = false;
+}
+
+function error() {
+	failed.value = true;
 }
 
 function filterByTerm(term: ScoreboardTerm) {
@@ -77,7 +83,7 @@ function formatNumber(value: unknown): string {
 	return String(value ?? '');
 }
 
-const registration: WidgetRegistration = { params, update, init };
+const registration: WidgetRegistration = { params, update, init, error };
 onMounted(() => dashboard.register(registration));
 </script>
 
@@ -106,7 +112,8 @@ onMounted(() => dashboard.register(registration));
 			</tbody>
 		</v-table>
 
-		<p v-if="terms === null" class="none">Loading...</p>
+		<p v-if="failed" class="none">Failed</p>
+		<p v-else-if="terms === null" class="none">Loading...</p>
 		<p v-else-if="terms.length === 0" class="none">None</p>
 	</div>
 </template>
