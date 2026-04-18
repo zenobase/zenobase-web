@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, inject, ref, toRef } from 'vue';
 import type { ScoreboardParams, ScoreboardTerm, SearchResult } from '../../types/search';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
+import { useWidgetData } from '../composables/useWidgetData';
 import { getUserName, resolveUserNames } from '../utils/userNames';
 
 const props = defineProps<{
@@ -15,11 +16,11 @@ const props = defineProps<{
 		filter?: string;
 		statistics?: string[];
 	};
+	active: boolean;
 }>();
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const terms = ref<ScoreboardTerm[] | null>(null);
-const failed = ref(false);
 
 const statistics = computed(() => props.settings.statistics ?? ['count', 'sum', 'avg']);
 
@@ -60,11 +61,6 @@ function update(result: SearchResult) {
 
 function init() {
 	terms.value = null;
-	failed.value = false;
-}
-
-function error() {
-	failed.value = true;
 }
 
 function filterByTerm(term: ScoreboardTerm) {
@@ -83,8 +79,7 @@ function formatNumber(value: unknown): string {
 	return String(value ?? '');
 }
 
-const registration: WidgetRegistration = { params, update, init, error };
-onMounted(() => dashboard.register(registration));
+const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { init, update });
 </script>
 
 <template>

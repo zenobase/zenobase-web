@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from 'vue';
+import { inject, ref, toRef } from 'vue';
 import type { Rating, RatingsParams, SearchResult } from '../../types/search';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
+import { useWidgetData } from '../composables/useWidgetData';
 
 const props = defineProps<{
 	settings: {
 		id: string;
 		filter?: string;
 	};
+	active: boolean;
 }>();
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const ratings = ref<Rating[] | null>(null);
-const failed = ref(false);
 
 function params(): RatingsParams {
 	return {
@@ -28,11 +29,6 @@ function update(result: SearchResult) {
 
 function init() {
 	ratings.value = null;
-	failed.value = false;
-}
-
-function error() {
-	failed.value = true;
 }
 
 function toStars(value: number | null): number {
@@ -48,8 +44,7 @@ function filterByRating(rating: Rating) {
 	dashboard.addConstraint('rating', `[${formatBound(rating.from)}..${formatBound(rating.to)})`);
 }
 
-const registration: WidgetRegistration = { params, update, init, error };
-onMounted(() => dashboard.register(registration));
+const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { init, update });
 </script>
 
 <template>

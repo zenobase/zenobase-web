@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { ECharts } from 'echarts/core';
-import { inject, nextTick, onMounted, ref } from 'vue';
+import { inject, nextTick, ref, toRef } from 'vue';
 import type { FieldInfo, SearchResult, TimeEntry, TimelineParams } from '../../types/search';
 import { compactDuration, compactNumber } from '../../utils/helpers';
 import { Interval, type IntervalDef } from '../../utils/interval';
 import { statistics } from '../../utils/statistics';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
+import { useWidgetData } from '../composables/useWidgetData';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
 import { downloadCsv, toFilename, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
@@ -77,6 +78,7 @@ const props = defineProps<{
 		placement?: string;
 	};
 	fieldLookup?: (name: string) => FieldInfo | undefined;
+	active: boolean;
 }>();
 
 const defaultFieldInfo: FieldInfo = {
@@ -94,7 +96,6 @@ const keyField = 'timestamp';
 
 const times = ref<TimeEntry[] | null>(null);
 const timesB = ref<TimeEntry[]>([]);
-const failed = ref(false);
 const chartOptions = ref<Record<string, unknown> | null>(null);
 const chartHeight = ref<number | undefined>();
 const effectSizeOptions = ref<Record<string, unknown> | null>(null);
@@ -353,11 +354,6 @@ function init() {
 	timesB.value = [];
 	chartOptions.value = null;
 	effectSizeOptions.value = null;
-	failed.value = false;
-}
-
-function error() {
-	failed.value = true;
 }
 
 function draw() {
@@ -659,8 +655,7 @@ defineExpose({
 	},
 });
 
-const registration: WidgetRegistration = { params, update, init, error };
-onMounted(() => dashboard.register(registration));
+const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { init, update });
 </script>
 
 <template>

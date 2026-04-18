@@ -1,5 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
+import { Constraint } from '../../../utils/constraint';
 import ScatterPlotWidget from '../ScatterPlotWidget.vue';
 import { createEChartsStub, feedData, mountWidget } from './helpers';
 
@@ -21,19 +22,14 @@ describe('ScatterPlotWidget', () => {
 		return { ...result, capturedOptions, allCapturedOptions };
 	}
 
-	it('mounts and registers with dashboard', () => {
-		const { dashboard } = mountWithStub();
-		expect(dashboard.register).toHaveBeenCalledOnce();
-	});
-
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWithStub();
 		expect(wrapper.find('.none').text()).toBe('Loading...');
 	});
 
 	it('builds scatter chart with correct data', async () => {
-		const { registration, allCapturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, allCapturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		const mainChart = allCapturedOptions[0];
@@ -43,14 +39,15 @@ describe('ScatterPlotWidget', () => {
 	});
 
 	it('adds second scatter series for A/B comparison', async () => {
-		const { registration, allCapturedOptions } = mountWithStub();
+		const { dashboard, allCapturedOptions } = mountWithStub();
+		dashboard.constraintsB.value = [new Constraint('tag', 'x')];
 		const dataB = [
 			[30, 60],
 			[80, 75],
 			[50, 65],
 			[70, 88],
 		];
-		await feedData(registration, 'w1', mockData, dataB);
+		await feedData(dashboard, 'w1', mockData, dataB);
 		await flushPromises();
 
 		const mainChart = allCapturedOptions[0];
@@ -60,8 +57,8 @@ describe('ScatterPlotWidget', () => {
 	});
 
 	it('adds regression line when configured', async () => {
-		const { registration, allCapturedOptions } = mountWithStub({ ...settings, regression: 'linear' });
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, allCapturedOptions } = mountWithStub({ ...settings, regression: 'linear' });
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		const mainChart = allCapturedOptions[0];
@@ -71,8 +68,8 @@ describe('ScatterPlotWidget', () => {
 	});
 
 	it('generates correlation chart for > 3 data points', async () => {
-		const { registration, allCapturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, allCapturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		// Should have 2 charts: main scatter + correlation
@@ -80,15 +77,15 @@ describe('ScatterPlotWidget', () => {
 	});
 
 	it('shows "None" for empty data', async () => {
-		const { wrapper, registration } = mountWithStub();
-		await feedData(registration, 'w1', []);
+		const { wrapper, dashboard } = mountWithStub();
+		await feedData(dashboard, 'w1', []);
 
 		expect(wrapper.text()).toContain('None');
 	});
 
 	it('matches snapshot', async () => {
-		const { registration, allCapturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, allCapturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		expect(allCapturedOptions[0]).toMatchSnapshot();

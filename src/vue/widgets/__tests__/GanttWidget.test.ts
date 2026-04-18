@@ -19,59 +19,54 @@ describe('GanttWidget', () => {
 		vi.useRealTimers();
 	});
 
-	it('mounts and registers with dashboard', () => {
-		const { dashboard } = mountWidget(GanttWidget, settings);
-		expect(dashboard.register).toHaveBeenCalledOnce();
-	});
-
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(GanttWidget, settings);
 		expect(wrapper.find('.none').text()).toBe('Loading...');
 	});
 
 	it('renders label, age, and freq', async () => {
-		const { wrapper, registration } = mountWidget(GanttWidget, settings);
-		await feedData(registration, 'w1', [{ label: 'exercise', first: '2025-01-01T00:00:00Z', last: '2025-06-15T00:00:00Z', count: 50 }]);
+		const { wrapper, dashboard } = mountWidget(GanttWidget, settings);
+		await feedData(dashboard, 'w1', [{ label: 'exercise', first: '2025-01-01T00:00:00Z', last: '2025-06-15T00:00:00Z', count: 50 }]);
 
 		expect(wrapper.text()).toContain('exercise');
 		expect(wrapper.text()).toContain('ago'); // age formatted
 	});
 
 	it('computes freq for count > 1', async () => {
-		const { wrapper, registration } = mountWidget(GanttWidget, settings);
+		const { wrapper, dashboard } = mountWidget(GanttWidget, settings);
 		// 10 days apart, count=2 → freq = 10 days in ms
-		await feedData(registration, 'w1', [{ label: 'test', first: '2025-06-01T00:00:00Z', last: '2025-06-11T00:00:00Z', count: 2 }]);
+		await feedData(dashboard, 'w1', [{ label: 'test', first: '2025-06-01T00:00:00Z', last: '2025-06-11T00:00:00Z', count: 2 }]);
 
 		// freq = (11-1) * 86400000 / (2-1) = 864000000 ms = 10 days
 		expect(wrapper.text()).toContain('10d');
 	});
 
 	it('does not show freq for count = 1', async () => {
-		const { wrapper, registration } = mountWidget(GanttWidget, settings);
-		await feedData(registration, 'w1', [{ label: 'once', first: '2025-06-01T00:00:00Z', last: '2025-06-01T00:00:00Z', count: 1 }]);
+		const { wrapper, dashboard } = mountWidget(GanttWidget, settings);
+		await feedData(dashboard, 'w1', [{ label: 'once', first: '2025-06-01T00:00:00Z', last: '2025-06-01T00:00:00Z', count: 1 }]);
 
 		const freqCell = wrapper.findAll('tbody td')[2];
 		expect(freqCell.text()).toBe('');
 	});
 
 	it('calls addConstraint when clicking a term', async () => {
-		const { wrapper, dashboard, registration } = mountWidget(GanttWidget, settings);
-		await feedData(registration, 'w1', [{ label: 'exercise', first: '2025-01-01T00:00:00Z', last: '2025-06-15T00:00:00Z', count: 50 }]);
+		const { wrapper, dashboard } = mountWidget(GanttWidget, settings);
+		await feedData(dashboard, 'w1', [{ label: 'exercise', first: '2025-01-01T00:00:00Z', last: '2025-06-15T00:00:00Z', count: 50 }]);
 
 		await wrapper.find('a').trigger('click');
 		expect(dashboard.addConstraint).toHaveBeenCalledWith('tag', 'exercise');
 	});
 
 	it('shows "None" for empty data', async () => {
-		const { wrapper, registration } = mountWidget(GanttWidget, settings);
-		await feedData(registration, 'w1', []);
+		const { wrapper, dashboard } = mountWidget(GanttWidget, settings);
+		await feedData(dashboard, 'w1', []);
 
 		expect(wrapper.text()).toContain('None');
 	});
 
 	it('matches snapshot', async () => {
-		const { wrapper, registration } = mountWidget(GanttWidget, settings);
-		await feedData(registration, 'w1', [
+		const { wrapper, dashboard } = mountWidget(GanttWidget, settings);
+		await feedData(dashboard, 'w1', [
 			{ label: 'exercise', first: '2025-01-01T00:00:00Z', last: '2025-06-15T00:00:00Z', count: 50 },
 			{ label: 'reading', first: '2025-06-01T00:00:00Z', last: '2025-06-01T00:00:00Z', count: 1 },
 		]);

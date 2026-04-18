@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { inject, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { inject, nextTick, onBeforeUnmount, ref, toRef } from 'vue';
 import type { GeoBounds, MapParams, MapPoint, SearchResult } from '../../types/search';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
+import { useWidgetData } from '../composables/useWidgetData';
 
 let maps: typeof google.maps;
 
@@ -11,6 +12,7 @@ const props = defineProps<{
 		id: string;
 		filter?: string;
 	};
+	active: boolean;
 }>();
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
@@ -26,7 +28,6 @@ let boundsUpdateTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const loading = ref(true);
 const empty = ref(false);
-const failed = ref(false);
 
 function toBounds(result: Partial<GeoBounds>): google.maps.LatLngBounds {
 	if (result.lat_min !== undefined) {
@@ -261,12 +262,6 @@ function init() {
 	factor = 1.0;
 	loading.value = true;
 	empty.value = false;
-	failed.value = false;
-}
-
-function error() {
-	loading.value = false;
-	failed.value = true;
 }
 
 onBeforeUnmount(() => {
@@ -274,8 +269,7 @@ onBeforeUnmount(() => {
 	clearMarkers();
 });
 
-const registration: WidgetRegistration = { params, update, init, error };
-onMounted(() => dashboard.register(registration));
+const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { init, update });
 </script>
 
 <template>

@@ -1,24 +1,17 @@
-import { type InjectionKey, type MaybeRefOrGetter, type Ref, ref, shallowRef, toValue } from 'vue';
+import { type InjectionKey, type MaybeRefOrGetter, type Ref, ref, toValue } from 'vue';
 import type { BaseWidgetParams, SearchResult } from '../../types/search';
 import { Constraint } from '../../utils/constraint';
 import { param } from '../../utils/helpers';
-
-export interface WidgetRegistration {
-	params: () => BaseWidgetParams | null;
-	update: (result: SearchResult, resultB?: SearchResult) => void;
-	init: () => void;
-	error: () => void;
-}
 
 export interface DashboardApi {
 	constraints: Ref<Constraint[]>;
 	constraintsB: Ref<Constraint[]>;
 	total: Ref<number>;
 	totalB: Ref<number | null>;
+	generation: Ref<number>;
 	search: (params: BaseWidgetParams[]) => Promise<SearchResult>;
-	register: (widget: WidgetRegistration) => void;
-	reduceExpectedWidgetCount: () => void;
-	refresh: (widgetIds?: string[]) => void;
+	searchB: (params: BaseWidgetParams[]) => Promise<SearchResult>;
+	refresh: () => void;
 	addConstraint: (field: string, value: string, replace?: boolean, negated?: boolean) => void;
 	addConstraintB: (field: string, value: string, replace?: boolean, negated?: boolean) => void;
 	addConstraints: (constraints: Constraint[]) => void;
@@ -43,16 +36,12 @@ export function useDashboard(
 	onLocationChange: (params: Record<string, string[] | null>) => void,
 	getLocationParams: () => Record<string, string | string[] | undefined>,
 ) {
-	const widgets: WidgetRegistration[] = [];
 	const constraints = ref<Constraint[]>([]);
 	const constraintsB = ref<Constraint[]>([]);
 	const total = ref(0);
 	const totalB = ref<number | null>(null);
-	const expectedWidgetCount = shallowRef(0);
-	let registeredCount = 0;
-	let generation = 0;
-	let visibleWidgetIds: string[] | null = null;
-	const fetchedWidgetIds = new Set<string>();
+	const generation = ref(0);
+	let pendingRefresh = 0;
 
 	function parseConstraints(value: string | string[] | undefined): Constraint[] {
 		if (!value) return [];
@@ -110,97 +99,40 @@ export function useDashboard(
 		return doSearch(constraints.value, buildFacets(params));
 	}
 
-	function fetchWidget(w: WidgetRegistration, currentGen: number) {
-		const p = w.params();
-		if (!p) return;
-		fetchedWidgetIds.add(p.id);
-		const facets = buildFacets([p]);
-		const requests: Promise<SearchResult>[] = [doSearch(constraints.value, facets)];
+	async function searchB(params: BaseWidgetParams[]): Promise<SearchResult> {
+		return doSearch(constraintsB.value, buildFacets(params));
+	}
+
+	function refresh() {
+		updateConstraints();
+		pendingRefresh++;
+		const current = pendingRefresh;
+		const requests: Promise<SearchResult>[] = [doSearch(constraints.value, [])];
 		if (constraintsB.value.length > 0) {
-			requests.push(doSearch(constraintsB.value, facets));
+			requests.push(doSearch(constraintsB.value, []));
 		}
 		Promise.all(requests).then(
 			(responses) => {
-				if (currentGen !== generation) return;
-				const resultB = responses.length > 1 ? responses[1] : undefined;
-				w.update(responses[0], resultB);
+				if (current !== pendingRefresh) return;
+				if (typeof responses[0]['total'] === 'number') {
+					total.value = responses[0]['total'];
+				}
+				if (responses.length > 1 && typeof responses[1]['total'] === 'number') {
+					totalB.value = responses[1]['total'];
+				}
+				generation.value++;
 			},
 			() => {
-				if (currentGen !== generation) return;
-				w.error();
+				if (current !== pendingRefresh) return;
+				total.value = -1;
+				totalB.value = null;
 			},
 		);
 	}
 
-	function widgetsById(widgetIds: string[]): WidgetRegistration[] {
-		return widgets.filter((w) => widgetIds.includes(w.params()?.id ?? ''));
-	}
-
-	function refresh(widgetIds?: string[]) {
-		updateConstraints();
-		if (!widgetIds) {
-			// Full refresh: fetch totals first, then visible widgets
-			generation++;
-			fetchedWidgetIds.clear();
-			const currentGen = generation;
-			for (const w of widgets) w.init();
-			const requests: Promise<SearchResult>[] = [doSearch(constraints.value, [])];
-			if (constraintsB.value.length > 0) {
-				requests.push(doSearch(constraintsB.value, []));
-			}
-			Promise.all(requests).then(
-				(responses) => {
-					if (currentGen !== generation) return;
-					total.value = (responses[0]['total'] as number) ?? 0;
-					totalB.value = responses.length > 1 ? ((responses[1]['total'] as number) ?? 0) : null;
-					const visible = visibleWidgetIds ? widgetsById(visibleWidgetIds) : widgets;
-					for (const w of visible) fetchWidget(w, currentGen);
-				},
-				() => {
-					if (currentGen !== generation) return;
-					total.value = -1;
-					totalB.value = null;
-				},
-			);
-		} else {
-			// Lazy tab activation: skip totals, only fetch widgets not yet fetched this generation
-			const currentGen = generation;
-			const unfetched = widgetsById(widgetIds).filter((w) => !fetchedWidgetIds.has(w.params()?.id ?? ''));
-			for (const w of unfetched) w.init();
-			for (const w of unfetched) fetchWidget(w, currentGen);
-		}
-	}
-
-	function register(widget: WidgetRegistration) {
-		widgets.push(widget);
-		registeredCount++;
-		if (registeredCount === expectedWidgetCount.value) {
-			refresh();
-		}
-	}
-
-	function reduceExpectedWidgetCount() {
-		expectedWidgetCount.value--;
-		if (registeredCount === expectedWidgetCount.value) {
-			refresh();
-		}
-	}
-
-	function setExpectedWidgetCount(count: number) {
-		expectedWidgetCount.value = count;
-	}
-
-	function setVisibleWidgets(ids: string[]) {
-		visibleWidgetIds = ids;
-	}
-
 	function reset() {
-		generation++;
-		widgets.length = 0;
-		registeredCount = 0;
-		expectedWidgetCount.value = 0;
-		visibleWidgetIds = null;
-		fetchedWidgetIds.clear();
+		pendingRefresh++;
+		generation.value = 0;
 		constraints.value = [];
 		constraintsB.value = [];
 		total.value = 0;
@@ -290,9 +222,9 @@ export function useDashboard(
 		constraintsB,
 		total,
 		totalB,
+		generation,
 		search,
-		register,
-		reduceExpectedWidgetCount,
+		searchB,
 		refresh,
 		addConstraint,
 		addConstraintB,
@@ -306,5 +238,5 @@ export function useDashboard(
 		getConstraintsB,
 	};
 
-	return { ...api, setExpectedWidgetCount, setVisibleWidgets, reset };
+	return { ...api, reset };
 }

@@ -14,19 +14,14 @@ describe('HistogramWidget', () => {
 		return { ...result, capturedOptions };
 	}
 
-	it('mounts and registers with dashboard', () => {
-		const { dashboard } = mountWithStub();
-		expect(dashboard.register).toHaveBeenCalledOnce();
-	});
-
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWithStub();
 		expect(wrapper.find('.none').text()).toBe('Loading...');
 	});
 
 	it('builds chart options with correct series data', async () => {
-		const { registration, capturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', [
+		const { dashboard, capturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', [
 			{ from: 0, to: 60, count: 5 },
 			{ from: 60, to: 120, count: 12 },
 			{ from: 120, to: 180, count: 3 },
@@ -39,8 +34,8 @@ describe('HistogramWidget', () => {
 	});
 
 	it('builds chart options with correct category labels', async () => {
-		const { registration, capturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', [
+		const { dashboard, capturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', [
 			{ from: 0, to: 60, count: 5 },
 			{ from: 60, to: 120, count: 12 },
 		]);
@@ -52,11 +47,11 @@ describe('HistogramWidget', () => {
 	});
 
 	it('formats duration fields', async () => {
-		const { registration, capturedOptions } = mountWithStub({
+		const { dashboard, capturedOptions } = mountWithStub({
 			...settings,
 			field: 'duration.minutes',
 		});
-		await feedData(registration, 'w1', [{ from: 60000, to: 120000, count: 5 }]);
+		await feedData(dashboard, 'w1', [{ from: 60000, to: 120000, count: 5 }]);
 		await flushPromises();
 
 		const yAxis = (capturedOptions.value as Record<string, unknown>).yAxis as { data: string[] };
@@ -65,15 +60,15 @@ describe('HistogramWidget', () => {
 	});
 
 	it('shows "None" for empty data', async () => {
-		const { wrapper, registration } = mountWithStub();
-		await feedData(registration, 'w1', []);
+		const { wrapper, dashboard } = mountWithStub();
+		await feedData(dashboard, 'w1', []);
 
 		expect(wrapper.text()).toContain('None');
 	});
 
 	it('matches snapshot', async () => {
-		const { registration, capturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', [
+		const { dashboard, capturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', [
 			{ from: 0, to: 60, count: 5 },
 			{ from: 60, to: 120, count: 12 },
 			{ from: 120, to: 180, count: 3 },

@@ -196,14 +196,8 @@ function getActiveTab(placement: string): string {
 	return widgets.length > 0 ? widgets[0].id : '';
 }
 
-function getVisibleWidgetIds(): string[] {
-	return ['top', 'left', 'right'].map((p) => getActiveTab(p)).filter((id) => id !== '');
-}
-
 function setActiveTab(placement: string, id: string) {
 	activeTabs.value[placement] = id;
-	dashboard.setVisibleWidgets(getVisibleWidgetIds());
-	dashboard.refresh([id]);
 	nextTick(() => {
 		const widget = widgetRefs.value[id];
 		if (widget && typeof (widget as unknown as { reflow: () => void }).reflow === 'function') {
@@ -385,13 +379,9 @@ function onWidgetSettingsSaved(updated: WidgetSettings) {
 		} else {
 			bucket.value.widgets.push(updated);
 			activeTabs.value[updated.placement || 'top'] = updated.id;
-			dashboard.setExpectedWidgetCount(bucket.value.widgets.length);
 		}
 		setDirty();
-		nextTick(() => {
-			dashboard.setVisibleWidgets(getVisibleWidgetIds());
-			dashboard.refresh();
-		});
+		nextTick(() => dashboard.refresh());
 	}
 }
 
@@ -404,7 +394,6 @@ function onWidgetRemoved() {
 		const id = editingWidgetSettings.value.id;
 		bucket.value.widgets = bucket.value.widgets.filter((w) => w.id !== id);
 		setDirty();
-		dashboard.setVisibleWidgets(getVisibleWidgetIds());
 		dashboard.refresh();
 	}
 }
@@ -414,9 +403,8 @@ async function loadBucket() {
 	try {
 		const response = await api.get<Bucket>(`/buckets/${bucketId.value}`);
 		response.data.widgets = filterWidgets(response.data.widgets ?? []);
-		dashboard.setExpectedWidgetCount(response.data.widgets.length);
 		bucket.value = response.data;
-		dashboard.setVisibleWidgets(getVisibleWidgetIds());
+		dashboard.refresh();
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
@@ -441,7 +429,6 @@ watch(
 	() => route.query,
 	() => {
 		if (bucket.value) {
-			dashboard.setVisibleWidgets(getVisibleWidgetIds());
 			dashboard.refresh();
 		}
 	},
@@ -531,7 +518,7 @@ watch(
 				</v-tabs>
 				<v-tabs-window v-model="activeTabs['top']">
 					<v-tabs-window-item v-for="settings in getWidgets('top')" :key="settings.id" :value="settings.id" eager :transition="false" :reverse-transition="false">
-						<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+						<ErrorBoundary><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :active="getActiveTab('top') === settings.id" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
 					</v-tabs-window-item>
 				</v-tabs-window>
 			</div>
@@ -546,7 +533,7 @@ watch(
 						</v-tabs>
 						<v-tabs-window v-model="activeTabs['left']">
 							<v-tabs-window-item v-for="settings in getWidgets('left')" :key="settings.id" :value="settings.id" eager :transition="false" :reverse-transition="false">
-								<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+								<ErrorBoundary><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :active="getActiveTab('left') === settings.id" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
 							</v-tabs-window-item>
 						</v-tabs-window>
 					</div>
@@ -559,7 +546,7 @@ watch(
 						</v-tabs>
 						<v-tabs-window v-model="activeTabs['right']">
 							<v-tabs-window-item v-for="settings in getWidgets('right')" :key="settings.id" :value="settings.id" eager :transition="false" :reverse-transition="false">
-								<ErrorBoundary @error="dashboard.reduceExpectedWidgetCount()"><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
+								<ErrorBoundary><component :is="getComponent(settings.type)" v-if="getComponent(settings.type)" :ref="(el: ComponentPublicInstance | null) => setWidgetRef(settings.id, el)" :settings="settings" :active="getActiveTab('right') === settings.id" :editable="editable" @open-dialog="(_id: string, event: ZenoEvent) => openEventDialog(event)" @remove-event="(id: string) => removeEvent(id)" /></ErrorBoundary>
 							</v-tabs-window-item>
 						</v-tabs-window>
 					</div>

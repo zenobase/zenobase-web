@@ -1,7 +1,7 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import HeatmapWidget from '../HeatmapWidget.vue';
-import { mountWidget } from './helpers';
+import { feedData, mountWidget } from './helpers';
 
 vi.mock('../../composables/useGoogleMaps', () => {
 	class MockLatLngBounds {
@@ -81,42 +81,36 @@ vi.mock('@deck.gl/aggregation-layers', () => ({
 describe('HeatmapWidget', () => {
 	const settings = { id: 'w1' };
 
-	it('mounts and registers with dashboard', () => {
-		const { dashboard } = mountWidget(HeatmapWidget, settings);
-		expect(dashboard.register).toHaveBeenCalledOnce();
-	});
-
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(HeatmapWidget, settings);
 		expect(wrapper.find('.none').text()).toBe('Loading...');
 	});
 
 	it('hides loading after update with bounds', async () => {
-		const { wrapper, registration } = mountWidget(HeatmapWidget, settings);
+		const { wrapper, dashboard } = mountWidget(HeatmapWidget, settings);
 
-		registration.update({ w1: { lat_min: 47.3, lon_min: 8.5, lat_max: 47.4, lon_max: 8.6 } });
-		await flushPromises();
+		await feedData(dashboard, 'w1', { lat_min: 47.3, lon_min: 8.5, lat_max: 47.4, lon_max: 8.6 });
 
 		expect(wrapper.find('.none').exists()).toBe(false);
 	});
 
 	it('shows "None" for empty bounds', async () => {
-		const { wrapper, registration } = mountWidget(HeatmapWidget, settings);
+		const { wrapper, dashboard } = mountWidget(HeatmapWidget, settings);
 
-		registration.update({ w1: {} });
-		await flushPromises();
+		await feedData(dashboard, 'w1', {});
 		await flushPromises();
 
 		expect(wrapper.text()).toContain('None');
 	});
 
-	it('resets to loading state on init', async () => {
-		const { wrapper, registration } = mountWidget(HeatmapWidget, settings);
+	it('resets to loading state on new generation', async () => {
+		const { wrapper, dashboard } = mountWidget(HeatmapWidget, settings);
 
-		registration.update({ w1: { lat_min: 47.3, lon_min: 8.5, lat_max: 47.4, lon_max: 8.6 } });
-		await flushPromises();
+		await feedData(dashboard, 'w1', { lat_min: 47.3, lon_min: 8.5, lat_max: 47.4, lon_max: 8.6 });
 
-		registration.init();
+		// Simulate a new generation where search hasn't resolved yet
+		(dashboard.search as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}));
+		dashboard.generation.value++;
 		await flushPromises();
 
 		expect(wrapper.find('.none').text()).toBe('Loading...');

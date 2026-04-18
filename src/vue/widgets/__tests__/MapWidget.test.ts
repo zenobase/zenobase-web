@@ -1,7 +1,7 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import MapWidget from '../MapWidget.vue';
-import { mountWidget } from './helpers';
+import { feedData, mountWidget } from './helpers';
 
 vi.mock('../../composables/useGoogleMaps', () => {
 	class MockLatLngBounds {
@@ -70,42 +70,36 @@ vi.mock('../../composables/useGoogleMaps', () => {
 describe('MapWidget', () => {
 	const settings = { id: 'w1' };
 
-	it('mounts and registers with dashboard', () => {
-		const { dashboard } = mountWidget(MapWidget, settings);
-		expect(dashboard.register).toHaveBeenCalledOnce();
-	});
-
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWidget(MapWidget, settings);
 		expect(wrapper.find('.none').text()).toBe('Loading...');
 	});
 
 	it('hides loading after update with bounds', async () => {
-		const { wrapper, registration } = mountWidget(MapWidget, settings);
+		const { wrapper, dashboard } = mountWidget(MapWidget, settings);
 
-		registration.update({ w1: { lat_min: 47.3, lon_min: 8.5, lat_max: 47.4, lon_max: 8.6 } });
-		await flushPromises();
+		await feedData(dashboard, 'w1', { lat_min: 47.3, lon_min: 8.5, lat_max: 47.4, lon_max: 8.6 });
 
 		expect(wrapper.find('.none').exists()).toBe(false);
 	});
 
 	it('shows "None" for empty bounds', async () => {
-		const { wrapper, registration } = mountWidget(MapWidget, settings);
+		const { wrapper, dashboard } = mountWidget(MapWidget, settings);
 
-		registration.update({ w1: {} });
-		await flushPromises();
+		await feedData(dashboard, 'w1', {});
 		await flushPromises();
 
 		expect(wrapper.text()).toContain('None');
 	});
 
-	it('resets to loading state on init', async () => {
-		const { wrapper, registration } = mountWidget(MapWidget, settings);
+	it('resets to loading state on new generation', async () => {
+		const { wrapper, dashboard } = mountWidget(MapWidget, settings);
 
-		registration.update({ w1: { lat_min: 47.3, lon_min: 8.5, lat_max: 47.4, lon_max: 8.6 } });
-		await flushPromises();
+		await feedData(dashboard, 'w1', { lat_min: 47.3, lon_min: 8.5, lat_max: 47.4, lon_max: 8.6 });
 
-		registration.init();
+		// Simulate a new generation where search hasn't resolved yet
+		(dashboard.search as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}));
+		dashboard.generation.value++;
 		await flushPromises();
 
 		expect(wrapper.find('.none').text()).toBe('Loading...');

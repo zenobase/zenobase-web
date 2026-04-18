@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { inject, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
 import type { GeoPoint, ZenoEvent } from '../../types';
 import type { ListParams, SearchResult } from '../../types/search';
 import { Constraint } from '../../utils/constraint';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
+import { useWidgetData } from '../composables/useWidgetData';
 import { esc, formatEventHtml, locationText } from '../utils/eventFormatter';
 import { resolveUserNames } from '../utils/userNames';
 
@@ -39,6 +40,7 @@ const props = defineProps<{
 	};
 	editable?: boolean;
 	isVirtual?: boolean;
+	active: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -51,7 +53,6 @@ const dashboard = inject<DashboardApi>(dashboardKey)!;
 const offset = ref(0);
 const total = ref(0);
 const items = ref<ZenoEvent[] | null>(null);
-const failed = ref(false);
 const filterField = ref<FilterField>(FILTER_FIELDS[0]);
 const filterValue = ref('');
 
@@ -126,11 +127,6 @@ function init() {
 	offset.value = 0;
 	total.value = 0;
 	items.value = null;
-	failed.value = false;
-}
-
-function error() {
-	failed.value = true;
 }
 
 async function refresh() {
@@ -185,9 +181,8 @@ watch(filterValue, () => {
 	filterDebounce = setTimeout(() => refresh(), 300);
 });
 
-const registration: WidgetRegistration = { params, update, init, error };
+const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { init, update });
 onMounted(() => {
-	dashboard.register(registration);
 	document.addEventListener('click', closeDropdownOnOutsideClick);
 });
 onBeforeUnmount(() => {

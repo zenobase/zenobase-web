@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from 'vue';
+import { inject, ref, toRef } from 'vue';
 import type { CountParams, CountTerm, SearchResult } from '../../types/search';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
+import { useWidgetData } from '../composables/useWidgetData';
 import { getUserName, resolveUserNames } from '../utils/userNames';
 
 const props = defineProps<{
@@ -12,6 +13,7 @@ const props = defineProps<{
 		order?: string;
 		filter?: string;
 	};
+	active: boolean;
 }>();
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
@@ -19,7 +21,6 @@ const dashboard = inject<DashboardApi>(dashboardKey)!;
 const offset = ref(0);
 const more = ref(false);
 const terms = ref<Array<{ label: string; count: number }> | null>(null);
-const failed = ref(false);
 
 function classesForOrderBy(column: string): string[] {
 	const classes: string[] = [];
@@ -75,11 +76,6 @@ function init() {
 	offset.value = 0;
 	more.value = false;
 	terms.value = null;
-	failed.value = false;
-}
-
-function error() {
-	failed.value = true;
 }
 
 async function refresh() {
@@ -92,8 +88,7 @@ function filterByTerm(term: { label: string }) {
 	dashboard.addConstraint(props.settings.field, term.label);
 }
 
-const registration: WidgetRegistration = { params, update, init, error };
-onMounted(() => dashboard.register(registration));
+const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { init, update });
 </script>
 
 <template>

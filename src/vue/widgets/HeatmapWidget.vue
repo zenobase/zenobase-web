@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { GoogleMapsOverlay } from '@deck.gl/google-maps';
-import { inject, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { inject, nextTick, onBeforeUnmount, ref, toRef } from 'vue';
 import type { GeoBounds, HeatmapParams, HeatmapPoint, SearchResult } from '../../types/search';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
+import { useWidgetData } from '../composables/useWidgetData';
 
 let maps: typeof google.maps;
 
@@ -21,6 +22,7 @@ const props = defineProps<{
 		unit?: string;
 		filter?: string;
 	};
+	active: boolean;
 }>();
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
@@ -36,7 +38,6 @@ let boundsUpdateTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const loading = ref(true);
 const empty = ref(false);
-const failed = ref(false);
 
 function toBounds(result: Partial<GeoBounds>): google.maps.LatLngBounds {
 	if (result.lat_min !== undefined) {
@@ -239,20 +240,13 @@ function init() {
 	precision = 8;
 	loading.value = true;
 	empty.value = false;
-	failed.value = false;
-}
-
-function error() {
-	loading.value = false;
-	failed.value = true;
 }
 
 onBeforeUnmount(() => {
 	if (boundsUpdateTimeout) clearTimeout(boundsUpdateTimeout);
 });
 
-const registration: WidgetRegistration = { params, update, init, error };
-onMounted(() => dashboard.register(registration));
+const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { init, update });
 </script>
 
 <template>

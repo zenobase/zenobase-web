@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from 'vue';
+import { inject, ref, toRef } from 'vue';
 import type { GanttParams, GanttTerm, SearchResult } from '../../types/search';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
+import { useWidgetData } from '../composables/useWidgetData';
 import { formatAge } from '../utils/formatAge';
 import { getUserName, resolveUserNames } from '../utils/userNames';
 
@@ -14,11 +15,11 @@ const props = defineProps<{
 		limit: number;
 		filter?: string;
 	};
+	active: boolean;
 }>();
 
 const dashboard = inject<DashboardApi>(dashboardKey)!;
 const terms = ref<GanttTerm[] | null>(null);
-const failed = ref(false);
 
 function classesForOrderBy(column: string): string[] {
 	const classes: string[] = [];
@@ -56,19 +57,13 @@ function update(result: SearchResult) {
 	}
 }
 
-function error() {
-	failed.value = true;
-}
-
 function init() {
 	terms.value = null;
-	failed.value = false;
 }
 
 function filterByTerm(term: GanttTerm) {
 	dashboard.addConstraint(props.settings.field, term.label);
 }
-
 
 function formatDuration(ms: number): string {
 	if (ms === 0) return '0';
@@ -83,8 +78,7 @@ function formatDuration(ms: number): string {
 	return `${days}d`;
 }
 
-const registration: WidgetRegistration = { params, update, init, error };
-onMounted(() => dashboard.register(registration));
+const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { init, update });
 </script>
 
 <template>

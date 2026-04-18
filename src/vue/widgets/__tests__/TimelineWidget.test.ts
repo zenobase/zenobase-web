@@ -1,5 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
+import { Constraint } from '../../../utils/constraint';
 import TimelineWidget from '../TimelineWidget.vue';
 import { createEChartsStub, feedData, mountWidget } from './helpers';
 
@@ -20,19 +21,14 @@ describe('TimelineWidget', () => {
 		return { ...result, capturedOptions, allCapturedOptions };
 	}
 
-	it('mounts and registers with dashboard', () => {
-		const { dashboard } = mountWithStub();
-		expect(dashboard.register).toHaveBeenCalledOnce();
-	});
-
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWithStub();
 		expect(wrapper.find('.none').text()).toBe('Loading...');
 	});
 
 	it('uses bar chart for count statistic', async () => {
-		const { registration, capturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, capturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		const series = (capturedOptions.value as Record<string, unknown>).series as Array<{ type: string; name: string }>;
@@ -41,8 +37,8 @@ describe('TimelineWidget', () => {
 	});
 
 	it('uses line chart for avg statistic', async () => {
-		const { registration, capturedOptions } = mountWithStub({ ...settings, statistic: 'avg' });
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, capturedOptions } = mountWithStub({ ...settings, statistic: 'avg' });
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		const series = (capturedOptions.value as Record<string, unknown>).series as Array<{ type: string; name: string }>;
@@ -51,8 +47,8 @@ describe('TimelineWidget', () => {
 	});
 
 	it('includes min/max range bands for avg statistic', async () => {
-		const { registration, capturedOptions } = mountWithStub({ ...settings, statistic: 'avg' });
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, capturedOptions } = mountWithStub({ ...settings, statistic: 'avg' });
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		const series = (capturedOptions.value as Record<string, unknown>).series as Array<{ name: string }>;
@@ -62,9 +58,10 @@ describe('TimelineWidget', () => {
 	});
 
 	it('generates two series for A/B comparison', async () => {
-		const { registration, allCapturedOptions } = mountWithStub();
+		const { dashboard, allCapturedOptions } = mountWithStub();
+		dashboard.constraintsB.value = [new Constraint('tag', 'x')];
 		const dataB = mockData.map((d) => ({ ...d, count: d.count + 5 }));
-		await feedData(registration, 'w1', mockData, dataB);
+		await feedData(dashboard, 'w1', mockData, dataB);
 		await flushPromises();
 
 		// First captured options is the main chart, second is effect size
@@ -76,8 +73,8 @@ describe('TimelineWidget', () => {
 	});
 
 	it('adds regression line when configured', async () => {
-		const { registration, capturedOptions } = mountWithStub({ ...settings, regression: 'linear' });
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, capturedOptions } = mountWithStub({ ...settings, regression: 'linear' });
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		const series = (capturedOptions.value as Record<string, unknown>).series as Array<{ type: string; lineStyle?: { type: string } }>;
@@ -86,15 +83,15 @@ describe('TimelineWidget', () => {
 	});
 
 	it('shows "None" for empty data', async () => {
-		const { wrapper, registration } = mountWithStub();
-		await feedData(registration, 'w1', []);
+		const { wrapper, dashboard } = mountWithStub();
+		await feedData(dashboard, 'w1', []);
 
 		expect(wrapper.text()).toContain('None');
 	});
 
 	it('matches snapshot', async () => {
-		const { registration, capturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, capturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		expect(capturedOptions.value).toMatchSnapshot();

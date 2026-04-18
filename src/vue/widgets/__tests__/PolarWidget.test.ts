@@ -1,5 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
+import { Constraint } from '../../../utils/constraint';
 import PolarWidget from '../PolarWidget.vue';
 import { createEChartsStub, feedData, mountWidget } from './helpers';
 
@@ -20,19 +21,14 @@ describe('PolarWidget', () => {
 		return { ...result, capturedOptions };
 	}
 
-	it('mounts and registers with dashboard', () => {
-		const { dashboard } = mountWithStub();
-		expect(dashboard.register).toHaveBeenCalledOnce();
-	});
-
 	it('shows loading state initially', () => {
 		const { wrapper } = mountWithStub();
 		expect(wrapper.find('.none').text()).toBe('Loading...');
 	});
 
 	it('builds chart with correct angle axis labels', async () => {
-		const { registration, capturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, capturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		const angleAxis = (capturedOptions.value as Record<string, unknown>).angleAxis as { data: string[] };
@@ -42,8 +38,8 @@ describe('PolarWidget', () => {
 	});
 
 	it('builds chart with correct series data', async () => {
-		const { registration, capturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, capturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		const series = (capturedOptions.value as Record<string, unknown>).series as Array<{ data: number[] }>;
@@ -52,9 +48,10 @@ describe('PolarWidget', () => {
 	});
 
 	it('adds second series for A/B comparison', async () => {
-		const { registration, capturedOptions } = mountWithStub();
+		const { dashboard, capturedOptions } = mountWithStub();
+		dashboard.constraintsB.value = [new Constraint('tag', 'x')];
 		const dataBSlice = mockData.map((d) => ({ ...d, count: d.count + 5 }));
-		await feedData(registration, 'w1', mockData, dataBSlice);
+		await feedData(dashboard, 'w1', mockData, dataBSlice);
 		await flushPromises();
 
 		const series = (capturedOptions.value as Record<string, unknown>).series as Array<{ name: string }>;
@@ -63,15 +60,15 @@ describe('PolarWidget', () => {
 	});
 
 	it('shows "None" for empty data', async () => {
-		const { wrapper, registration } = mountWithStub();
-		await feedData(registration, 'w1', []);
+		const { wrapper, dashboard } = mountWithStub();
+		await feedData(dashboard, 'w1', []);
 
 		expect(wrapper.text()).toContain('None');
 	});
 
 	it('matches snapshot', async () => {
-		const { registration, capturedOptions } = mountWithStub();
-		await feedData(registration, 'w1', mockData);
+		const { dashboard, capturedOptions } = mountWithStub();
+		await feedData(dashboard, 'w1', mockData);
 		await flushPromises();
 
 		expect(capturedOptions.value).toMatchSnapshot();

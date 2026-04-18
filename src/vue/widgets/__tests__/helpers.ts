@@ -2,7 +2,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import { vi } from 'vitest';
 import { type Component, type ComponentPublicInstance, defineComponent, ref, watch } from 'vue';
 import { createVuetify } from 'vuetify';
-import { type DashboardApi, dashboardKey, type WidgetRegistration } from '../../composables/useDashboard';
+import { type DashboardApi, dashboardKey } from '../../composables/useDashboard';
 
 const vuetify = createVuetify();
 
@@ -12,10 +12,10 @@ export function createMockDashboard(): DashboardApi {
 		constraintsB: ref([]),
 		total: ref(0),
 		totalB: ref<number | null>(null),
+		generation: ref(0),
 		search: vi.fn().mockResolvedValue({}),
-		register: vi.fn(),
+		searchB: vi.fn().mockResolvedValue({}),
 		refresh: vi.fn(),
-		reduceExpectedWidgetCount: vi.fn(),
 		addConstraint: vi.fn(),
 		addConstraintB: vi.fn(),
 		addConstraints: vi.fn(),
@@ -29,14 +29,14 @@ export function createMockDashboard(): DashboardApi {
 	};
 }
 
-export function getRegistration(dashboard: DashboardApi): WidgetRegistration {
-	return (dashboard.register as ReturnType<typeof vi.fn>).mock.calls[0][0];
-}
-
-export async function feedData(registration: WidgetRegistration, widgetId: string, data: unknown, dataB?: unknown): Promise<void> {
+export async function feedData(dashboard: DashboardApi, widgetId: string, data: unknown, dataB?: unknown): Promise<void> {
 	const result = { [widgetId]: data };
 	const resultB = dataB !== undefined ? { [widgetId]: dataB } : undefined;
-	registration.update(result, resultB);
+	(dashboard.search as ReturnType<typeof vi.fn>).mockResolvedValue(result);
+	if (resultB) {
+		(dashboard.searchB as ReturnType<typeof vi.fn>).mockResolvedValue(resultB);
+	}
+	dashboard.generation.value++;
 	await flushPromises();
 }
 
@@ -44,22 +44,17 @@ interface MountWidgetOptions {
 	stubs?: Record<string, Component | boolean>;
 }
 
-export function mountWidget(
-	component: Component,
-	settings: Record<string, unknown>,
-	opts?: MountWidgetOptions,
-): { wrapper: VueWrapper<ComponentPublicInstance>; dashboard: DashboardApi; registration: WidgetRegistration } {
+export function mountWidget(component: Component, settings: Record<string, unknown>, opts?: MountWidgetOptions): { wrapper: VueWrapper<ComponentPublicInstance>; dashboard: DashboardApi } {
 	const dashboard = createMockDashboard();
 	const wrapper = mount(component, {
-		props: { settings },
+		props: { settings, active: true },
 		global: {
 			plugins: [vuetify],
 			provide: { [dashboardKey as symbol]: dashboard },
 			stubs: opts?.stubs,
 		},
 	});
-	const registration = getRegistration(dashboard);
-	return { wrapper, dashboard, registration };
+	return { wrapper, dashboard };
 }
 
 export function createEChartsStub(): {
