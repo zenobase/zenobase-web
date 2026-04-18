@@ -1,11 +1,16 @@
-name: zenobase-web
+name: zenobase-frontend
 services:
-  nginx:
-    container_name: nginx
+  zenobase:
+    container_name: zenobase-nginx
+    image: zenobase-nginx:latest
+    ports:
+        - "8080:80"
     build:
       context: .
       dockerfile: docker/Dockerfile
       args:
         VITE_API_BASE_URL: http://localhost:9000
-    ports:
-      - "8080:80"
+    deploy:
+        resources:
+            limits:
+                memory: 1g
