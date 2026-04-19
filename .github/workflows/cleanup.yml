@@ -27,14 +27,18 @@ jobs:
         env:
           S3_BUCKET: ${{ vars.S3_BUCKET }}
         run: |
-          KEEP=3
-          PREFIXES=$(aws s3 ls "s3://$S3_BUCKET/" | awk '{print $2}' | sed 's/\/$//')
-          COUNT=$(echo "$PREFIXES" | wc -l | tr -d ' ')
+          KEEP=10
+          SORTED=$(aws s3api list-objects-v2 --bucket "$S3_BUCKET" \
+            --query 'Contents[].[LastModified,Key]' --output text \
+            | awk -F'[ \t/]+' '{ if ($1 > seen[$2]) seen[$2] = $1 } END { for (p in seen) print seen[p] " " p }' \
+            | sort \
+            | awk '{print $2}')
+          COUNT=$(echo "$SORTED" | wc -l | tr -d ' ')
           if [ "$COUNT" -le "$KEEP" ]; then
             echo "Only $COUNT versions found, nothing to delete"
             exit 0
           fi
-          DELETE=$(echo "$PREFIXES" | head -n -"$KEEP")
+          DELETE=$(echo "$SORTED" | head -n -"$KEEP")
           for FOLDER in $DELETE; do
             echo "Deleting $FOLDER"
             aws s3 rm "s3://$S3_BUCKET/$FOLDER" --recursive
