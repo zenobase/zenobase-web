@@ -2,6 +2,7 @@
 import { computed, provide, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '../api';
+import LoadingState from '../components/LoadingState.vue';
 import { authKey, useAuth } from '../composables/useAuth';
 
 const auth = useAuth();
@@ -86,7 +87,7 @@ async function signOut() {
 		<v-main>
 			<v-container fluid class="pa-4 pt-2">
 				<RouterView v-if="authReady" />
-				<div v-else class="mt-4 text-medium-emphasis">Loading...</div>
+				<LoadingState v-else state="loading" />
 			</v-container>
 
 		</v-main>

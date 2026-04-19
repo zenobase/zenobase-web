@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import type { AdminBucket, AdminTask, AdminUser, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
 import { param } from '../../utils/helpers';
 import api, { ApiError } from '../api';
+import LoadingState from '../components/LoadingState.vue';
 import { formatAge } from '../utils/formatAge';
 
 const route = useRoute();
@@ -534,7 +535,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									</td>
 								</tr>
 								<tr v-if="journal.commands === null">
-									<td colspan="6"><i>Loading</i></td>
+									<td colspan="6"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="journal.commands && journal.commands.length === 0">
 									<td colspan="6"><i>None</i></td>
@@ -601,7 +602,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td></td>
 								</tr>
 								<tr v-if="buckets.items === null">
-									<td colspan="5"><i>Loading</i></td>
+									<td colspan="5"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="buckets.items?.length === 0">
 									<td colspan="5"><i>None</i></td>
@@ -668,7 +669,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									</td>
 								</tr>
 								<tr v-if="users.items === null">
-									<td colspan="5"><i>Loading</i></td>
+									<td colspan="5"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="users.items?.length === 0">
 									<td colspan="5"><i>None</i></td>
@@ -751,7 +752,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									</td>
 								</tr>
 								<tr v-if="credentials.items === null">
-									<td colspan="6"><i>Loading</i></td>
+									<td colspan="6"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="credentials.items?.length === 0">
 									<td colspan="6"><i>None</i></td>
@@ -813,7 +814,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									</td>
 								</tr>
 								<tr v-if="tasks.items === null">
-									<td colspan="8"><i>Loading</i></td>
+									<td colspan="8"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="tasks.items?.length === 0">
 									<td colspan="8"><i>None</i></td>
@@ -844,7 +845,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td style="text-align: right">{{ job.period }}</td>
 								</tr>
 								<tr v-if="scheduler.jobs === null">
-									<td colspan="3"><i>Loading</i></td>
+									<td colspan="3"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="scheduler.jobs && scheduler.jobs.length === 0">
 									<td colspan="3"><i>None</i></td>
@@ -882,7 +883,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									</td>
 								</tr>
 								<tr v-if="snapshots.items === null">
-									<td colspan="5"><i>Loading</i></td>
+									<td colspan="5"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="snapshots.items?.length === 0">
 									<td colspan="5"><i>None</i></td>
