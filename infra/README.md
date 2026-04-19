@@ -1,11 +1,24 @@
 # Infrastructure
 
+The Pulumi program in this directory manages the following AWS resources:
+
+- CloudFront, serves the web app from S3
+- S3 bucket for storing web app assets
+
+The following AWS resources are shared with the backend, and are not managed by Pulumi:
+
+- Route 53, manages DNS records for \*.zenobase.com
+- CloudTrail, captures an audit trail of account activity
+- GuardDuty, detects potential threats
+- AWS Config, detects policy violations
+- AWS User Notifications, sends alerts for GuardDuty and AWS Config
+- S3 buckets for storing OpenSearch snapshots, and CloudTrail and AWS Config records
+
 ## Prerequisites
 
 - AWS account with CLI configured
 - Pulumi (`brew install pulumi`) with a Pulumi Cloud account
 - Node.js (see `../.nvmrc`) with pnpm via Corepack (`corepack enable`)
-
 
 ## AWS: GitHub OIDC Identity Provider
 
