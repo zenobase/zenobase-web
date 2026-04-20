@@ -25,6 +25,7 @@ export const auth0Config = {
 	authorizationParams: {
 		redirect_uri: buildRedirectUri(),
 		audience,
+		scope: 'openid profile email offline_access',
 	},
 	cacheLocation: 'localstorage' as const,
 	useRefreshTokens: true,
@@ -39,7 +40,7 @@ class LocalAuthClient implements AuthClient {
 			response_type: 'code',
 			client_id: clientId,
 			audience,
-			scope: 'openid profile email',
+			scope: 'openid profile email offline_access',
 			state,
 			redirect_uri: buildRedirectUri(),
 		});

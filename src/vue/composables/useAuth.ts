@@ -23,8 +23,10 @@ export function useAuth() {
 	api.setAuthRefresher(async () => {
 		try {
 			const fresh = await authClient.getTokenSilently({ ignoreCache: true });
+			console.log('[auth] getTokenSilently returned fresh token');
 			api.setToken(fresh);
 		} catch (e) {
+			console.warn('[auth] getTokenSilently failed; signing out', e);
 			api.setToken(null);
 			user.value = null;
 			throw e;

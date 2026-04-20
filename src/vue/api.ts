@@ -92,9 +92,12 @@ async function request<T = unknown>(url: string, options: RequestOptions = {}, r
 	const responseHeaders = response.headers;
 
 	if (response.status === 401 && !retried && authRefresher) {
+		console.log('[auth] 401 received, attempting token refresh', { url });
 		try {
 			await refreshOnce();
-		} catch {
+			console.log('[auth] token refresh succeeded, retrying request', { url });
+		} catch (e) {
+			console.warn('[auth] token refresh failed, giving up', { url, error: e });
 			throw new ApiError(401, await readBody(response));
 		}
 		return request<T>(url, options, true);
