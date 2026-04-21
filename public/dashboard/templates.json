@@ -1,62 +1,8 @@
 [
 	{
 		"category" : "Activities",
-		"source" : "Fitbit",
-		"task" : "fitbit-activities",
-		"widgets" : [
-			{
-				"id" : "timeline",
-				"type" : "timeline",
-				"label" : "Distance (mi)",
-				"placement" : "top",
-				"field" : "distance",
-				"unit" : "mi",
-				"statistic" : "sum",
-				"interval" : "month"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"order" : "-timestamp",
-				"limit" : 10,
-				"singleton" : true
-			},
-			{
-				"id" : "tags",
-				"type" : "count",
-				"label" : "Type",
-				"placement" : "left",
-				"field" : "tag",
-				"limit" : 5,
-				"order" : "-count"
-			},
-			{
-				"id" : "histogram",
-				"type" : "histogram",
-				"label" : "Distances",
-				"placement" : "right",
-				"field" : "distance",
-				"unit" : "mi",
-				"interval" : 5
-			},
-			{
-				"id" : "polar",
-				"type" : "polar",
-				"label" : "Day of Week",
-				"placement" : "right",
-				"value_field" : "timestamp",
-				"unit" : null,
-				"statistic" : "count",
-				"interval" : "day_of_week"
-			}
-		]
-	},
-	{
-		"category" : "Activities",
-		"source" : "Google Fit",
-		"task" : "google-activities",
+		"source" : "Google Health",
+		"task" : "google-health-activities",
 		"widgets" : [
 			{
 				"id" : "timeline",
@@ -86,12 +32,6 @@
 				"field" : "tag",
 				"limit" : 5,
 				"order" : "-count"
-			},
-			{
-				"id" : "map",
-				"type" : "map",
-				"label" : "Map",
-				"placement" : "right"
 			},
 			{
 				"id" : "histogram",
@@ -284,8 +224,8 @@
 	},
 	{
 		"category" : "Burn",
-		"source" : "Fitbit",
-		"task" : "fitbit-burn",
+		"source" : "Google Health",
+		"task" : "google-health-burn",
 		"widgets" : [
 			{
 				"id" : "timeline_energy",
@@ -322,7 +262,7 @@
 		"category" : "Environment",
 		"source" : "Netatmo",
 		"task" : "netatmo",
-		"widgets": [
+		"widgets" : [
 			{
 				"id" : "latest",
 				"type" : "list",
@@ -445,53 +385,8 @@
 	},
 	{
 		"category" : "Food",
-		"source" : "Fitbit",
-		"task" : "fitbit-food",
-		"widgets" : [
-			{
-				"id" : "timeline_kcal",
-				"type" : "timeline",
-				"label" : "Calories",
-				"placement" : "top",
-				"field" : "energy",
-				"unit" : "kcal",
-				"statistic" : "avg",
-				"interval" : "month"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"order" : "-timestamp",
-				"limit" : 10,
-				"singleton" : true
-			},
-			{
-				"id" : "kcal_by_day",
-				"type" : "polar",
-				"label" : "Day of Week",
-				"placement" : "right",
-				"value_field" : "energy",
-				"unit" : "kcal",
-				"statistic" : "avg",
-				"interval" : "day_of_week"
-			},
-			{
-				"id" : "histogram",
-				"type" : "histogram",
-				"label" : "Histogram",
-				"placement" : "right",
-				"field" : "energy",
-				"unit" : "kcal",
-				"interval" : 500
-			}
-		]
-	},
-	{
-		"category" : "Food",
-		"source" : "Google Fit",
-		"task" : "google-food",
+		"source" : "Google Health",
+		"task" : "google-health-food",
 		"widgets" : [
 			{
 				"id" : "timeline_kcal",
@@ -589,53 +484,8 @@
 	},
 	{
 		"category" : "Heart Rate",
-		"source" : "Fitbit",
-		"task" : "fitbit-cardio",
-		"widgets" : [
-			{
-				"id" : "timeline",
-				"type" : "timeline",
-				"label" : "Heart Rate (bpm)",
-				"placement" : "top",
-				"field" : "frequency",
-				"statistic" : "avg",
-				"unit" : "bpm",
-				"interval" : "day"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"singleton" : true,
-				"limit" : 10,
-				"order" : "-timestamp"
-			},
-			{
-				"id" : "histogram",
-				"type" : "histogram",
-				"label" : "Histogram",
-				"placement" : "right",
-				"field" : "frequency",
-				"unit" : "bpm",
-				"interval" : 10
-			},
-			{
-				"id" : "day_of_week",
-				"type" : "polar",
-				"label" : "Day of Week",
-				"placement" : "right",
-				"value_field" : "frequency",
-				"unit" : "bpm",
-				"statistic" : "avg",
-				"interval" : "day_of_week"
-			}
-		]
-	},
-	{
-		"category" : "Heart Rate",
-		"source" : "Google Fit",
-		"task" : "google-cardio",
+		"source" : "Google Health",
+		"task" : "google-health-cardio",
 		"widgets" : [
 			{
 				"id" : "timeline",
@@ -785,7 +635,7 @@
 				"label" : "Books Completed",
 				"placement" : "top",
 				"field" : "timestamp",
-				"key_field": "timestamp$max",
+				"key_field" : "timestamp$max",
 				"statistic" : "count"
 			},
 			{
@@ -807,21 +657,21 @@
 				"interval" : 100
 			},
 			{
-				"id": "pages_durations",
-				"label": "Page Counts & Durations",
-				"type": "scatterplot",
-				"statistic_x": "sum",
-				"statistic_y": "sum",
-				"key_field": "timestamp$max",
-				"label_y": "Duration",
-				"label_x": "Pages",
-				"regression": "linear",
-				"unit_y": null,
-				"field_x": "count",
-				"interval": "minute",
-				"placement": "right",
-				"unit_x": null,
-				"field_y": "duration"
+				"id" : "pages_durations",
+				"label" : "Page Counts & Durations",
+				"type" : "scatterplot",
+				"statistic_x" : "sum",
+				"statistic_y" : "sum",
+				"key_field" : "timestamp$max",
+				"label_y" : "Duration",
+				"label_x" : "Pages",
+				"regression" : "linear",
+				"unit_y" : null,
+				"field_x" : "count",
+				"interval" : "minute",
+				"placement" : "right",
+				"unit_x" : null,
+				"field_y" : "duration"
 			}
 		]
 	},
@@ -961,87 +811,6 @@
 				"value_field" : "rating",
 				"unit" : null,
 				"interval" : "day_of_week"
-			}
-		]
-	},
-	{
-		"category" : "Sleep",
-		"source" : "Fitbit",
-		"task" : "fitbit-sleep",
-		"widgets" : [
-			{
-				"id" : "timeline",
-				"type" : "timeline",
-				"label" : "Timeline",
-				"placement" : "top",
-				"key_field" : "timestamp$max",
-				"field" : "duration",
-				"unit" : null,
-				"statistic" : "avg",
-				"interval" : "week"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"order" : "-timestamp",
-				"limit" : 7,
-				"singleton" : true
-			},
-			{
-				"id" : "polar_hour",
-				"type" : "polar",
-				"label" : "Hours (Begin)",
-				"placement" : "left",
-				"key_field" : "timestamp$min",
-				"value_field" : "timestamp",
-				"unit" : null,
-				"statistic" : "count",
-				"interval" : "hour_of_day"
-			},
-			{
-				"id" : "polar_day_duration",
-				"type" : "polar",
-				"label" : "Days (Duration)",
-				"placement" : "left",
-				"key_field" : "timestamp$max",
-				"value_field" : "duration",
-				"unit" : null,
-				"statistic" : "avg",
-				"interval" : "day_of_week"
-			},
-			{
-				"id" : "histogram_duration",
-				"type" : "histogram",
-				"label" : "Duration",
-				"placement" : "right",
-				"field" : "duration",
-				"unit" : null,
-				"interval" : 3600000
-			},
-			{
-				"id" : "ratings",
-				"type" : "ratings",
-				"label" : "Efficiency",
-				"placement" : "right"
-			},
-			{
-				"id" : "scatterplot_duration_percentage",
-				"type" : "scatterplot",
-				"label" : "Duration & Efficiency",
-				"placement" : "right",
-				"label_x" : "Duration",
-				"field_x" : "duration",
-				"unit_x" : null,
-				"statistic_x" : "avg",
-				"label_y" : "Efficiency",
-				"field_y" : "rating",
-				"unit_y" : null,
-				"statistic_y" : "avg",
-				"key_field" : "timestamp$max",
-				"interval" : "day",
-				"regression" : "linear"
 			}
 		]
 	},
@@ -1568,53 +1337,6 @@
 	},
 	{
 		"category" : "Steps",
-		"source" : "Fitbit",
-		"task" : "fitbit-steps",
-		"widgets" : [
-			{
-				"id" : "steps",
-				"type" : "timeline",
-				"label" : "Steps",
-				"placement" : "top",
-				"field" : "count",
-				"unit" : null,
-				"statistic" : "sum",
-				"interval" : "month"
-			},
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"order" : "-timestamp",
-				"limit" : 10,
-				"singleton" : true
-			},
-			{
-				"id" : "steps_scoreboard",
-				"type" : "scoreboard",
-				"label" : "Scoreboard",
-				"placement" : "right",
-				"key_field" : "author",
-				"value_field" : "count",
-				"unit" : null,
-				"order" : "-sum",
-				"limit" : 10
-			},
-			{
-				"id" : "steps_by_day",
-				"type" : "polar",
-				"label" : "Day of Week",
-				"placement" : "right",
-				"value_field" : "count",
-				"unit" : null,
-				"statistic" : "avg",
-				"interval" : "day_of_week"
-			}
-		]
-	},
-	{
-		"category" : "Steps",
 		"source" : "Oura",
 		"task" : "oura-steps",
 		"widgets" : [
@@ -1624,7 +1346,7 @@
 				"label" : "Steps",
 				"placement" : "top",
 				"field" : "count",
-				"key_field": "timestamp$max",
+				"key_field" : "timestamp$max",
 				"unit" : null,
 				"statistic" : "sum",
 				"interval" : "month"
@@ -1654,7 +1376,7 @@
 				"type" : "polar",
 				"label" : "Day of Week",
 				"placement" : "right",
-				"key_field": "timestamp$max",
+				"key_field" : "timestamp$max",
 				"value_field" : "count",
 				"unit" : null,
 				"statistic" : "avg",
@@ -1826,8 +1548,8 @@
 	},
 	{
 		"category" : "Weight",
-		"source" : "Fitbit",
-		"task" : "fitbit-weight",
+		"source" : "Google Health",
+		"task" : "google-health-weight",
 		"widgets" : [
 			{
 				"id" : "latest",
@@ -1865,43 +1587,6 @@
 				"key_field" : "timestamp",
 				"interval" : "day",
 				"regression" : "linear"
-			}
-		]
-	},
-	{
-		"category" : "Weight",
-		"source" : "Google Fit",
-		"task" : "google-weight",
-		"widgets" : [
-			{
-				"id" : "latest",
-				"type" : "list",
-				"label" : "Latest",
-				"placement" : "left",
-				"singleton" : true,
-				"limit" : 10,
-				"order" : "-timestamp"
-			},
-			{
-				"id" : "weight",
-				"type" : "timeline",
-				"label" : "Weight (lb)",
-				"placement" : "right",
-				"field" : "weight",
-				"statistic" : "avg",
-				"interval" : "week",
-				"unit" : "lb",
-				"regression" : "linear"
-			},
-			{
-				"id" : "polar",
-				"type" : "polar",
-				"label" : "Months",
-				"placement" : "right",
-				"value_field" : "weight",
-				"unit" : "kg",
-				"statistic" : "avg",
-				"interval" : "month_of_year"
 			}
 		]
 	},
@@ -1997,6 +1682,255 @@
 		"category" : "Body Temperature",
 		"source" : "Withings",
 		"task" : "withings-temperature",
+		"widgets" : [
+			{
+				"id" : "temperature",
+				"type" : "timeline",
+				"label" : "Temperature (F)",
+				"placement" : "top",
+				"field" : "temperature",
+				"statistic" : "avg",
+				"interval" : "week",
+				"unit" : "F",
+				"regression" : "linear"
+			},
+			{
+				"id" : "latest",
+				"type" : "list",
+				"label" : "Latest",
+				"placement" : "left",
+				"singleton" : true,
+				"limit" : 10,
+				"order" : "-timestamp"
+			},
+			{
+				"id" : "hour_of_day",
+				"type" : "polar",
+				"label" : "Hours",
+				"placement" : "right",
+				"value_field" : "temperature",
+				"unit" : "F",
+				"statistic" : "avg",
+				"interval" : "hour_of_day"
+			}
+		]
+	},
+	{
+		"category" : "Steps",
+		"source" : "Google Health",
+		"task" : "google-health-steps",
+		"widgets" : [
+			{
+				"id" : "steps",
+				"type" : "timeline",
+				"label" : "Steps",
+				"placement" : "top",
+				"field" : "count",
+				"unit" : null,
+				"statistic" : "sum",
+				"interval" : "month"
+			},
+			{
+				"id" : "latest",
+				"type" : "list",
+				"label" : "Latest",
+				"placement" : "left",
+				"order" : "-timestamp",
+				"limit" : 10,
+				"singleton" : true
+			},
+			{
+				"id" : "steps_scoreboard",
+				"type" : "scoreboard",
+				"label" : "Scoreboard",
+				"placement" : "right",
+				"key_field" : "author",
+				"value_field" : "count",
+				"unit" : null,
+				"order" : "-sum",
+				"limit" : 10
+			},
+			{
+				"id" : "steps_by_day",
+				"type" : "polar",
+				"label" : "Day of Week",
+				"placement" : "right",
+				"value_field" : "count",
+				"unit" : null,
+				"statistic" : "avg",
+				"interval" : "day_of_week"
+			}
+		]
+	},
+	{
+		"category" : "Sleep",
+		"source" : "Google Health",
+		"task" : "google-health-sleep",
+		"widgets" : [
+			{
+				"id" : "timeline",
+				"type" : "timeline",
+				"label" : "Timeline",
+				"placement" : "top",
+				"key_field" : "timestamp$max",
+				"field" : "duration",
+				"unit" : null,
+				"statistic" : "avg",
+				"interval" : "week"
+			},
+			{
+				"id" : "latest",
+				"type" : "list",
+				"label" : "Latest",
+				"placement" : "left",
+				"order" : "-timestamp",
+				"limit" : 7,
+				"singleton" : true
+			},
+			{
+				"id" : "polar_hour",
+				"type" : "polar",
+				"label" : "Hours (Begin)",
+				"placement" : "left",
+				"key_field" : "timestamp$min",
+				"value_field" : "timestamp",
+				"unit" : null,
+				"statistic" : "count",
+				"interval" : "hour_of_day"
+			},
+			{
+				"id" : "polar_day_duration",
+				"type" : "polar",
+				"label" : "Days (Duration)",
+				"placement" : "left",
+				"key_field" : "timestamp$max",
+				"value_field" : "duration",
+				"unit" : null,
+				"statistic" : "avg",
+				"interval" : "day_of_week"
+			},
+			{
+				"id" : "histogram_duration",
+				"type" : "histogram",
+				"label" : "Duration",
+				"placement" : "right",
+				"field" : "duration",
+				"unit" : null,
+				"interval" : 3600000
+			}
+		]
+	},
+	{
+		"category" : "Heart Rate Variability",
+		"source" : "Google Health",
+		"task" : "google-health-hrv",
+		"widgets" : [
+			{
+				"id" : "timeline",
+				"type" : "timeline",
+				"label" : "HRV",
+				"placement" : "top",
+				"field" : "duration",
+				"unit" : null,
+				"statistic" : "avg",
+				"interval" : "week",
+				"regression" : "linear"
+			},
+			{
+				"id" : "latest",
+				"type" : "list",
+				"label" : "Latest",
+				"placement" : "left",
+				"order" : "-timestamp",
+				"limit" : 10,
+				"singleton" : true
+			},
+			{
+				"id" : "day_of_week",
+				"type" : "polar",
+				"label" : "Day of Week",
+				"placement" : "right",
+				"value_field" : "duration",
+				"unit" : null,
+				"statistic" : "avg",
+				"interval" : "day_of_week"
+			}
+		]
+	},
+	{
+		"category" : "Oxygen Saturation",
+		"source" : "Google Health",
+		"task" : "google-health-spo2",
+		"widgets" : [
+			{
+				"id" : "timeline",
+				"type" : "timeline",
+				"label" : "SpO2 (%)",
+				"placement" : "top",
+				"field" : "percentage",
+				"unit" : null,
+				"statistic" : "avg",
+				"interval" : "week"
+			},
+			{
+				"id" : "latest",
+				"type" : "list",
+				"label" : "Latest",
+				"placement" : "left",
+				"order" : "-timestamp",
+				"limit" : 10,
+				"singleton" : true
+			},
+			{
+				"id" : "histogram",
+				"type" : "histogram",
+				"label" : "Histogram",
+				"placement" : "right",
+				"field" : "percentage",
+				"unit" : null,
+				"interval" : 1
+			}
+		]
+	},
+	{
+		"category" : "Respiration",
+		"source" : "Google Health",
+		"task" : "google-health-respiratory",
+		"widgets" : [
+			{
+				"id" : "timeline",
+				"type" : "timeline",
+				"label" : "Respiration (bpm)",
+				"placement" : "top",
+				"field" : "frequency",
+				"unit" : "bpm",
+				"statistic" : "avg",
+				"interval" : "week"
+			},
+			{
+				"id" : "latest",
+				"type" : "list",
+				"label" : "Latest",
+				"placement" : "left",
+				"order" : "-timestamp",
+				"limit" : 10,
+				"singleton" : true
+			},
+			{
+				"id" : "histogram",
+				"type" : "histogram",
+				"label" : "Histogram",
+				"placement" : "right",
+				"field" : "frequency",
+				"unit" : "bpm",
+				"interval" : 1
+			}
+		]
+	},
+	{
+		"category" : "Body Temperature",
+		"source" : "Google Health",
+		"task" : "google-health-temperature",
 		"widgets" : [
 			{
 				"id" : "temperature",

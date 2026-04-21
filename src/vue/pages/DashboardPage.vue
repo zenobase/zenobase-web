@@ -303,6 +303,7 @@ const showEditBucketDialog = ref(false);
 const showSaveAsViewDialog = ref(false);
 const showTaskListDialog = ref(false);
 const showCreateTaskDialog = ref(false);
+const createTaskPreselect = ref<string | undefined>(undefined);
 const showImportDialog = ref(false);
 const showExportDialog = ref(false);
 
@@ -356,6 +357,7 @@ function onTaskCreated() {
 }
 
 function openCreateTaskFromList() {
+	createTaskPreselect.value = undefined;
 	showCreateTaskDialog.value = true;
 }
 
@@ -416,7 +418,17 @@ async function loadBucket() {
 	}
 }
 
-onMounted(loadBucket);
+onMounted(async () => {
+	await loadBucket();
+	// Honor ?createTask=<task-type> — App.vue sets this after creating a bucket from a template that names a task, so
+	// we land here with the Create Task dialog already open on the right type. Strip the param so reloads don't reopen.
+	const pending = route.query.createTask;
+	if (typeof pending === 'string' && pending.length > 0) {
+		createTaskPreselect.value = pending;
+		showCreateTaskDialog.value = true;
+		router.replace({ query: { ...route.query, createTask: undefined } });
+	}
+});
 
 watch(bucketId, () => {
 	dashboard.reset();
@@ -565,7 +577,7 @@ watch(
 
 		<TaskListDialog v-model="showTaskListDialog" :bucket-id="bucketId" @open-create-task="openCreateTaskFromList" @task-ran="() => { dashboard.refresh(); reloadBuckets() }" />
 
-		<CreateTaskDialog v-model="showCreateTaskDialog" :bucket-id="bucketId" @created="onTaskCreated" />
+		<CreateTaskDialog v-model="showCreateTaskDialog" :bucket-id="bucketId" :preselect-type="createTaskPreselect" @created="onTaskCreated" />
 
 		<ImportDialog v-model="showImportDialog" :bucket-id="bucketId" @imported="onImported" />
 
