@@ -466,6 +466,27 @@ function onLongPress(id: string) {
 	}, 3000);
 }
 
+const confirmDialog = reactive({
+	show: false,
+	title: '',
+	message: '',
+	action: null as null | (() => void | Promise<void>),
+});
+
+function confirmAction(title: string, message: string, action: () => void | Promise<void>) {
+	confirmDialog.title = title;
+	confirmDialog.message = message;
+	confirmDialog.action = action;
+	confirmDialog.show = true;
+}
+
+async function runConfirmed() {
+	const fn = confirmDialog.action;
+	confirmDialog.show = false;
+	confirmDialog.action = null;
+	if (fn) await fn();
+}
+
 function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
 	switch (name) {
 		case 'journal': return refreshJournal(overrides);
@@ -519,10 +540,10 @@ function blurOnEnter(event: KeyboardEvent) {
 				<v-icon icon="mdi-refresh" :class="outstanding > 0 && 'mdi-spin'" />
 			</v-btn>
 			<template v-if="section === 'journal'">
-				<v-btn v-if="status?.read_only" icon size="small" variant="text" @click="setReadOnly(false)" title="in read-only mode" style="--v-btn-size: 1rem">
+				<v-btn v-if="status?.read_only" icon size="small" variant="text" @click="confirmAction('Switch to normal mode', 'Allow writes to the database?', () => setReadOnly(false))" title="in read-only mode" style="--v-btn-size: 1rem">
 					<v-icon icon="mdi-lock" />
 				</v-btn>
-				<v-btn v-if="status && !status.read_only" icon size="small" variant="text" @click="setReadOnly(true)" title="in normal mode" style="--v-btn-size: 1rem">
+				<v-btn v-if="status && !status.read_only" icon size="small" variant="text" @click="confirmAction('Switch to read-only mode', 'Block all writes to the database?', () => setReadOnly(true))" title="in normal mode" style="--v-btn-size: 1rem">
 					<v-icon icon="mdi-lock-open" />
 				</v-btn>
 			</template>
@@ -530,14 +551,14 @@ function blurOnEnter(event: KeyboardEvent) {
 				<v-icon icon="mdi-download" />
 			</v-btn>
 			<template v-if="section === 'scheduler'">
-				<v-btn v-if="status && !status.scheduler_disabled" icon size="small" variant="text" @click="disableScheduler(true)" title="Pause" style="--v-btn-size: 1rem">
+				<v-btn v-if="status && !status.scheduler_disabled" icon size="small" variant="text" @click="confirmAction('Pause scheduler', 'Stop running scheduled jobs?', () => disableScheduler(true))" title="Pause" style="--v-btn-size: 1rem">
 					<v-icon icon="mdi-pause" />
 				</v-btn>
-				<v-btn v-if="status?.scheduler_disabled" icon size="small" variant="text" @click="disableScheduler(false)" title="Resume" style="--v-btn-size: 1rem">
+				<v-btn v-if="status?.scheduler_disabled" icon size="small" variant="text" @click="confirmAction('Resume scheduler', 'Resume running scheduled jobs?', () => disableScheduler(false))" title="Resume" style="--v-btn-size: 1rem">
 					<v-icon icon="mdi-play" />
 				</v-btn>
 			</template>
-			<v-btn v-if="section === 'snapshots'" icon size="small" variant="text" @click="createSnapshot()" :disabled="snapshots.snapshotting" title="Snapshot" style="--v-btn-size: 1rem">
+			<v-btn v-if="section === 'snapshots'" icon size="small" variant="text" @click="confirmAction('Create snapshot', 'Take a new snapshot of the database?', () => createSnapshot())" :disabled="snapshots.snapshotting" title="Snapshot" style="--v-btn-size: 1rem">
 				<v-icon icon="mdi-camera" />
 			</v-btn>
 			<v-text-field
@@ -595,7 +616,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td style="text-align: right; position: relative">
 										<span v-if="command.cost">{{ formatNumber(command.cost as number) }}</span>
 										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === command['@id'] }">
-											<v-btn icon="mdi-undo" size="x-small" variant="elevated" color="primary" title="Undo" @click.stop="undo(command['@id'] as string)" />
+											<v-btn icon="mdi-undo" size="x-small" variant="elevated" color="primary" title="Undo" @click.stop="confirmAction('Undo command', `Undo command ${command['@id']}?`, () => undo(command['@id'] as string))" />
 										</div>
 									</td>
 								</tr>
@@ -640,7 +661,7 @@ function blurOnEnter(event: KeyboardEvent) {
 										<a v-if="isPublished(bucket)" :href="`/#/buckets/${bucket['@id']}`">{{ bucket.size }}</a>
 										<span v-else>{{ formatNumber(bucket.size as number) }}</span>
 										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === bucket['@id'] }">
-											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="removeBucket(bucket['@id'] as string)" />
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="confirmAction('Delete bucket', `Delete bucket ${bucket['@id']}?`, () => removeBucket(bucket['@id'] as string))" />
 										</div>
 									</td>
 								</tr>
@@ -696,12 +717,14 @@ function blurOnEnter(event: KeyboardEvent) {
 												:icon="user.optedout ? 'mdi-email-outline' : 'mdi-email'"
 												size="x-small" variant="elevated" color="primary"
 												:title="user.optedout ? 'Opt In' : 'Opt Out'"
-												@click.stop="user.optedout ? optinUser(user) : optoutUser(user)"
+												@click.stop="user.optedout
+													? confirmAction('Opt user in', `Opt ${user.name} back into emails?`, () => optinUser(user))
+													: confirmAction('Opt user out', `Opt ${user.name} out of emails?`, () => optoutUser(user))"
 											/>
 											<v-btn
 												icon="mdi-send" size="x-small" variant="elevated" color="primary"
 												title="Resend Verification" :disabled="!!user.verified"
-												@click.stop="reverifyUser(user)"
+												@click.stop="confirmAction('Resend verification', `Resend the verification email to ${user.email}?`, () => reverifyUser(user))"
 											/>
 											<v-btn
 												icon="mdi-pencil" size="x-small" variant="elevated" color="primary"
@@ -711,13 +734,13 @@ function blurOnEnter(event: KeyboardEvent) {
 												v-if="!user.suspended"
 												icon="mdi-cancel" size="x-small" variant="elevated" color="primary"
 												title="Suspend" :disabled="!!user.superuser"
-												@click.stop="suspendUser(user.name as string)"
+												@click.stop="confirmAction('Suspend user', `Suspend ${user.name}?`, () => suspendUser(user.name as string))"
 											/>
 											<v-btn
 												v-else
 												icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary"
 												title="Delete"
-												@click.stop="removeUser(user.name as string)"
+												@click.stop="confirmAction('Delete user', `Permanently delete user ${user.name}?`, () => removeUser(user.name as string))"
 											/>
 										</div>
 									</td>
@@ -786,7 +809,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td style="text-align: center; position: relative">
 										{{ !credential.authorizationUrl }}
 										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === credential['@id'] }">
-											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="removeCredential(credential['@id'] as string)" />
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="confirmAction('Delete credential', `Delete credential ${credential['@id']}?`, () => removeCredential(credential['@id'] as string))" />
 										</div>
 									</td>
 								</tr>
@@ -837,7 +860,7 @@ function blurOnEnter(event: KeyboardEvent) {
 											<v-btn icon size="x-small" variant="elevated" color="primary" title="Run" @click.stop="runTask(task['@id'] as string)">
 												<v-icon icon="mdi-refresh" :class="tasks.running[task['@id'] as string] && 'mdi-spin'" />
 											</v-btn>
-											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="removeTask(task['@id'] as string)" />
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="confirmAction('Delete task', `Delete task ${task['@id']}?`, () => removeTask(task['@id'] as string))" />
 										</div>
 									</td>
 								</tr>
@@ -903,7 +926,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td style="text-align: right; position: relative">
 										{{ formatDuration(snapshot.duration as number) }}
 										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === snapshot['@id'] }">
-											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="removeSnapshot(snapshot['@id'] as string)" />
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="confirmAction('Delete snapshot', `Delete snapshot ${snapshot['@id']}?`, () => removeSnapshot(snapshot['@id'] as string))" />
 										</div>
 									</td>
 								</tr>
@@ -923,6 +946,18 @@ function blurOnEnter(event: KeyboardEvent) {
 					</div>
 
 		</div>
+
+		<v-dialog v-model="confirmDialog.show" max-width="400">
+			<v-card>
+				<v-card-title>{{ confirmDialog.title }}</v-card-title>
+				<v-card-text>{{ confirmDialog.message }}</v-card-text>
+				<v-card-actions>
+					<v-spacer />
+					<v-btn color="primary" @click="runConfirmed()">Confirm</v-btn>
+					<v-btn variant="text" @click="confirmDialog.show = false">Cancel</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
 	</div>
 </template>
 
