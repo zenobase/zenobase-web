@@ -146,85 +146,88 @@ watch(
 			</v-btn>
 		</Teleport>
 
-		<div style="max-width: 800px; margin: 0 auto" class="pt-4">
+		<div class="settings-container pt-4 px-4">
 			<!-- Quota -->
-			<v-card variant="elevated" elevation="1" class="mb-6" v-if="quota">
-				<v-card-title>Quota</v-card-title>
-				<v-card-text>
+			<template v-if="quota">
+				<section>
+					<h2 class="settings-heading">Quota</h2>
 					<v-progress-linear :model-value="quota.used / quota.limit * 100" :color="quota.used >= quota.limit ? 'error' : quota.used >= quota.limit * 0.8 ? 'warning' : 'success'" height="10" rounded class="mb-2" />
 					<p class="text-body-2">{{ quota.used.toLocaleString() }} / {{ quota.limit.toLocaleString() }} events. {{ quotaResetLabel }}. <a href="mailto:support@zenobase.com">Contact support</a> to increase your quota.</p>
-				</v-card-text>
-			</v-card>
+				</section>
+				<v-divider class="my-8" />
+			</template>
 
 			<!-- Email -->
-			<v-card variant="elevated" elevation="1" class="mb-6">
-				<v-card-title>Email</v-card-title>
-				<v-card-text>
-					<v-alert v-if="settingsMessage" type="error" variant="tonal" class="mb-4">{{ settingsMessage }}</v-alert>
-					<form @submit.prevent="saveEmail()">
-						<v-text-field
-							type="email"
-							label="Email"
-							required
-							v-model="settingsEmail"
-							hint="For important, account-related messages."
-							persistent-hint
-						>
-							<template v-slot:append>
-								<v-icon v-if="auth.user.value?.verified && !emailDirty" icon="mdi-check-circle" color="success" title="This email address has been verified" />
-								<v-icon v-else-if="!emailDirty" icon="mdi-alert-circle" color="warning" title="This email address has not been verified" />
-							</template>
-						</v-text-field>
-					</form>
-				</v-card-text>
-				<v-card-actions>
+			<section>
+				<h2 class="settings-heading">Email</h2>
+				<v-alert v-if="settingsMessage" type="error" variant="tonal" class="mb-4">{{ settingsMessage }}</v-alert>
+				<form @submit.prevent="saveEmail()">
+					<v-text-field
+						type="email"
+						label="Email"
+						required
+						v-model="settingsEmail"
+						hint="For important, account-related messages."
+						persistent-hint
+					>
+						<template v-slot:append>
+							<v-icon v-if="auth.user.value?.verified && !emailDirty" icon="mdi-check-circle" color="success" title="This email address has been verified" />
+							<v-icon v-else-if="!emailDirty" icon="mdi-alert-circle" color="warning" title="This email address has not been verified" />
+						</template>
+					</v-text-field>
+				</form>
+				<div class="settings-actions">
 					<v-spacer />
 					<v-btn color="primary" :disabled="!emailDirty" @click="saveEmail()">Save</v-btn>
-				</v-card-actions>
-			</v-card>
+				</div>
+			</section>
+
+			<v-divider class="my-8" />
 
 			<!-- Credentials -->
-			<v-card variant="elevated" elevation="1" class="mb-6">
-				<v-card-title>Credentials</v-card-title>
-				<v-card-subtitle>You have granted Zenobase access to data in these services</v-card-subtitle>
-				<v-card-text>
-					<v-table>
-						<tbody>
-							<tr v-if="credentials === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
-							<tr v-else-if="credentials.length === 0"><td colspan="2"><i>None</i></td></tr>
-							<tr v-for="c in credentials" :key="c['@id']" class="credentials-row" @contextmenu.prevent="onRowLongPress(c['@id'])">
-								<td><span :class="{ 'credentials-invalid': c.authorizationUrl }">{{ c.type }}</span></td>
-								<td style="text-align: right; position: relative; overflow: visible">
-									<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === c['@id'] }">
-										<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Delete" @click.stop="deleteCredentials(c['@id'])" />
-									</div>
-								</td>
-							</tr>
-						</tbody>
-					</v-table>
-				</v-card-text>
-				<v-card-actions v-if="credentials?.length">
+			<section>
+				<h2 class="settings-heading">Credentials</h2>
+				<p class="settings-subtitle">You have granted Zenobase access to data in these services</p>
+				<v-table>
+					<tbody>
+						<tr v-if="credentials === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
+						<tr v-else-if="credentials.length === 0"><td colspan="2"><i>None</i></td></tr>
+						<tr v-for="c in credentials" :key="c['@id']" class="credentials-row" @contextmenu.prevent="onRowLongPress(c['@id'])">
+							<td><span :class="{ 'credentials-invalid': c.authorizationUrl }">{{ c.type }}</span></td>
+							<td style="text-align: right; position: relative; overflow: visible">
+								<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === c['@id'] }">
+									<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Delete" @click.stop="deleteCredentials(c['@id'])" />
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</v-table>
+				<div class="settings-actions" v-if="credentials?.length">
 					<v-spacer />
 					<v-btn icon variant="text" title="Previous" :disabled="credOffset <= 0" @click="() => { credOffset -= credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-left" /></v-btn>
 					<span style="color: rgba(0,0,0,0.5)"><b>{{ credOffset + 1 }}</b>&ndash;<b>{{ credOffset + (credentials?.length ?? 0) }}</b> of <b>{{ credTotal }}</b></span>
 					<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="() => { credOffset += credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-right" /></v-btn>
-				</v-card-actions>
-			</v-card>
+				</div>
+			</section>
+
+			<v-divider class="my-8" />
 
 			<!-- API token -->
-			<v-card variant="elevated" elevation="1" class="mb-6">
-				<v-card-title>API Token</v-card-title>
-				<v-card-subtitle>
+			<section>
+				<h2 class="settings-heading">API Token</h2>
+				<p class="settings-subtitle">
 					Use this token for <a href="/#/api">API calls</a>.
-					<span class="text-body-2" v-if="tokenExpiryLabel">{{ tokenExpiryLabel }}.</span>
-				</v-card-subtitle>
-				<v-card-actions>
+					<span v-if="tokenExpiryLabel">{{ tokenExpiryLabel }}.</span>
+				</p>
+				<div class="settings-actions">
 					<v-spacer />
 					<v-btn color="primary" :disabled="!tokenExpiry" @click="copyToken()">Copy token</v-btn>
-				</v-card-actions>
-			</v-card>
+				</div>
+			</section>
 
-			<div class="mb-6">
+			<v-divider class="my-8" />
+
+			<div>
 				<v-btn variant="text" color="error" @click="closeAccount()">Close account...</v-btn>
 			</div>
 		</div>
@@ -232,12 +235,23 @@ watch(
 </template>
 
 <style scoped>
-.v-card-title {
-	text-transform: uppercase;
-	font-size: 0.875rem !important;
-	font-weight: 600;
+.settings-container {
+	max-width: 800px;
+	margin: 0 auto;
 }
-:deep(.v-card-subtitle) {
-	white-space: normal !important;
+.settings-heading {
+	font-size: 1.125rem;
+	font-weight: 600;
+	margin: 0 0 0.75rem;
+}
+.settings-subtitle {
+	color: rgba(0, 0, 0, 0.6);
+	margin: -0.25rem 0 1rem;
+	font-size: 0.875rem;
+}
+.settings-actions {
+	display: flex;
+	align-items: center;
+	margin-top: 1rem;
 }
 </style>
