@@ -418,6 +418,54 @@ async function createSnapshot() {
 // --- Active section from route ---
 const section = computed(() => (route.params.section as string) || 'journal');
 
+const SECTIONS: Record<string, { title: string; placeholder?: string }> = {
+	journal: { title: 'History', placeholder: '@id, @type.name' },
+	buckets: { title: 'Buckets', placeholder: '@id, refresh' },
+	users: { title: 'Users', placeholder: '@id, name, email, verified, suspended, quota' },
+	credentials: { title: 'Credentials', placeholder: '@id, type, authorizationUrl' },
+	tasks: { title: 'Tasks', placeholder: '@id, type, status, bucket, completed' },
+	scheduler: { title: 'Scheduler' },
+	snapshots: { title: 'Snapshots' },
+};
+
+const sectionTitle = computed(() => SECTIONS[section.value]?.title ?? 'Admin');
+const sectionPlaceholder = computed(() => SECTIONS[section.value]?.placeholder ?? '');
+const isSearchable = computed(() => !!SECTIONS[section.value]?.placeholder);
+
+const currentFilter = computed<string | null>({
+	get() {
+		switch (section.value) {
+			case 'journal': return journal.filter;
+			case 'buckets': return buckets.filter;
+			case 'users': return users.filter;
+			case 'credentials': return credentials.filter;
+			case 'tasks': return tasks.filter;
+			default: return null;
+		}
+	},
+	set(value) {
+		switch (section.value) {
+			case 'journal': journal.filter = value; break;
+			case 'buckets': buckets.filter = value; break;
+			case 'users': users.filter = value; break;
+			case 'credentials': credentials.filter = value; break;
+			case 'tasks': tasks.filter = value; break;
+		}
+	},
+});
+
+function refreshCurrentFiltered() {
+	refreshSection(section.value, { offset: 0 });
+}
+
+const longPressedId = ref<string | null>(null);
+function onLongPress(id: string) {
+	longPressedId.value = id;
+	setTimeout(() => {
+		if (longPressedId.value === id) longPressedId.value = null;
+	}, 3000);
+}
+
 function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
 	switch (name) {
 		case 'journal': return refreshJournal(overrides);
@@ -466,16 +514,48 @@ function blurOnEnter(event: KeyboardEvent) {
 	<div id="admin-dashboard">
 
 		<Teleport to="#page-toolbar">
-			<span class="text-subtitle-1 font-weight-bold mr-1">Admin</span>
+			<span class="text-subtitle-1 font-weight-bold mr-1">{{ sectionTitle }}</span>
 			<v-btn icon size="small" variant="text" @click="refreshAll()" title="Refresh" style="--v-btn-size: 1rem">
 				<v-icon icon="mdi-refresh" :class="outstanding > 0 && 'mdi-spin'" />
 			</v-btn>
-			<v-btn v-if="status?.read_only" icon size="small" variant="text" @click="setReadOnly(false)" title="in read-only mode" style="--v-btn-size: 1rem">
-				<v-icon icon="mdi-lock" />
+			<template v-if="section === 'journal'">
+				<v-btn v-if="status?.read_only" icon size="small" variant="text" @click="setReadOnly(false)" title="in read-only mode" style="--v-btn-size: 1rem">
+					<v-icon icon="mdi-lock" />
+				</v-btn>
+				<v-btn v-if="status && !status.read_only" icon size="small" variant="text" @click="setReadOnly(true)" title="in normal mode" style="--v-btn-size: 1rem">
+					<v-icon icon="mdi-lock-open" />
+				</v-btn>
+			</template>
+			<v-btn v-if="section === 'users'" icon size="small" variant="text" title="Download" @click="api.download('/users/', 'users.json')" style="--v-btn-size: 1rem">
+				<v-icon icon="mdi-download" />
 			</v-btn>
-			<v-btn v-if="status && !status.read_only" icon size="small" variant="text" @click="setReadOnly(true)" title="in normal mode" style="--v-btn-size: 1rem">
-				<v-icon icon="mdi-lock-open" />
+			<template v-if="section === 'scheduler'">
+				<v-btn v-if="status && !status.scheduler_disabled" icon size="small" variant="text" @click="disableScheduler(true)" title="Pause" style="--v-btn-size: 1rem">
+					<v-icon icon="mdi-pause" />
+				</v-btn>
+				<v-btn v-if="status?.scheduler_disabled" icon size="small" variant="text" @click="disableScheduler(false)" title="Resume" style="--v-btn-size: 1rem">
+					<v-icon icon="mdi-play" />
+				</v-btn>
+			</template>
+			<v-btn v-if="section === 'snapshots'" icon size="small" variant="text" @click="createSnapshot()" :disabled="snapshots.snapshotting" title="Snapshot" style="--v-btn-size: 1rem">
+				<v-icon icon="mdi-camera" />
 			</v-btn>
+			<v-text-field
+				v-if="isSearchable && !constraint"
+				v-model="currentFilter"
+				prepend-inner-icon="mdi-magnify"
+				:placeholder="sectionPlaceholder"
+				variant="plain"
+				density="compact"
+				hide-details
+				clearable
+				single-line
+				class="ml-2 admin-toolbar-search"
+				style="flex: 1; min-width: 0"
+				@keydown="blurOnEnter"
+				@blur="refreshCurrentFiltered()"
+				@click:clear="() => { currentFilter = null; refreshCurrentFiltered(); }"
+			/>
 		</Teleport>
 
 		<div class="d-flex align-center flex-wrap ga-1 mb-2" v-if="constraint">
@@ -490,20 +570,6 @@ function blurOnEnter(event: KeyboardEvent) {
 
 					<!-- Journal -->
 					<div v-show="section === 'journal'">
-						<div v-if="!constraint" class="mb-2">
-							<v-text-field
-								prepend-inner-icon="mdi-magnify"
-								v-model="journal.filter"
-								@keydown="blurOnEnter"
-								@blur="refreshJournal({ offset: 0 })"
-								placeholder="@id, @type.name"
-								variant="plain"
-								density="compact"
-								hide-details
-								clearable
-								@click:clear="() => { journal.filter = null; refreshJournal({ offset: 0 }) }"
-							/>
-						</div>
 						<v-table>
 							<thead>
 								<tr>
@@ -512,11 +578,10 @@ function blurOnEnter(event: KeyboardEvent) {
 									<th style="width: 99%">Description</th>
 									<th style="width: 0">Created</th>
 									<th style="width: 0; text-align: right">Cost</th>
-									<th style="width: 0"></th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="command in journal.commands" :key="command['@id'] as string">
+								<tr v-for="command in journal.commands" :key="command['@id'] as string" @contextmenu.prevent="onLongPress(command['@id'] as string)">
 									<td>{{ command['@id'] }}</td>
 									<td>
 										<a @click="setConstraint(command.principal as string)">{{ formatUsername(command.principal as string) }}</a>
@@ -527,18 +592,18 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td class="text-no-wrap">
 										<abbr :title="String(command.timestamp)">{{ formatAge(command.timestamp as string) }}</abbr>
 									</td>
-									<td style="text-align: right">
+									<td style="text-align: right; position: relative">
 										<span v-if="command.cost">{{ formatNumber(command.cost as number) }}</span>
-									</td>
-									<td style="text-align: right">
-										<a class="action" @click="undo(command['@id'] as string)" title="Undo"><v-icon icon="mdi-step-backward" /></a>
+										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === command['@id'] }">
+											<v-btn icon="mdi-undo" size="x-small" variant="elevated" color="primary" title="Undo" @click.stop="undo(command['@id'] as string)" />
+										</div>
 									</td>
 								</tr>
 								<tr v-if="journal.commands === null">
-									<td colspan="6"><LoadingState state="loading" /></td>
+									<td colspan="5"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="journal.commands && journal.commands.length === 0">
-									<td colspan="6"><i>None</i></td>
+									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
@@ -551,20 +616,6 @@ function blurOnEnter(event: KeyboardEvent) {
 
 					<!-- Buckets -->
 					<div v-show="section === 'buckets'">
-						<div v-if="!constraint" class="mb-2">
-							<v-text-field
-								prepend-inner-icon="mdi-magnify"
-								v-model="buckets.filter"
-								@keydown="blurOnEnter"
-								@blur="refreshBuckets({ offset: 0 })"
-								placeholder="@id, refresh"
-								variant="plain"
-								density="compact"
-								hide-details
-								clearable
-								@click:clear="() => { buckets.filter = null; refreshBuckets({ offset: 0 }) }"
-							/>
-						</div>
 						<v-table>
 							<thead>
 								<tr>
@@ -572,11 +623,10 @@ function blurOnEnter(event: KeyboardEvent) {
 									<th style="width: 99%">User</th>
 									<th style="width: 0">Created</th>
 									<th style="width: 0; text-align: right">Size</th>
-									<th style="width: 0"></th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="bucket in buckets.items" :key="bucket['@id'] as string">
+								<tr v-for="bucket in buckets.items" :key="bucket['@id'] as string" @contextmenu.prevent="onLongPress(bucket['@id'] as string)">
 									<td>
 										<span :class="bucket.aliases && (bucket.aliases as unknown[]).length ? 'bucket-virtual' : undefined">{{ bucket['@id'] }}</span>
 									</td>
@@ -586,12 +636,12 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td class="text-no-wrap">
 										<abbr :title="String(bucket.created)">{{ formatAge(bucket.created as string) }}</abbr>
 									</td>
-									<td style="text-align: right">
+									<td style="text-align: right; position: relative">
 										<a v-if="isPublished(bucket)" :href="`/#/buckets/${bucket['@id']}`">{{ bucket.size }}</a>
 										<span v-else>{{ formatNumber(bucket.size as number) }}</span>
-									</td>
-									<td style="text-align: right">
-										<a class="action" @click="removeBucket(bucket['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
+										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === bucket['@id'] }">
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="removeBucket(bucket['@id'] as string)" />
+										</div>
 									</td>
 								</tr>
 								<tr v-if="buckets.items?.length">
@@ -599,13 +649,12 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td></td>
 									<td></td>
 									<td style="text-align: right">{{ formatNumber(buckets.events) }}</td>
-									<td></td>
 								</tr>
 								<tr v-if="buckets.items === null">
-									<td colspan="5"><LoadingState state="loading" /></td>
+									<td colspan="4"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="buckets.items?.length === 0">
-									<td colspan="5"><i>None</i></td>
+									<td colspan="4"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
@@ -619,20 +668,6 @@ function blurOnEnter(event: KeyboardEvent) {
 
 					<!-- Users -->
 					<div v-show="section === 'users'">
-						<div v-if="!constraint" class="mb-2">
-							<v-text-field
-								prepend-inner-icon="mdi-magnify"
-								v-model="users.filter"
-								@keydown="blurOnEnter"
-								@blur="refreshUsers({ offset: 0 })"
-								placeholder="@id, name, email, verified, suspended, quota"
-								variant="plain"
-								density="compact"
-								hide-details
-								clearable
-								@click:clear="() => { users.filter = null; refreshUsers({ offset: 0 }) }"
-							/>
-						</div>
 						<v-table>
 							<thead>
 								<tr>
@@ -640,45 +675,62 @@ function blurOnEnter(event: KeyboardEvent) {
 									<th style="width: 99%">Email</th>
 									<th style="width: 0">Created</th>
 									<th style="width: 0; text-align: right">Quota</th>
-									<th style="width: 0"></th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="user in users.items" :key="user['@id'] as string">
+								<tr v-for="user in users.items" :key="user['@id'] as string" @contextmenu.prevent="onLongPress(user['@id'] as string)">
 									<td>
 										<a v-if="!user.suspended" @click="setConstraint(user['@id'] as string)" :class="user.superuser ? 'b' : undefined">{{ user.name }}</a>
 										<span v-else style="color: gray">{{ user.name }}</span>
 									</td>
 									<td>
 										<a :href="`mailto:${user.email}`">{{ user.email }}</a>
-										{{ ' ' }}
-										<a v-if="!user.optedout" title="Opt Out" @click="optoutUser(user)"><v-icon icon="mdi-email" /></a>
-										<a v-if="user.optedout" title="Opt In" @click="optinUser(user)"><v-icon icon="mdi-email-outline" /></a>
-										<a v-if="!user.verified" title="Resend Verification" @click="reverifyUser(user)"><v-icon icon="mdi-send" /></a>
 									</td>
 									<td class="text-no-wrap">
 										<abbr :title="String(user.created)">{{ formatAge(user.created as string) }}</abbr>
 									</td>
-									<td style="text-align: right" class="text-no-wrap">
-										<a class="action" @click="openEditQuota(user)" title="Edit Quota"><v-icon icon="mdi-pencil" /></a>
-										<span>{{ formatNumber(user.quota as number) }}</span>
-									</td>
-									<td style="text-align: right">
-										<a v-if="!user.suspended && !user.superuser" class="action" @click="suspendUser(user.name as string)" title="Suspend"><v-icon icon="mdi-cancel" /></a>
-										<a v-if="user.suspended" class="action" @click="removeUser(user.name as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
+									<td style="text-align: right; position: relative" class="text-no-wrap">
+										{{ formatNumber(user.quota as number) }}
+										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === user['@id'] }">
+											<v-btn
+												:icon="user.optedout ? 'mdi-email-outline' : 'mdi-email'"
+												size="x-small" variant="elevated" color="primary"
+												:title="user.optedout ? 'Opt In' : 'Opt Out'"
+												@click.stop="user.optedout ? optinUser(user) : optoutUser(user)"
+											/>
+											<v-btn
+												icon="mdi-send" size="x-small" variant="elevated" color="primary"
+												title="Resend Verification" :disabled="!!user.verified"
+												@click.stop="reverifyUser(user)"
+											/>
+											<v-btn
+												icon="mdi-pencil" size="x-small" variant="elevated" color="primary"
+												title="Edit Quota" @click.stop="openEditQuota(user)"
+											/>
+											<v-btn
+												v-if="!user.suspended"
+												icon="mdi-cancel" size="x-small" variant="elevated" color="primary"
+												title="Suspend" :disabled="!!user.superuser"
+												@click.stop="suspendUser(user.name as string)"
+											/>
+											<v-btn
+												v-else
+												icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary"
+												title="Delete"
+												@click.stop="removeUser(user.name as string)"
+											/>
+										</div>
 									</td>
 								</tr>
 								<tr v-if="users.items === null">
-									<td colspan="5"><LoadingState state="loading" /></td>
+									<td colspan="4"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="users.items?.length === 0">
-									<td colspan="5"><i>None</i></td>
+									<td colspan="4"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center" v-if="users.items?.length">
-							<v-btn icon variant="text" title="Download" @click="api.download('/users/', 'users.json')"><v-icon icon="mdi-download" /></v-btn>
-							<v-spacer />
+						<div class="d-flex align-center justify-end" v-if="users.items?.length">
 							<v-btn icon variant="text" title="Previous" @click="refreshUsers({ offset: users.offset - users.limit })" :disabled="users.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ users.offset + 1 }}</b>&ndash;<b>{{ users.offset + users.items.length }}</b> of <b>{{ formatNumber(users.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshUsers({ offset: users.offset + users.limit })" :disabled="users.offset + users.limit >= users.total"><v-icon icon="mdi-chevron-right" /></v-btn>
@@ -715,20 +767,6 @@ function blurOnEnter(event: KeyboardEvent) {
 
 					<!-- Credentials -->
 					<div v-show="section === 'credentials'">
-						<div v-if="!constraint" class="mb-2">
-							<v-text-field
-								prepend-inner-icon="mdi-magnify"
-								v-model="credentials.filter"
-								@keydown="blurOnEnter"
-								@blur="refreshCredentials({ offset: 0 })"
-								placeholder="@id, type, authorizationUrl"
-								variant="plain"
-								density="compact"
-								hide-details
-								clearable
-								@click:clear="() => { credentials.filter = null; refreshCredentials({ offset: 0 }) }"
-							/>
-						</div>
 						<v-table>
 							<thead>
 								<tr>
@@ -737,25 +775,26 @@ function blurOnEnter(event: KeyboardEvent) {
 									<th style="width: 99%">Type</th>
 									<th style="width: 0">Created</th>
 									<th style="width: 0">Authorized</th>
-									<th style="width: 0"></th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="credential in credentials.items" :key="credential['@id'] as string">
+								<tr v-for="credential in credentials.items" :key="credential['@id'] as string" @contextmenu.prevent="onLongPress(credential['@id'] as string)">
 									<td>{{ credential['@id'] }}</td>
 									<td><a @click="setConstraint(credential.principal as string)">{{ formatUsername(credential.principal as string) }}</a></td>
 									<td>{{ credential.type }}</td>
 									<td class="text-no-wrap"><abbr :title="String(credential.created)">{{ formatAge(credential.created as string) }}</abbr></td>
-									<td style="text-align: center">{{ !credential.authorizationUrl }}</td>
-									<td style="text-align: right">
-										<a class="action" @click="removeCredential(credential['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
+									<td style="text-align: center; position: relative">
+										{{ !credential.authorizationUrl }}
+										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === credential['@id'] }">
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="removeCredential(credential['@id'] as string)" />
+										</div>
 									</td>
 								</tr>
 								<tr v-if="credentials.items === null">
-									<td colspan="6"><LoadingState state="loading" /></td>
+									<td colspan="5"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="credentials.items?.length === 0">
-									<td colspan="6"><i>None</i></td>
+									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
@@ -768,20 +807,6 @@ function blurOnEnter(event: KeyboardEvent) {
 
 					<!-- Tasks -->
 					<div v-show="section === 'tasks'">
-						<div v-if="!constraint" class="mb-2">
-							<v-text-field
-								prepend-inner-icon="mdi-magnify"
-								v-model="tasks.filter"
-								@keydown="blurOnEnter"
-								@blur="refreshTasks({ offset: 0 })"
-								placeholder="@id, type, status, bucket, completed"
-								variant="plain"
-								density="compact"
-								hide-details
-								clearable
-								@click:clear="() => { tasks.filter = null; refreshTasks({ offset: 0 }) }"
-							/>
-						</div>
 						<v-table>
 							<thead>
 								<tr>
@@ -792,11 +817,10 @@ function blurOnEnter(event: KeyboardEvent) {
 									<th style="width: 0">Created</th>
 									<th style="width: 0">Completed</th>
 									<th style="width: 0">Status</th>
-									<th style="width: 0"></th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="task in tasks.items" :key="task['@id'] as string">
+								<tr v-for="task in tasks.items" :key="task['@id'] as string" @contextmenu.prevent="onLongPress(task['@id'] as string)">
 									<td>{{ task['@id'] }}</td>
 									<td><a @click="setConstraint(task.principal as string)">{{ formatUsername(task.principal as string) }}</a></td>
 									<td>{{ task.bucket }}</td>
@@ -807,17 +831,21 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td class="text-no-wrap">
 										<abbr :title="String(task.completed)">{{ formatAge(task.completed as string) }}</abbr>
 									</td>
-									<td>{{ task.status }}</td>
-									<td class="text-no-wrap" style="text-align: right">
-										<a class="action" @click="runTask(task['@id'] as string)"><v-icon icon="mdi-refresh" :class="tasks.running[task['@id'] as string] && 'mdi-spin'" title="Run" /></a>
-										<a class="action" @click="removeTask(task['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
+									<td style="position: relative">
+										{{ task.status }}
+										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === task['@id'] }">
+											<v-btn icon size="x-small" variant="elevated" color="primary" title="Run" @click.stop="runTask(task['@id'] as string)">
+												<v-icon icon="mdi-refresh" :class="tasks.running[task['@id'] as string] && 'mdi-spin'" />
+											</v-btn>
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="removeTask(task['@id'] as string)" />
+										</div>
 									</td>
 								</tr>
 								<tr v-if="tasks.items === null">
-									<td colspan="8"><LoadingState state="loading" /></td>
+									<td colspan="7"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="tasks.items?.length === 0">
-									<td colspan="8"><i>None</i></td>
+									<td colspan="7"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
@@ -852,10 +880,6 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center">
-							<v-btn v-if="status && !status.scheduler_disabled" icon variant="text" @click="disableScheduler(true)" title="Pause"><v-icon icon="mdi-pause" /></v-btn>
-							<v-btn v-if="status?.scheduler_disabled" icon variant="text" @click="disableScheduler(false)" title="Resume"><v-icon icon="mdi-play" /></v-btn>
-						</div>
 					</div>
 
 					<!-- Snapshots -->
@@ -867,38 +891,52 @@ function blurOnEnter(event: KeyboardEvent) {
 									<th style="width: 99%">State</th>
 									<th style="width: 0">Created</th>
 									<th style="width: 0; text-align: right">Duration</th>
-									<th style="width: 0"></th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="snapshot in snapshots.items" :key="snapshot['@id'] as string">
+								<tr v-for="snapshot in snapshots.items" :key="snapshot['@id'] as string" @contextmenu.prevent="onLongPress(snapshot['@id'] as string)">
 									<td>{{ snapshot['@id'] }}</td>
 									<td>{{ snapshot.state }}</td>
 									<td class="text-no-wrap">
 										<abbr :title="String(snapshot.created)">{{ formatAge(snapshot.created as string) }}</abbr>
 									</td>
-									<td style="text-align: right">{{ formatDuration(snapshot.duration as number) }}</td>
-									<td style="text-align: right">
-										<a class="action" @click="removeSnapshot(snapshot['@id'] as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
+									<td style="text-align: right; position: relative">
+										{{ formatDuration(snapshot.duration as number) }}
+										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === snapshot['@id'] }">
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Delete" @click.stop="removeSnapshot(snapshot['@id'] as string)" />
+										</div>
 									</td>
 								</tr>
 								<tr v-if="snapshots.items === null">
-									<td colspan="5"><LoadingState state="loading" /></td>
+									<td colspan="4"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="snapshots.items?.length === 0">
-									<td colspan="5"><i>None</i></td>
+									<td colspan="4"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
-						<div class="d-flex align-center">
-							<v-btn icon variant="text" @click="createSnapshot()" :disabled="snapshots.snapshotting" title="Snapshot"><v-icon icon="mdi-camera" /></v-btn>
-							<v-spacer />
-							<v-btn icon variant="text" title="Previous" v-if="snapshots.items?.length" @click="refreshSnapshots({ offset: snapshots.offset - snapshots.limit })" :disabled="snapshots.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
-							<span style="color: rgba(0,0,0,0.5)" v-if="snapshots.items?.length"><b>{{ snapshots.offset + 1 }}</b>&ndash;<b>{{ snapshots.offset + snapshots.items.length }}</b> of <b>{{ formatNumber(snapshots.total) }}</b></span>
-							<v-btn icon variant="text" title="Next" v-if="snapshots.items?.length" @click="refreshSnapshots({ offset: snapshots.offset + snapshots.limit })" :disabled="snapshots.offset + snapshots.limit >= snapshots.total"><v-icon icon="mdi-chevron-right" /></v-btn>
+						<div class="d-flex align-center justify-end" v-if="snapshots.items?.length">
+							<v-btn icon variant="text" title="Previous" @click="refreshSnapshots({ offset: snapshots.offset - snapshots.limit })" :disabled="snapshots.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ snapshots.offset + 1 }}</b>&ndash;<b>{{ snapshots.offset + snapshots.items.length }}</b> of <b>{{ formatNumber(snapshots.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" @click="refreshSnapshots({ offset: snapshots.offset + snapshots.limit })" :disabled="snapshots.offset + snapshots.limit >= snapshots.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
 					</div>
 
 		</div>
 	</div>
 </template>
+
+<style>
+.admin-toolbar-search .v-field__field {
+	align-items: center;
+}
+.admin-toolbar-search .v-field__input {
+	padding-top: 0;
+	padding-bottom: 0;
+	min-height: auto;
+}
+.admin-toolbar-search .v-field__prepend-inner {
+	padding-top: 0;
+	align-items: center;
+}
+</style>
