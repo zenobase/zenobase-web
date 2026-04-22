@@ -188,3 +188,52 @@ const api = {
 
 export default api;
 export { ApiError };
+
+// --- Sessions ---
+
+export interface Session {
+	id: string;
+	userAgent: string | null;
+	ip: string | null;
+	createdAt: string;
+	lastActiveAt: string | null;
+	current?: boolean;
+}
+
+export interface AdminSession extends Session {
+	userId: string;
+	username: string;
+}
+
+export interface AdminSessionListParams {
+	user?: string | null;
+	offset?: number;
+	limit?: number;
+}
+
+export async function listSessions(username: string): Promise<Session[]> {
+	const response = await api.get<{ sessions: Session[] }>(`/users/@${encodeURIComponent(username)}/sessions/`);
+	return response.data.sessions;
+}
+
+export async function revokeSession(username: string, sessionId: string): Promise<void> {
+	await api.del(`/users/@${encodeURIComponent(username)}/sessions/${encodeURIComponent(sessionId)}`);
+}
+
+export async function adminRevokeSession(usernameOrId: string, sessionId: string): Promise<void> {
+	await api.del(`/users/${usernameOrId}/sessions/${encodeURIComponent(sessionId)}`);
+}
+
+export async function adminRevokeAllSessions(usernameOrId: string): Promise<void> {
+	await api.del(`/users/${usernameOrId}/sessions/`);
+}
+
+export async function adminListSessions(params: AdminSessionListParams = {}): Promise<{ total: number; sessions: AdminSession[] }> {
+	const query = new URLSearchParams();
+	if (params.user) query.append('user', params.user);
+	if (typeof params.offset === 'number') query.append('offset', String(params.offset));
+	if (typeof params.limit === 'number') query.append('limit', String(params.limit));
+	const qs = query.toString();
+	const response = await api.get<{ total: number; sessions: AdminSession[] }>(qs ? `/sessions/?${qs}` : '/sessions/');
+	return response.data;
+}

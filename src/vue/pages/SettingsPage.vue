@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch } from 'vue';
 import { param } from '../../utils/helpers';
-import api from '../api';
+import api, { listSessions, revokeSession, type Session } from '../api';
 import LoadingState from '../components/LoadingState.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { formatDuration } from '../utils/eventFormatter';
+import { formatAge } from '../utils/formatAge';
+import { parseUserAgent } from '../utils/parseUserAgent';
 
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
@@ -121,9 +123,57 @@ function onRowLongPress(id: string) {
 	setTimeout(() => { longPressedRowId.value = null; }, 3000);
 }
 
+// Sessions
+const sessions = ref<Session[] | null>(null);
+const revokeTarget = ref<Session | null>(null);
+const revokeDialog = ref(false);
+const revoking = ref(false);
+
+function describeDevice(s: Session): string {
+	const { browser, os } = parseUserAgent(s.userAgent);
+	return `${browser} on ${os}`;
+}
+
+async function loadSessions() {
+	try {
+		const username = auth.user.value?.name;
+		sessions.value = username ? await listSessions(username) : [];
+	} catch {
+		sessions.value = [];
+	}
+}
+
+function askRevokeSession(s: Session) {
+	revokeTarget.value = s;
+	revokeDialog.value = true;
+}
+
+async function confirmRevokeSession() {
+	const target = revokeTarget.value;
+	if (!target) return;
+	alertApi.clear();
+	revoking.value = true;
+	const previous = sessions.value;
+	// optimistic removal
+	sessions.value = previous ? previous.filter((s) => s.id !== target.id) : previous;
+	try {
+		await revokeSession(auth.user.value!.name as string, target.id);
+		alertApi.show('Sign-out requested \u2014 may take a moment.', 'success', '');
+	} catch {
+		// restore on failure
+		sessions.value = previous;
+		alertApi.show("Couldn't revoke session. Try again later or contact support.", 'error');
+	} finally {
+		revoking.value = false;
+		revokeDialog.value = false;
+		revokeTarget.value = null;
+	}
+}
+
 function refresh() {
 	loadQuota();
 	loadCredentials();
+	loadSessions();
 }
 
 watch(
@@ -131,7 +181,7 @@ watch(
 	async () => {
 		if (!auth.user.value?.name) return;
 		settingsEmail.value = (auth.user.value as typeof auth.user.value & { email?: string }).email || '';
-		await Promise.all([loadQuota(), loadCredentials()]);
+		await Promise.all([loadQuota(), loadCredentials(), loadSessions()]);
 	},
 	{ immediate: true },
 );
@@ -188,10 +238,10 @@ watch(
 				<v-card-title>Credentials</v-card-title>
 				<v-card-subtitle>You have granted Zenobase access to data in these services</v-card-subtitle>
 				<v-card-text>
-					<v-table>
+					<LoadingState v-if="credentials === null" state="loading" />
+					<p v-else-if="credentials.length === 0"><i>None</i></p>
+					<v-table v-else>
 						<tbody>
-							<tr v-if="credentials === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
-							<tr v-else-if="credentials.length === 0"><td colspan="2"><i>None</i></td></tr>
 							<tr v-for="c in credentials" :key="c['@id']" class="credentials-row" @contextmenu.prevent="onRowLongPress(c['@id'])">
 								<td><span :class="{ 'credentials-invalid': c.authorizationUrl }">{{ c.type }}</span></td>
 								<td style="text-align: right; position: relative; overflow: visible">
@@ -210,6 +260,55 @@ watch(
 					<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="() => { credOffset += credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-right" /></v-btn>
 				</v-card-actions>
 			</v-card>
+
+			<!-- Sessions -->
+			<v-card variant="elevated" elevation="1" class="mb-6">
+				<v-card-title>Sessions</v-card-title>
+				<v-card-subtitle>Browsers and apps signed in to your account. Revocations may take a moment to take effect.</v-card-subtitle>
+				<v-card-text>
+					<LoadingState v-if="sessions === null" state="loading" />
+					<p v-else-if="sessions.length === 0"><i>None</i></p>
+					<v-table v-else>
+						<thead>
+							<tr>
+								<th style="width: 99%">Device</th>
+								<th style="width: 0" class="text-no-wrap">IP</th>
+								<th style="width: 0" class="text-no-wrap">Created</th>
+								<th style="width: 0" class="text-no-wrap">Last active</th>
+								<th style="width: 0"></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="s in sessions" :key="s.id">
+								<td>{{ describeDevice(s) }}</td>
+								<td>{{ s.ip || '' }}</td>
+								<td class="text-no-wrap"><abbr :title="s.createdAt || ''">{{ formatAge(s.createdAt) }}</abbr></td>
+								<td class="text-no-wrap"><abbr :title="s.lastActiveAt || ''">{{ formatAge(s.lastActiveAt) }}</abbr></td>
+								<td style="text-align: right">
+									<span v-if="s.current" class="text-medium-emphasis">This device</span>
+									<v-btn v-else icon="mdi-logout" size="small" variant="elevated" color="error" title="Revoke" @click="askRevokeSession(s)" />
+								</td>
+							</tr>
+						</tbody>
+					</v-table>
+				</v-card-text>
+			</v-card>
+
+			<v-dialog v-model="revokeDialog" max-width="400">
+				<v-card v-if="revokeTarget">
+					<v-card-title>Revoke session?</v-card-title>
+					<v-card-text>
+						<p class="mb-2">Sign this device out:</p>
+						<p class="text-body-2"><b>{{ describeDevice(revokeTarget) }}</b></p>
+						<p class="text-body-2" v-if="revokeTarget.ip">{{ revokeTarget.ip }}</p>
+					</v-card-text>
+					<v-card-actions>
+						<v-spacer />
+						<v-btn variant="text" @click="revokeDialog = false" :disabled="revoking">Cancel</v-btn>
+						<v-btn color="error" @click="confirmRevokeSession()" :loading="revoking">Revoke</v-btn>
+					</v-card-actions>
+				</v-card>
+			</v-dialog>
 
 			<!-- API token -->
 			<v-card variant="elevated" elevation="1" class="mb-6">

@@ -65,9 +65,43 @@ export function useAuth() {
 	}
 
 	async function signOut(): Promise<void> {
+		console.log('[auth] sign-out requested');
+		const token = api.getToken();
+		const claims = token ? decodeClaims(token) : null;
+		const sid = claims?.sid ?? null;
+		// Fall back to the JWT's username claim if user.value has been cleared (e.g. after a 401),
+		// so we still revoke the session server-side instead of orphaning its refresh token.
+		const username = user.value?.name ?? claims?.username ?? null;
+		if (sid && username) {
+			try {
+				await api.del(`/users/@${encodeURIComponent(username)}/sessions/${encodeURIComponent(sid)}`);
+				console.log('[auth] current session revoked');
+			} catch (e) {
+				// don't block logout on a revoke failure
+				console.warn('[auth] current-session revoke failed; continuing with logout', e);
+			}
+		} else {
+			console.log('[auth] skipping current-session revoke', { hasSid: !!sid, hasUsername: !!username });
+		}
 		api.setToken(null);
 		user.value = null;
 		await authClient.logout();
+	}
+
+	function decodeClaims(jwt: string): { sid: string | null; username: string | null } | null {
+		try {
+			const parts = jwt.split('.');
+			if (parts.length < 2) return null;
+			const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+			const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+			const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+			const sid = typeof payload.sid === 'string' ? payload.sid : null;
+			const usernameClaim = payload['https://zenobase.com/username'];
+			const username = typeof usernameClaim === 'string' ? usernameClaim : null;
+			return { sid, username };
+		} catch {
+			return null;
+		}
 	}
 
 	async function handleCallback(): Promise<void> {

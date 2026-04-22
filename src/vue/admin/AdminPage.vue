@@ -3,9 +3,10 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { AdminBucket, AdminTask, AdminUser, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
 import { param } from '../../utils/helpers';
-import api, { ApiError } from '../api';
+import api, { type AdminSession, ApiError, adminListSessions, adminRevokeAllSessions, adminRevokeSession } from '../api';
 import LoadingState from '../components/LoadingState.vue';
 import { formatAge } from '../utils/formatAge';
+import { parseUserAgent } from '../utils/parseUserAgent';
 
 const route = useRoute();
 const router = useRouter();
@@ -363,6 +364,66 @@ async function removeTask(taskId: string) {
 	delay(() => refreshAll());
 }
 
+// --- Sessions ---
+
+const sessions = reactive({
+	offset: 0,
+	limit: 10,
+	total: 0,
+	items: null as AdminSession[] | null,
+	filter: null as string | null,
+});
+
+function sessionParams(overrides?: Partial<PaginationParams>) {
+	const params: PaginationParams = { offset: sessions.offset, limit: sessions.limit };
+	if (sessions.filter) params.q = sessions.filter;
+	return { ...params, ...overrides };
+}
+
+async function refreshSessions(overrides?: Partial<PaginationParams>) {
+	const effective = { ...sessionParams(overrides) };
+	if (overrides) Object.assign(sessions, overrides);
+	const user = constraint.value || sessions.filter || null;
+	const response = await adminListSessions({ user, offset: effective.offset, limit: effective.limit });
+	sessions.total = response.total;
+	sessions.items = response.sessions;
+	resolveUserNames(response.sessions.map((s) => s.userId));
+}
+
+function describeDevice(s: AdminSession): string {
+	const { browser, os } = parseUserAgent(s.userAgent);
+	return `${browser} on ${os}`;
+}
+
+async function removeSession(s: AdminSession) {
+	if (!window.confirm(`Revoke this session for ${s.username || s.userId}?`)) return;
+	try {
+		await adminRevokeSession(s.userId, s.id);
+		delay(() => refreshSessions({}));
+	} catch (e) {
+		if (e instanceof ApiError && e.status < 500) {
+			alert("Couldn't revoke session.");
+		} else {
+			alert("Couldn't revoke session. Try again later or contact support.");
+		}
+	}
+}
+
+async function revokeAllSessions(username: string) {
+	if (!window.confirm(`Sign out ALL sessions for @${username}? This cannot be undone.`)) return;
+	try {
+		await adminRevokeAllSessions(`@${username}`);
+		alert('Sign-out requested for all sessions. May take a moment to take effect.');
+		delay(() => refreshAll());
+	} catch (e) {
+		if (e instanceof ApiError && e.status < 500) {
+			alert("Couldn't revoke sessions.");
+		} else {
+			alert("Couldn't revoke sessions. Try again later or contact support.");
+		}
+	}
+}
+
 // --- Scheduler ---
 
 const scheduler = reactive({
@@ -424,6 +485,7 @@ function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
 		case 'buckets': return refreshBuckets(overrides);
 		case 'users': return refreshUsers(overrides);
 		case 'credentials': return refreshCredentials(overrides);
+		case 'sessions': return refreshSessions(overrides);
 		case 'tasks': return refreshTasks(overrides);
 		case 'scheduler': return refreshScheduler();
 		case 'snapshots': return refreshSnapshots(overrides);
@@ -663,7 +725,8 @@ function blurOnEnter(event: KeyboardEvent) {
 										<a class="action" @click="openEditQuota(user)" title="Edit Quota"><v-icon icon="mdi-pencil" /></a>
 										<span>{{ formatNumber(user.quota as number) }}</span>
 									</td>
-									<td style="text-align: right">
+									<td style="text-align: right" class="text-no-wrap">
+										<a class="action" @click="revokeAllSessions(user.name as string)" title="Revoke all sessions"><v-icon icon="mdi-logout" /></a>
 										<a v-if="!user.suspended && !user.superuser" class="action" @click="suspendUser(user.name as string)" title="Suspend"><v-icon icon="mdi-cancel" /></a>
 										<a v-if="user.suspended" class="action" @click="removeUser(user.name as string)" title="Delete"><v-icon icon="mdi-delete-outline" /></a>
 									</td>
@@ -763,6 +826,59 @@ function blurOnEnter(event: KeyboardEvent) {
 							<v-btn icon variant="text" title="Previous" @click="refreshCredentials({ offset: credentials.offset - credentials.limit })" :disabled="credentials.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ credentials.offset + 1 }}</b>&ndash;<b>{{ credentials.offset + credentials.items.length }}</b> of <b>{{ formatNumber(credentials.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshCredentials({ offset: credentials.offset + credentials.limit })" :disabled="credentials.offset + credentials.limit >= credentials.total"><v-icon icon="mdi-chevron-right" /></v-btn>
+						</div>
+					</div>
+
+					<!-- Sessions -->
+					<div v-show="section === 'sessions'">
+						<div v-if="!constraint" class="mb-2">
+							<v-text-field
+								prepend-inner-icon="mdi-magnify"
+								v-model="sessions.filter"
+								@keydown="blurOnEnter"
+								@blur="refreshSessions({ offset: 0 })"
+								placeholder="@username"
+								variant="plain"
+								density="compact"
+								hide-details
+								clearable
+								@click:clear="() => { sessions.filter = null; refreshSessions({ offset: 0 }) }"
+							/>
+						</div>
+						<v-table>
+							<thead>
+								<tr>
+									<th style="width: 0">User</th>
+									<th style="width: 99%">Device</th>
+									<th style="width: 0" class="text-no-wrap">IP</th>
+									<th style="width: 0" class="text-no-wrap">Created</th>
+									<th style="width: 0" class="text-no-wrap">Last active</th>
+									<th style="width: 0"></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="s in sessions.items" :key="s.id">
+									<td><a @click="setConstraint(s.userId)">{{ s.username || formatUsername(s.userId) }}</a></td>
+									<td>{{ describeDevice(s) }}</td>
+									<td>{{ s.ip || '' }}</td>
+									<td class="text-no-wrap"><abbr :title="s.createdAt || ''">{{ formatAge(s.createdAt) }}</abbr></td>
+									<td class="text-no-wrap"><abbr :title="s.lastActiveAt || ''">{{ formatAge(s.lastActiveAt) }}</abbr></td>
+									<td style="text-align: right">
+										<a class="action" @click="removeSession(s)" title="Revoke"><v-icon icon="mdi-logout" /></a>
+									</td>
+								</tr>
+								<tr v-if="sessions.items === null">
+									<td colspan="6"><LoadingState state="loading" /></td>
+								</tr>
+								<tr v-if="sessions.items?.length === 0">
+									<td colspan="6"><i>None</i></td>
+								</tr>
+							</tbody>
+						</v-table>
+						<div class="d-flex align-center justify-end" v-if="sessions.items?.length">
+							<v-btn icon variant="text" title="Previous" @click="refreshSessions({ offset: sessions.offset - sessions.limit })" :disabled="sessions.offset <= 0"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ sessions.offset + 1 }}</b>&ndash;<b>{{ sessions.offset + sessions.items.length }}</b> of <b>{{ formatNumber(sessions.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" @click="refreshSessions({ offset: sessions.offset + sessions.limit })" :disabled="sessions.offset + sessions.limit >= sessions.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
 					</div>
 
