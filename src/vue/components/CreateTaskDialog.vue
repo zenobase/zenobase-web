@@ -7,6 +7,9 @@ import { getNumericFieldNames, getUnitsForField, TIMESTAMP_SUBFIELDS } from '../
 const props = defineProps<{
 	bucketId: string;
 	modelValue: boolean;
+	// Optional task type id (e.g. "google-health-steps") to pre-select when the dialog opens. Used when the Create
+	// Bucket flow picked a template that names a task — we bring the user straight to the settings step.
+	preselectType?: string;
 }>();
 
 const emit = defineEmits<{
@@ -66,99 +69,6 @@ const types: TaskType[] = [
 		fields: [{ key: 'tag', label: 'Tag', type: 'text', default: 'demo', required: true }],
 	},
 	{
-		id: 'fitbit-activities',
-		description: 'Creates an event for each activity.',
-		url: 'https://www.fitbit.com/',
-		fields: [
-			{ key: 'autodetected', label: '', type: 'checkbox', default: false, checkboxLabel: 'include autodetected activities' },
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
-		],
-	},
-	{
-		id: 'fitbit-burn',
-		description: 'Creates an event for the number of calories burned each day or hour.',
-		url: 'https://www.fitbit.com/',
-		fields: [
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'burn', required: true },
-			{
-				key: 'hourly',
-				label: 'Interval',
-				type: 'radio',
-				default: false,
-				options: [
-					{ value: false, label: 'day' },
-					{ value: true, label: 'hour' },
-				],
-			},
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
-		],
-	},
-	{
-		id: 'fitbit-cardio',
-		description: 'Creates an event for the daily resting heart rate, or the average hourly heart rate.',
-		url: 'https://www.fitbit.com/',
-		fields: [
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'heart rate', required: true },
-			{
-				key: 'hourly',
-				label: 'Interval',
-				type: 'radio',
-				default: false,
-				options: [
-					{ value: false, label: 'day (resting heart rate)' },
-					{ value: true, label: 'hour (average)' },
-				],
-			},
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
-		],
-	},
-	{
-		id: 'fitbit-food',
-		description: 'Creates an event for the number of calories consumed each day.',
-		url: 'https://www.fitbit.com/',
-		fields: [
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'food', required: true },
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-12' },
-		],
-	},
-	{
-		id: 'fitbit-sleep',
-		description: 'Creates an event for each period of sleep.',
-		url: 'https://www.fitbit.com/',
-		fields: [
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'sleep', required: true },
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
-		],
-	},
-	{
-		id: 'fitbit-steps',
-		description: 'Creates an event for the number of steps each day or hour.',
-		url: 'https://www.fitbit.com/',
-		fields: [
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'steps', required: true },
-			{
-				key: 'hourly',
-				label: 'Interval',
-				type: 'radio',
-				default: false,
-				options: [
-					{ value: false, label: 'day (steps, distance, elevation gain and calories burned)' },
-					{ value: true, label: 'hour (steps only)' },
-				],
-			},
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
-		],
-	},
-	{
-		id: 'fitbit-weight',
-		description: 'Creates an event for the body weight each day.',
-		url: 'https://www.fitbit.com/',
-		fields: [
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'body', required: true },
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
-		],
-	},
-	{
 		id: 'foursquare',
 		description: 'Creates an event for each place visited.',
 		url: 'https://foursquare.com/',
@@ -175,21 +85,11 @@ const types: TaskType[] = [
 		],
 	},
 	{
-		id: 'google-activities',
-		description: 'Creates an event for each activity.',
-		url: 'https://fit.google.com/',
+		id: 'google-health-activities',
+		description: 'Creates an event for each exercise session recorded in Google Health.',
+		url: 'https://health.google/',
 		fields: [
 			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
-			{
-				key: 'derived',
-				label: 'Include',
-				type: 'radio',
-				default: false,
-				options: [
-					{ value: true, label: 'all activities' },
-					{ value: false, label: 'exercise sessions only' },
-				],
-			},
 			{
 				key: 'metric',
 				label: 'Units',
@@ -204,37 +104,147 @@ const types: TaskType[] = [
 		],
 	},
 	{
-		id: 'google-cardio',
-		description: 'Creates an event for each heart rate measurement.',
-		url: 'https://fit.google.com/',
+		id: 'google-health-burn',
+		description: 'Creates an event for the number of calories burned each day or hour.',
+		url: 'https://health.google/',
 		fields: [
 			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'Heart Rate', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'burn', required: true },
+			{
+				key: 'hourly',
+				label: 'Interval',
+				type: 'radio',
+				default: false,
+				options: [
+					{ value: false, label: 'day' },
+					{ value: true, label: 'hour' },
+				],
+			},
+			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
+		],
+	},
+	{
+		id: 'google-health-cardio',
+		description: 'Creates an event for the daily resting heart rate, or the hourly heart rate.',
+		url: 'https://health.google/',
+		fields: [
+			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'heart rate', required: true },
+			{
+				key: 'hourly',
+				label: 'Interval',
+				type: 'radio',
+				default: false,
+				options: [
+					{ value: false, label: 'day (resting heart rate)' },
+					{ value: true, label: 'hour' },
+				],
+			},
+			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
+		],
+	},
+	{
+		id: 'google-health-food',
+		description: 'Creates an event for each nutrition entry.',
+		url: 'https://health.google/',
+		fields: [
+			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'food', required: true },
 			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-12' },
 		],
 	},
 	{
-		id: 'google-food',
-		description: 'Creates an event for each number of calories consumed that was recorded.',
-		url: 'https://fit.google.com/',
+		id: 'google-health-hrv',
+		description: 'Creates an event for the daily heart rate variability (RMSSD).',
+		url: 'https://health.google/',
 		fields: [
 			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'Food', required: true },
-			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-12' },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'hrv', required: true },
+			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
 		],
 	},
 	{
-		id: 'google-weight',
-		description: 'Creates an event for each body weight measurement.',
-		url: 'https://fit.google.com/',
+		id: 'google-health-respiratory',
+		description: 'Creates an event for each respiratory rate measurement.',
+		url: 'https://health.google/',
 		fields: [
 			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
-			{ key: 'tag', label: 'Tag', type: 'text', default: 'Weight', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'respiration', required: true },
+			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
+		],
+	},
+	{
+		id: 'google-health-sleep',
+		description: 'Creates an event for each period of sleep.',
+		url: 'https://health.google/',
+		fields: [
+			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'sleep', required: true },
+			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
+		],
+	},
+	{
+		id: 'google-health-spo2',
+		description: 'Creates an event for the daily oxygen saturation.',
+		url: 'https://health.google/',
+		fields: [
+			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'spo2', required: true },
+			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
+		],
+	},
+	{
+		id: 'google-health-steps',
+		description: 'Creates an event for the number of steps each day or hour.',
+		url: 'https://health.google/',
+		fields: [
+			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'steps', required: true },
+			{
+				key: 'hourly',
+				label: 'Interval',
+				type: 'radio',
+				default: false,
+				options: [
+					{ value: false, label: 'day' },
+					{ value: true, label: 'hour' },
+				],
+			},
+			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
+		],
+	},
+	{
+		id: 'google-health-temperature',
+		description: 'Creates an event for the nightly skin temperature derivation.',
+		url: 'https://health.google/',
+		fields: [
+			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'temperature', required: true },
 			{
 				key: 'metric',
 				label: 'Units',
 				type: 'radio',
-				default: false,
+				default: true,
+				options: [
+					{ value: true, label: 'Celsius' },
+					{ value: false, label: 'Fahrenheit' },
+				],
+			},
+			{ key: 'marker', label: 'Starting from', type: 'date', default: 'months-3' },
+		],
+	},
+	{
+		id: 'google-health-weight',
+		description: 'Creates an event for each body weight and body fat measurement.',
+		url: 'https://health.google/',
+		fields: [
+			{ key: 'timezone', label: 'Timezone', type: 'select', default: null, options: 'timezone', required: true },
+			{ key: 'tag', label: 'Tag', type: 'text', default: 'weight', required: true },
+			{
+				key: 'metric',
+				label: 'Units',
+				type: 'radio',
+				default: true,
 				options: [
 					{ value: true, label: 'metric' },
 					{ value: false, label: 'imperial' },
@@ -496,8 +506,10 @@ function initSettings(taskType: TaskType) {
 
 function init() {
 	message.value = '';
-	selectedType.value = types[0];
-	initSettings(types[0]);
+	const preselected = props.preselectType ? types.find((t) => t.id === props.preselectType) : undefined;
+	const initial = preselected ?? types[0];
+	selectedType.value = initial;
+	initSettings(initial);
 }
 
 watch(

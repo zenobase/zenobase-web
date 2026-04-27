@@ -112,7 +112,9 @@ interface BucketTemplate {
 	category: string;
 	label?: string;
 	widgets: WidgetSettings[];
-	task?: Record<string, unknown>;
+	// Task type identifier (e.g. "google-health-steps") that the dashboard opens a pre-filled CreateTaskDialog for
+	// after the bucket is created, so the user can finish the task's settings (timezone, marker, etc.).
+	task?: string;
 	importer?: Record<string, unknown>;
 }
 const templates = ref<BucketTemplate[]>([]);
@@ -169,9 +171,6 @@ async function createBucket() {
 		const template = selectedTemplate.value;
 		const widgets = template ? template.widgets : [];
 		const payload: Record<string, unknown> = { label: newBucketLabel.value, widgets };
-		if (template?.task) {
-			payload.task = template.task;
-		}
 		if (template?.importer) {
 			payload.importer = template.importer;
 		}
@@ -179,7 +178,10 @@ async function createBucket() {
 		showCreateBucket.value = false;
 		const location = response.headers('Location');
 		if (location) {
-			window.location.hash = `#${location}`;
+			// When the template specifies a task type, carry it as a query param so the dashboard opens a
+			// pre-selected CreateTaskDialog for the user to finish filling in (timezone, marker, etc.).
+			const suffix = template?.task ? `?createTask=${encodeURIComponent(template.task)}` : '';
+			window.location.hash = `#${location}${suffix}`;
 		}
 		await loadBuckets();
 	} catch (e: unknown) {
