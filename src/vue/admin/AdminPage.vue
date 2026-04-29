@@ -165,6 +165,13 @@ async function removeBucket(bucketId: string) {
 
 // --- Users ---
 
+const AUTH0_TENANT_URL = (import.meta.env.VITE_AUTH0_TENANT_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+
+function auth0UserUrl(user: AdminUser): string | null {
+	if (!AUTH0_TENANT_URL || !user.external_id) return null;
+	return `${AUTH0_TENANT_URL}/users/${encodeURIComponent(user.external_id)}`;
+}
+
 const users = reactive({
 	offset: 0,
 	limit: 10,
@@ -709,6 +716,16 @@ function blurOnEnter(event: KeyboardEvent) {
 											title="Verified"
 											class="ml-1"
 										/>
+										<a
+											v-if="auth0UserUrl(user)"
+											:href="auth0UserUrl(user)!"
+											target="_blank"
+											rel="noopener"
+											title="Open in Auth0"
+											class="ml-1"
+										>
+											<v-icon icon="mdi-open-in-new" size="x-small" />
+										</a>
 									</td>
 									<td class="text-no-wrap">
 										<abbr :title="String(user.created)">{{ formatAge(user.created as string) }}</abbr>

@@ -2,6 +2,7 @@ export interface AdminUser {
 	'@id': string;
 	name?: string;
 	email?: string;
+	external_id?: string;
 	verified?: boolean;
 	suspended?: boolean;
 	optedout?: boolean;
