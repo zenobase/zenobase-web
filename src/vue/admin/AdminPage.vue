@@ -202,11 +202,6 @@ async function suspendUser(username: string) {
 	delay(() => refreshAll());
 }
 
-async function reverifyUser(user: AdminUser) {
-	await api.post(`/users/@${user.name}`, { email: user.email });
-	delay(() => refreshAll());
-}
-
 async function optoutUser(user: AdminUser) {
 	await api.post(`/users/@${user.name}`, { optedout: true });
 	delay(() => refreshAll());
@@ -706,6 +701,14 @@ function blurOnEnter(event: KeyboardEvent) {
 									</td>
 									<td>
 										<a :href="`mailto:${user.email}`">{{ user.email }}</a>
+										<v-icon
+											v-if="user.verified"
+											icon="mdi-check"
+											size="x-small"
+											color="success"
+											title="Verified"
+											class="ml-1"
+										/>
 									</td>
 									<td class="text-no-wrap">
 										<abbr :title="String(user.created)">{{ formatAge(user.created as string) }}</abbr>
@@ -720,11 +723,6 @@ function blurOnEnter(event: KeyboardEvent) {
 												@click.stop="user.optedout
 													? confirmAction('Opt user in', `Opt ${user.name} back into emails?`, () => optinUser(user))
 													: confirmAction('Opt user out', `Opt ${user.name} out of emails?`, () => optoutUser(user))"
-											/>
-											<v-btn
-												icon="mdi-send" size="x-small" variant="elevated" color="primary"
-												title="Resend Verification" :disabled="!!user.verified"
-												@click.stop="confirmAction('Resend verification', `Resend the verification email to ${user.email}?`, () => reverifyUser(user))"
 											/>
 											<v-btn
 												icon="mdi-pencil" size="x-small" variant="elevated" color="primary"
