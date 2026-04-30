@@ -1,5 +1,6 @@
 .claude/
 .idea/
 .playwright-mcp/
+.pnpm-store/
 node_modules/
 dist/
