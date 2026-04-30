@@ -991,7 +991,8 @@ function blurOnEnter(event: KeyboardEvent) {
 	padding-bottom: 0;
 	min-height: auto;
 }
-.admin-toolbar-search .v-field__prepend-inner {
+.admin-toolbar-search .v-field__prepend-inner,
+.admin-toolbar-search .v-field__clearable {
 	padding-top: 0;
 	align-items: center;
 }
