@@ -3,6 +3,11 @@
 	"html": {
 		"experimentalFullSupportEnabled": true
 	},
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
 	"files": {
 		"includes": ["src/**/*.{js,ts,vue}", "vite.config.js"]
 	},
