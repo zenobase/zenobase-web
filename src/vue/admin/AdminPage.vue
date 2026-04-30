@@ -186,6 +186,12 @@ function userParams(overrides?: Partial<PaginationParams>) {
 	return { ...params, ...overrides };
 }
 
+function downloadUsers() {
+	const params: Record<string, string | number> = { limit: 2147483647 };
+	if (users.filter) params.q = users.filter;
+	return api.download('/users/?' + param(params), 'users.csv');
+}
+
 async function refreshUsers(overrides?: Partial<PaginationParams>) {
 	if (constraint.value) {
 		const response = await api.get<AdminUser>('/users/' + constraint.value);
@@ -549,7 +555,7 @@ function blurOnEnter(event: KeyboardEvent) {
 					<v-icon icon="mdi-lock-open" />
 				</v-btn>
 			</template>
-			<v-btn v-if="section === 'users'" icon size="small" variant="text" title="Download" @click="api.download('/users/', 'users.json')" style="--v-btn-size: 1rem">
+			<v-btn v-if="section === 'users'" icon size="small" variant="text" title="Download" @click="downloadUsers()" style="--v-btn-size: 1rem">
 				<v-icon icon="mdi-download" />
 			</v-btn>
 			<template v-if="section === 'scheduler'">
