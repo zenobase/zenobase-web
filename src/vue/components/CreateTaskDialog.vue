@@ -11,7 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	'update:modelValue': [value: boolean];
-	created: [];
+	created: [taskId: string];
 }>();
 
 const alertApi = inject<AlertApi>(alertKey)!;
@@ -517,13 +517,13 @@ async function create() {
 		}
 	}
 	try {
-		await api.post('/tasks/', {
+		const response = await api.post<{ '@id': string }>('/tasks/', {
 			type: selectedType.value.id,
 			bucket: props.bucketId,
 			settings: Object.keys(filteredSettings).length > 0 ? filteredSettings : undefined,
 		});
 		close();
-		emit('created');
+		emit('created', response.data['@id']);
 	} catch {
 		message.value = "Couldn't create task. Try again later or contact support.";
 	}

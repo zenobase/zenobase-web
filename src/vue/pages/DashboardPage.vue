@@ -351,8 +351,9 @@ function onImported() {
 	setTimeout(() => { dashboard.refresh(); reloadBuckets(); }, 1000);
 }
 
-function onTaskCreated() {
-	// After creating a task, could refresh or reopen the task list
+async function onTaskCreated(taskId: string) {
+	await runTask(taskId);
+	setTimeout(() => { dashboard.refresh(); reloadBuckets(); }, 1000);
 }
 
 function openCreateTaskFromList() {
