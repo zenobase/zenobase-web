@@ -71,10 +71,10 @@ function next() {
 }
 
 async function remove(taskId: string) {
+	deleting[taskId] = true;
 	message.value = '';
 	try {
 		await api.del(`/tasks/${taskId}`);
-		setTimeout(() => refresh(), 500);
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
@@ -82,9 +82,15 @@ async function remove(taskId: string) {
 		} else {
 			message.value = "Couldn't delete the task. Try again later or contact support.";
 		}
+	} finally {
+		setTimeout(() => {
+			refresh();
+			delete deleting[taskId];
+		}, 1000);
 	}
 }
 
+const deleting = reactive<Record<string, boolean>>({});
 const running = reactive<Record<string, boolean>>({});
 
 async function runTask(taskId: string) {
@@ -208,7 +214,7 @@ watch(
 							<td class="text-right" style="position: relative; overflow: visible">
 								<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === task['@id'] }">
 									<v-btn icon="mdi-play" size="small" variant="elevated" title="Run" :loading="running[task['@id']]" @click.stop="runTask(task['@id'])" class="mr-1" />
-									<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Delete" @click.stop="remove(task['@id'])" />
+									<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Delete" :loading="deleting[task['@id']]" @click.stop="remove(task['@id'])" />
 								</div>
 							</td>
 						</tr>
