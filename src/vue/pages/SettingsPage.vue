@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import { param } from '../../utils/helpers';
 import api from '../api';
 import LoadingState from '../components/LoadingState.vue';
@@ -22,8 +22,12 @@ const quotaResetLabel = computed(() => {
 });
 
 // API token
+const currentToken = ref<string | null>(null);
+onMounted(async () => {
+	currentToken.value = await auth.getToken();
+});
 const tokenExpiry = computed(() => {
-	const token = api.getToken();
+	const token = currentToken.value;
 	if (!token) return null;
 	try {
 		const payload = JSON.parse(atob(token.split('.')[1]));
@@ -40,7 +44,7 @@ const tokenExpiryLabel = computed(() => {
 });
 
 async function copyToken() {
-	const token = api.getToken();
+	const token = currentToken.value;
 	if (!token) return;
 	try {
 		await navigator.clipboard.writeText(token);

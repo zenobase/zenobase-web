@@ -1,37 +1,45 @@
-const TOKEN_KEY = 'access_token';
+import { isLocalDev } from './authClient';
+
+// Migration: api.ts no longer maintains its own access_token cache; the Auth0
+// SDK is the single source of truth. LocalAuthClient still uses this key for
+// its own session cache in local dev, so leave it alone there.
+if (!isLocalDev) {
+	localStorage.removeItem('access_token');
+}
 
 function getBaseUrl(): string {
 	return (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || '';
 }
 
-function getToken(): string | null {
-	return localStorage.getItem(TOKEN_KEY);
+type TokenProvider = (options?: { ignoreCache?: boolean }) => Promise<string | null>;
+
+let tokenProvider: TokenProvider | null = null;
+let refreshInFlight: Promise<string | null> | null = null;
+
+function setTokenProvider(fn: TokenProvider | null): void {
+	tokenProvider = fn;
 }
 
-function setToken(token: string | null): void {
-	if (token) {
-		localStorage.setItem(TOKEN_KEY, token);
-	} else {
-		localStorage.removeItem(TOKEN_KEY);
+async function getToken(forceRefresh: boolean): Promise<string | null> {
+	if (!tokenProvider) return null;
+	if (forceRefresh) {
+		if (!refreshInFlight) {
+			console.log('[auth] tokenProvider: refreshing token');
+			refreshInFlight = (async () => {
+				try {
+					return await tokenProvider!({ ignoreCache: true });
+				} finally {
+					refreshInFlight = null;
+				}
+			})();
+		}
+		return refreshInFlight;
 	}
-}
-
-type AuthRefresher = () => Promise<void>;
-let authRefresher: AuthRefresher | null = null;
-let refreshInFlight: Promise<void> | null = null;
-
-function setAuthRefresher(fn: AuthRefresher | null): void {
-	authRefresher = fn;
-}
-
-async function refreshOnce(): Promise<void> {
-	if (!authRefresher) throw new Error('no auth refresher registered');
-	if (!refreshInFlight) {
-		refreshInFlight = authRefresher().finally(() => {
-			refreshInFlight = null;
-		});
+	try {
+		return await tokenProvider();
+	} catch {
+		return null;
 	}
-	return refreshInFlight;
 }
 
 interface RequestOptions {
@@ -63,7 +71,7 @@ async function request<T = unknown>(url: string, options: RequestOptions = {}, r
 	const fullUrl = baseUrl ? baseUrl + url : url;
 	const headers: Record<string, string> = { ...options.headers };
 
-	const token = getToken();
+	const token = await getToken(false);
 	if (token) {
 		headers['Authorization'] = `Bearer ${token}`;
 	}
@@ -91,16 +99,15 @@ async function request<T = unknown>(url: string, options: RequestOptions = {}, r
 	const response = await fetch(fullUrl, fetchOptions);
 	const responseHeaders = response.headers;
 
-	if (response.status === 401 && !retried && authRefresher) {
-		console.log('[auth] 401 received, attempting token refresh', { url });
-		try {
-			await refreshOnce();
-			console.log('[auth] token refresh succeeded, retrying request', { url });
-		} catch (e) {
-			console.warn('[auth] token refresh failed, giving up', { url, error: e });
-			throw new ApiError(401, await readBody(response));
+	if (response.status === 401 && !retried && token) {
+		console.log('[auth] api: 401 received, refreshing', { url });
+		const fresh = await getToken(true);
+		if (fresh) {
+			console.log('[auth] api: refresh succeeded, retrying', { url });
+			return request<T>(url, options, true);
 		}
-		return request<T>(url, options, true);
+		console.warn('[auth] api: refresh failed, propagating 401', { url });
+		throw new ApiError(401, await readBody(response));
 	}
 
 	let data: T;
@@ -139,7 +146,7 @@ async function download(url: string, filename: string, retried = false): Promise
 	const fullUrl = baseUrl ? baseUrl + url : url;
 	const headers: Record<string, string> = {};
 
-	const token = getToken();
+	const token = await getToken(false);
 	if (token) {
 		headers['Authorization'] = `Bearer ${token}`;
 	}
@@ -151,13 +158,15 @@ async function download(url: string, filename: string, retried = false): Promise
 
 	const response = await fetch(fullUrl, fetchOptions);
 
-	if (response.status === 401 && !retried && authRefresher) {
-		try {
-			await refreshOnce();
-		} catch {
-			throw new ApiError(401, await response.text());
+	if (response.status === 401 && !retried && token) {
+		console.log('[auth] api: 401 received, refreshing', { url });
+		const fresh = await getToken(true);
+		if (fresh) {
+			console.log('[auth] api: refresh succeeded, retrying', { url });
+			return download(url, filename, true);
 		}
-		return download(url, filename, true);
+		console.warn('[auth] api: refresh failed, propagating 401', { url });
+		throw new ApiError(401, await response.text());
 	}
 
 	if (!response.ok) {
@@ -180,9 +189,7 @@ const api = {
 	put: <T = unknown>(url: string, body?: unknown) => request<T>(url, { method: 'PUT', body }),
 	del: <T = unknown>(url: string) => request<T>(url, { method: 'DELETE' }),
 	download: (url: string, filename: string) => download(url, filename),
-	getToken,
-	setToken,
-	setAuthRefresher,
+	setTokenProvider,
 	ApiError,
 };
 

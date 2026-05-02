@@ -11,6 +11,7 @@ export interface AuthApi {
 	signUp: () => Promise<void>;
 	signOut: () => Promise<void>;
 	handleCallback: () => Promise<void>;
+	getToken: () => Promise<string | null>;
 }
 
 export const authKey: InjectionKey<AuthApi> = Symbol('auth');
@@ -20,36 +21,35 @@ export function useAuth() {
 	const user = ref<User | null>(null);
 	const loading = ref(true);
 
-	api.setAuthRefresher(async () => {
+	api.setTokenProvider(async (options) => {
 		try {
-			const fresh = await authClient.getTokenSilently({ ignoreCache: true });
-			console.log('[auth] getTokenSilently returned fresh token');
-			api.setToken(fresh);
+			return await authClient.getTokenSilently({ ignoreCache: options?.ignoreCache });
 		} catch (e) {
-			console.warn('[auth] getTokenSilently failed; signing out', e);
-			api.setToken(null);
-			user.value = null;
-			throw e;
+			if (options?.ignoreCache) {
+				console.warn('[auth] tokenProvider: refresh failed', e);
+				user.value = null;
+			}
+			return null;
 		}
 	});
 
 	async function whoami(): Promise<void> {
-		if (!api.getToken()) {
-			try {
-				// No token set -- try to get one from the auth client (Auth0 or local)
-				const token = await authClient.getTokenSilently();
-				api.setToken(token);
-			} catch {
-				// No auth session available
-				loading.value = false;
-				return;
-			}
+		try {
+			await authClient.getTokenSilently();
+		} catch {
+			// No auth session — skip /who, render signed-out
+			user.value = null;
+			loading.value = false;
+			return;
 		}
 		try {
 			const response = await api.get<User | null>('/who');
+			if (!response.data) {
+				console.warn('[auth] whoami: /who returned 204 despite valid session');
+			}
 			user.value = response.data;
-		} catch {
-			api.setToken(null);
+		} catch (e) {
+			console.warn('[auth] whoami: /who failed', e);
 			user.value = null;
 		} finally {
 			loading.value = false;
@@ -65,16 +65,21 @@ export function useAuth() {
 	}
 
 	async function signOut(): Promise<void> {
-		api.setToken(null);
 		user.value = null;
 		await authClient.logout();
 	}
 
 	async function handleCallback(): Promise<void> {
 		await authClient.handleRedirectCallback();
-		const token = await authClient.getTokenSilently();
-		api.setToken(token);
 		await whoami();
+	}
+
+	async function getToken(): Promise<string | null> {
+		try {
+			return await authClient.getTokenSilently();
+		} catch {
+			return null;
+		}
 	}
 
 	const auth: AuthApi = {
@@ -85,6 +90,7 @@ export function useAuth() {
 		signUp,
 		signOut,
 		handleCallback,
+		getToken,
 	};
 
 	return auth;
