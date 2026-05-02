@@ -138,6 +138,16 @@ abbr {
 }
 
 
+/* ── Bucket size ── */
+
+.bucket-size {
+	font-size: 0.8125rem;
+	font-variant-numeric: tabular-nums;
+	font-weight: 400;
+	margin-left: 8px;
+}
+
+
 /* ── Constraint chips ── */
 
 .v-chip.font-weight-bold .v-chip__content {
