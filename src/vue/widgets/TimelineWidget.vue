@@ -8,7 +8,7 @@ import { statistics } from '../../utils/statistics';
 import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
-import { BRAND_BLUE_RGB } from '../plugins/vuetify';
+import { BRAND_BLUE_RGB, BRAND_ORANGE_RGB } from '../plugins/vuetify';
 import { downloadCsv, toFilename, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
@@ -450,10 +450,10 @@ function draw() {
 						itemStyle: { color: 'rgba(204, 102, 0, 0.4)', borderWidth: 0, borderRadius: 5 },
 					}
 				: {
-						lineStyle: { color: 'rgb(204, 102, 0)', width: 2 },
+						lineStyle: { color: `rgb(${BRAND_ORANGE_RGB})`, width: 2 },
 						symbol: 'circle',
 						symbolSize: 8,
-						itemStyle: { color: '#fff', borderColor: 'rgb(204, 102, 0)', borderWidth: 2 },
+						itemStyle: { color: '#fff', borderColor: `rgb(${BRAND_ORANGE_RGB})`, borderWidth: 2 },
 					}),
 		};
 		const seriesBData = seriesB.data as unknown[];
@@ -528,8 +528,8 @@ function draw() {
 			allSeries.push({
 				type: 'line',
 				data: regressionB.data,
-				lineStyle: { type: 'dotted', width: 2, color: 'rgb(204, 102, 0)' },
-				itemStyle: { color: 'rgb(204, 102, 0)' },
+				lineStyle: { type: 'dotted', width: 2, color: `rgb(${BRAND_ORANGE_RGB})` },
+				itemStyle: { color: `rgb(${BRAND_ORANGE_RGB})` },
 				symbol: 'none',
 				silent: true,
 			});

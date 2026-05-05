@@ -6,7 +6,7 @@ import { statistics } from '../../utils/statistics';
 import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
-import { BRAND_BLUE_RGB } from '../plugins/vuetify';
+import { BRAND_BLUE_RGB, BRAND_ORANGE_RGB } from '../plugins/vuetify';
 import { downloadCsv, toFilename } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
@@ -140,8 +140,8 @@ function draw() {
 			allSeries.push({
 				type: 'line',
 				data: regressionB.data,
-				lineStyle: { type: 'dotted', width: 2, color: 'rgb(204, 102, 0)' },
-				itemStyle: { color: 'rgb(204, 102, 0)' },
+				lineStyle: { type: 'dotted', width: 2, color: `rgb(${BRAND_ORANGE_RGB})` },
+				itemStyle: { color: `rgb(${BRAND_ORANGE_RGB})` },
 				symbol: 'none',
 				silent: true,
 			});
@@ -257,7 +257,7 @@ function draw() {
 				type: 'scatter',
 				data: [[1, correlationB.r]],
 				symbolSize: 10,
-				itemStyle: { color: 'rgb(204, 102, 0)' },
+				itemStyle: { color: `rgb(${BRAND_ORANGE_RGB})` },
 				silent: true,
 			});
 			if (correlationB.lower !== undefined && correlationB.upper !== undefined) {
@@ -273,17 +273,17 @@ function draw() {
 								{
 									type: 'line',
 									shape: { x1: lowPt[0], y1: lowPt[1], x2: highPt[0], y2: highPt[1] },
-									style: { stroke: 'rgb(204, 102, 0)', lineWidth: 2 },
+									style: { stroke: `rgb(${BRAND_ORANGE_RGB})`, lineWidth: 2 },
 								},
 								{
 									type: 'line',
 									shape: { x1: lowPt[0] - 4, y1: lowPt[1], x2: lowPt[0] + 4, y2: lowPt[1] },
-									style: { stroke: 'rgb(204, 102, 0)', lineWidth: 2 },
+									style: { stroke: `rgb(${BRAND_ORANGE_RGB})`, lineWidth: 2 },
 								},
 								{
 									type: 'line',
 									shape: { x1: highPt[0] - 4, y1: highPt[1], x2: highPt[0] + 4, y2: highPt[1] },
-									style: { stroke: 'rgb(204, 102, 0)', lineWidth: 2 },
+									style: { stroke: `rgb(${BRAND_ORANGE_RGB})`, lineWidth: 2 },
 								},
 							],
 						};

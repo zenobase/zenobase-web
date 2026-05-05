@@ -4,6 +4,8 @@ import { createVuetify } from 'vuetify';
 
 export const BRAND_BLUE = '#3B86C6';
 export const BRAND_BLUE_RGB = '59, 134, 198';
+export const BRAND_ORANGE = '#CC6600';
+export const BRAND_ORANGE_RGB = '204, 102, 0';
 
 export default createVuetify({
 	theme: {

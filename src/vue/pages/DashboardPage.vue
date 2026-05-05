@@ -7,6 +7,7 @@ import { WIDGET_TITLES, type WidgetType } from '../../types';
 import api, { ApiError } from '../api';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import CreateTaskDialog from '../components/CreateTaskDialog.vue';
+import DashboardSummary from '../components/DashboardSummary.vue';
 import EditBucketDialog from '../components/EditBucketDialog.vue';
 import ErrorBoundary from '../components/ErrorBoundary.vue';
 import EventEditDialog from '../components/EventEditDialog.vue';
@@ -20,8 +21,6 @@ import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { reloadBucketsKey } from '../composables/useBuckets';
 import { dashboardKey, useDashboard } from '../composables/useDashboard';
-import { getFieldIcon } from '../utils/eventFormatter';
-import { getUserName } from '../utils/userNames';
 import { SETTINGS_DIALOGS } from '../widgets';
 import CountWidget from '../widgets/CountWidget.vue';
 import GanttWidget from '../widgets/GanttWidget.vue';
@@ -488,26 +487,7 @@ watch(
 			<!-- Description -->
 			<div class="text-body-2 text-medium-emphasis mb-4" v-if="bucket.description">{{ bucket.description }}</div>
 
-			<!-- Constraint chips -->
-			<div class="d-flex align-center flex-wrap ga-1 mb-2" v-if="dashboard.constraints.value.length || dashboard.constraintsB.value.length">
-				<v-chip color="primary" variant="flat" size="default" class="font-weight-bold" title="Events (A)" v-if="dashboard.total.value >= 0">{{ dashboard.total.value.toLocaleString() }}</v-chip>
-				<v-chip v-for="constraint in dashboard.constraints.value" :key="constraint.toString()" color="primary" variant="outlined" size="default" class="font-weight-bold" :title="constraint.toString()">
-					<v-icon v-if="constraint.negated" icon="mdi-minus" start />
-					<v-icon :icon="getFieldIcon(constraint.field)" start @click="dashboard.invertConstraint(constraint)" />
-					{{ constraint.field === 'author' ? getUserName(constraint.shortValue()) : constraint.shortValue() }}
-					<v-icon icon="mdi-close" end size="x-small" @click="dashboard.removeConstraint(constraint)" />
-				</v-chip>
-				<v-btn v-if="dashboard.constraints.value.length || dashboard.constraintsB.value.length" icon size="small" variant="text" title="Compare A/B" @click="dashboard.swapAB()">
-					<v-icon icon="mdi-swap-horizontal" />
-				</v-btn>
-				<v-chip color="#CC6600" variant="flat" size="default" class="font-weight-bold" title="Events (B)" v-if="dashboard.totalB.value !== null && dashboard.totalB.value >= 0">{{ dashboard.totalB.value.toLocaleString() }}</v-chip>
-				<v-chip v-for="constraint in dashboard.constraintsB.value" :key="'b-' + constraint.toString()" color="#CC6600" variant="outlined" size="default" class="font-weight-bold" :title="constraint.toString()">
-					<v-icon v-if="constraint.negated" icon="mdi-minus" start />
-					<v-icon :icon="getFieldIcon(constraint.field)" start @click="dashboard.invertConstraintB(constraint)" />
-					{{ constraint.field === 'author' ? getUserName(constraint.shortValue()) : constraint.shortValue() }}
-					<v-icon icon="mdi-close" end size="x-small" @click="dashboard.removeConstraintB(constraint)" />
-				</v-chip>
-			</div>
+			<DashboardSummary />
 
 			<!-- Error state -->
 			<v-empty-state v-if="dashboard.total.value < 0" icon="mdi-alert-circle-outline" headline="Couldn't load data" text="Try refreshing, or check back later." />

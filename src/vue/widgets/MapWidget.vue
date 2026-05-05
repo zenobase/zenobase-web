@@ -5,6 +5,7 @@ import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
 import { useWidgetData } from '../composables/useWidgetData';
+import { BRAND_ORANGE_RGB } from '../plugins/vuetify';
 
 let maps: typeof google.maps;
 
@@ -179,7 +180,7 @@ function addPoints(points: MapPoint[], pointsB: MapPoint[]) {
 			position: { lat: point.lat, lng: point.lon },
 			map,
 			title: point.count + (point.count === 1 ? ' event' : ' events'),
-			content: createDot('rgb(204, 102, 0)', point.count),
+			content: createDot(`rgb(${BRAND_ORANGE_RGB})`, point.count),
 		});
 		markers.push(marker);
 	});
@@ -235,7 +236,7 @@ function drawMap() {
 	});
 
 	drawConstraintBounds(dashboard.getConstraints(locationField), 'rgb(47, 126, 216)');
-	drawConstraintBounds(dashboard.getConstraintsB(locationField), 'rgb(204, 102, 0)');
+	drawConstraintBounds(dashboard.getConstraintsB(locationField), `rgb(${BRAND_ORANGE_RGB})`);
 	map.controls[maps.ControlPosition.TOP_RIGHT].push(createFilterControl());
 }
 

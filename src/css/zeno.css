@@ -148,6 +148,50 @@ abbr {
 }
 
 
+/* ── Series swatches (A/B count legend) ── */
+
+:root {
+	--brand-orange: #CC6600;
+}
+
+.series-swatch {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+	flex-shrink: 0;
+}
+
+.series-swatch--a {
+	background: rgb(var(--v-theme-primary));
+}
+
+.series-swatch--b {
+	background: var(--brand-orange);
+}
+
+.series-count {
+	font-size: 1rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.series-count--a {
+	color: rgb(var(--v-theme-primary));
+}
+
+.series-count--b {
+	color: var(--brand-orange);
+}
+
+.dashboard-summary .v-chip {
+	transition: box-shadow 0.15s ease;
+}
+
+.dashboard-summary .v-chip:hover {
+	box-shadow: 0 0 0 1px currentColor;
+}
+
+
 /* ── Constraint chips ── */
 
 .v-chip.font-weight-bold .v-chip__content {

@@ -7,6 +7,7 @@ import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
 import { useWidgetData } from '../composables/useWidgetData';
+import { BRAND_ORANGE_RGB } from '../plugins/vuetify';
 
 let maps: typeof google.maps;
 
@@ -210,7 +211,7 @@ function drawMap() {
 	overlay = new GoogleMapsOverlay({});
 	overlay.setMap(map);
 	drawConstraintBounds(dashboard.getConstraints(locationField), 'rgb(47, 126, 216)');
-	drawConstraintBounds(dashboard.getConstraintsB(locationField), 'rgb(204, 102, 0)');
+	drawConstraintBounds(dashboard.getConstraintsB(locationField), `rgb(${BRAND_ORANGE_RGB})`);
 	map.controls[maps.ControlPosition.TOP_RIGHT].push(createFilterControl());
 }
 
