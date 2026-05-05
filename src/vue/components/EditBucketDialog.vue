@@ -122,8 +122,15 @@ async function archiveBucket(archive: boolean) {
 	}
 	try {
 		await api.put(`/buckets/${props.bucketId}`, newBucket.value);
+		if (newBucket.value.version !== undefined) {
+			newBucket.value.version += 1;
+		}
 		close();
-		router.push('/');
+		if (archive) {
+			router.push('/');
+		} else {
+			emit('saved', newBucket.value);
+		}
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
 		if (status && status < 500) {
@@ -181,40 +188,44 @@ watch(
 			<v-form @submit.prevent="save()">
 				<v-card-text v-if="newBucket">
 					<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
-					<v-text-field label="Label *" v-model="newBucket.label" required />
-					<v-textarea label="Description" rows="2" v-model="newBucket.description" />
+					<v-alert v-if="bucket.archived" type="info" variant="tonal" class="mb-4">This bucket is archived and is read-only.</v-alert>
 
-					<v-switch
-						label="Anyone with a link can view"
-						:model-value="isPublished()"
-						@update:model-value="$event ? publish() : unpublish()"
-						:disabled="!auth.user.value?.verified"
-						:hint="!auth.user.value?.verified ? 'You can make this dashboard public after signing up and verifying your email address.' : ''"
-						:persistent-hint="!auth.user.value?.verified"
-						color="primary"
-					/>
+					<template v-if="!bucket.archived">
+						<v-text-field label="Label *" v-model="newBucket.label" required />
+						<v-textarea label="Description" rows="2" v-model="newBucket.description" />
 
-					<template v-if="!isView">
-						<div class="text-subtitle-2 mb-2">Tasks</div>
-						<v-radio-group v-model="newBucket.refresh" :disabled="!auth.user.value?.quota">
-							<v-radio label="automatic refreshing (contact support to enable)" :value="true" />
-							<v-radio label="manual refreshing only" :value="false" />
-						</v-radio-group>
-					</template>
+						<v-switch
+							label="Anyone with a link can view"
+							:model-value="isPublished()"
+							@update:model-value="$event ? publish() : unpublish()"
+							:disabled="!auth.user.value?.verified"
+							:hint="!auth.user.value?.verified ? 'You can make this dashboard public after signing up and verifying your email address.' : ''"
+							:persistent-hint="!auth.user.value?.verified"
+							color="primary"
+						/>
 
-					<template v-if="isView">
-						<div class="text-subtitle-2 mb-2">Aliases</div>
-						<div class="d-flex flex-wrap ga-2 mb-4">
-							<v-chip v-for="alias in newBucket.aliases" :key="alias['@id']" closable @click:close="removeAlias(alias['@id'])">
-								<v-icon v-if="alias.filter" icon="mdi-filter" size="small" start :title="alias.filter" />
-								{{ alias['@id'] }}
-							</v-chip>
-						</div>
-						<div class="d-flex ga-2 align-center">
-							<v-select :items="selectableBuckets" item-title="label" item-value="@id" return-object v-model="selectedBucket" label="Bucket" style="max-width: 200px" />
-							<v-text-field v-model="aliasFilter" placeholder="e.g. tag:xyz" label="Filter" style="max-width: 200px" />
-							<v-btn :disabled="!selectedBucket" @click="addAlias()">Add</v-btn>
-						</div>
+						<template v-if="!isView">
+							<div class="text-subtitle-2 mb-2">Tasks</div>
+							<v-radio-group v-model="newBucket.refresh" :disabled="!auth.user.value?.quota">
+								<v-radio label="automatic refreshing (contact support to enable)" :value="true" />
+								<v-radio label="manual refreshing only" :value="false" />
+							</v-radio-group>
+						</template>
+
+						<template v-if="isView">
+							<div class="text-subtitle-2 mb-2">Aliases</div>
+							<div class="d-flex flex-wrap ga-2 mb-4">
+								<v-chip v-for="alias in newBucket.aliases" :key="alias['@id']" closable @click:close="removeAlias(alias['@id'])">
+									<v-icon v-if="alias.filter" icon="mdi-filter" size="small" start :title="alias.filter" />
+									{{ alias['@id'] }}
+								</v-chip>
+							</div>
+							<div class="d-flex ga-2 align-center">
+								<v-select :items="selectableBuckets" item-title="label" item-value="@id" return-object v-model="selectedBucket" label="Bucket" style="max-width: 200px" />
+								<v-text-field v-model="aliasFilter" placeholder="e.g. tag:xyz" label="Filter" style="max-width: 200px" />
+								<v-btn :disabled="!selectedBucket" @click="addAlias()">Add</v-btn>
+							</div>
+						</template>
 					</template>
 				</v-card-text>
 				<v-card-actions class="ps-4">
@@ -223,7 +234,7 @@ watch(
 					{{ ' ' }} or {{ ' ' }}
 					<a @click="deleteBucket()">delete</a> {{ ' ' }} this bucket
 					<v-spacer />
-					<v-btn type="submit" color="primary" :disabled="!isFormValid">Update</v-btn>
+					<v-btn v-if="!bucket.archived" type="submit" color="primary" :disabled="!isFormValid">Update</v-btn>
 					<v-btn variant="text" @click="close()">Cancel</v-btn>
 				</v-card-actions>
 			</v-form>
