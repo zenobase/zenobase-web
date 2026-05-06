@@ -162,8 +162,9 @@ async function openCreateBucket() {
 	templateCategory.value = null;
 	showCreateBucket.value = true;
 	try {
-		const response = await api.get<BucketTemplate[]>('/dashboard/templates.json');
-		templates.value = Array.isArray(response.data) ? response.data : [];
+		const response = await fetch('/dashboard/templates.json');
+		const data = await response.json();
+		templates.value = Array.isArray(data) ? data : [];
 	} catch {
 		// silently fail
 	}
