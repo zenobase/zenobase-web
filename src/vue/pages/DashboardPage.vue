@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
-import { type ComponentPublicInstance, computed, inject, nextTick, onMounted, provide, ref, watch } from 'vue';
+import { type ComponentPublicInstance, computed, inject, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Bucket, SearchResult, WidgetSettings, ZenoEvent } from '../../types';
 import { WIDGET_TITLES, type WidgetType } from '../../types';
@@ -89,11 +89,10 @@ async function runTask(taskId: string): Promise<boolean> {
 			try {
 				const credResponse = await api.post<{ '@id': string; authorizationUrl?: string }>('/credentials/', { type: credentialsHeader });
 				if (credResponse.data.authorizationUrl) {
-					alertApi.show(`${credentialsHeader} requires authorization`, 'error');
 					if (credResponse.data['@id'] && !credResponse.data.authorizationUrl.includes(credResponse.data['@id'])) {
 						localStorage.setItem('credentials', credResponse.data['@id']);
 					}
-					window.open(credResponse.data.authorizationUrl);
+					alertApi.show(`${credentialsHeader} requires authorization`, 'error', '', { label: 'Authorize', url: credResponse.data.authorizationUrl });
 				}
 			} catch {
 				alertApi.show("Can't create credentials.", 'error');
@@ -103,8 +102,7 @@ async function runTask(taskId: string): Promise<boolean> {
 		if (linkHeader) {
 			const match = linkHeader.match(/<(.+?)>/);
 			if (match) {
-				alertApi.show(`${response.data.type} requires authorization`, 'error');
-				window.open(match[1]);
+				alertApi.show(`${response.data.type} requires authorization`, 'error', '', { label: 'Authorize', url: match[1] });
 			}
 			return true;
 		}
@@ -418,7 +416,21 @@ async function loadBucket() {
 	}
 }
 
-onMounted(loadBucket);
+function onCredentialsMessage(event: MessageEvent) {
+	if (event.origin !== window.location.origin) return;
+	if (event.data?.type === 'credentials-updated') {
+		run();
+	}
+}
+
+onMounted(() => {
+	loadBucket();
+	window.addEventListener('message', onCredentialsMessage);
+});
+
+onUnmounted(() => {
+	window.removeEventListener('message', onCredentialsMessage);
+});
 
 watch(bucketId, () => {
 	dashboard.reset();

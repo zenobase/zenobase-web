@@ -28,6 +28,13 @@ function reload() {
 	window.location.reload();
 }
 
+function openAlertAction() {
+	const action = alertApi.alert.value.action;
+	if (action) {
+		window.open(action.url);
+	}
+}
+
 const authReady = ref(false);
 
 // Handle Auth0 redirect callback (auto-handled by @auth0/auth0-vue), then load user
@@ -396,6 +403,7 @@ watch(
 				<v-snackbar :model-value="!!alertApi.alert.value.message" :timeout="alertApi.alert.value.level === 'error' ? -1 : 5000" :color="alertApi.alert.value.level || 'info'" @update:model-value="alertApi.clear()">
 					{{ alertApi.alert.value.message }}
 					<template #actions>
+						<v-btn v-if="alertApi.alert.value.action" variant="text" @click="openAlertAction()">{{ alertApi.alert.value.action.label }}</v-btn>
 						<v-btn v-if="alertApi.alert.value.undoId" variant="text" @click="alertApi.undo(alertApi.alert.value.undoId)">Undo</v-btn>
 						<v-btn variant="text" @click="alertApi.clear()">Close</v-btn>
 					</template>

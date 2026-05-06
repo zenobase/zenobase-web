@@ -103,11 +103,10 @@ async function runTask(taskId: string) {
 			try {
 				const credResponse = await api.post<{ '@id': string; authorizationUrl?: string }>('/credentials/', { type: credentialsHeader });
 				if (credResponse.data.authorizationUrl) {
-					alertApi.show(`${credentialsHeader} requires authorization`, 'error');
 					if (credResponse.data['@id'] && !credResponse.data.authorizationUrl.includes(credResponse.data['@id'])) {
 						localStorage.setItem('credentials', credResponse.data['@id']);
 					}
-					window.open(credResponse.data.authorizationUrl);
+					alertApi.show(`${credentialsHeader} requires authorization`, 'error', '', { label: 'Authorize', url: credResponse.data.authorizationUrl });
 				}
 			} catch {
 				alertApi.show("Can't create credentials.", 'error');
@@ -115,8 +114,7 @@ async function runTask(taskId: string) {
 		} else if (linkHeader) {
 			const match = linkHeader.match(/<(.+?)>/);
 			if (match) {
-				alertApi.show(`${response.data.type} requires authorization`, 'error');
-				window.open(match[1]);
+				alertApi.show(`${response.data.type} requires authorization`, 'error', '', { label: 'Authorize', url: match[1] });
 			}
 		}
 	} catch (e) {

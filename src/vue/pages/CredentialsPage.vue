@@ -22,6 +22,13 @@ onMounted(async () => {
 		await api.post(`/credentials/${credentialsId}`, { credentials: route.query });
 		alertApi.show('Updated credentials.', 'success');
 		localStorage.removeItem('credentials');
+		if (window.opener && !window.opener.closed) {
+			try {
+				window.opener.postMessage({ type: 'credentials-updated' }, window.location.origin);
+			} catch {
+				// opener may be cross-origin or gone
+			}
+		}
 		try {
 			window.close();
 		} catch {
