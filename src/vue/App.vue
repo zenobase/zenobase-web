@@ -119,7 +119,7 @@ interface BucketTemplate {
 	category: string;
 	label?: string;
 	widgets: WidgetSettings[];
-	task?: Record<string, unknown>;
+	task?: string;
 	importer?: Record<string, unknown>;
 }
 const templates = ref<BucketTemplate[]>([]);
@@ -177,9 +177,6 @@ async function createBucket() {
 		const template = selectedTemplate.value;
 		const widgets = template ? template.widgets : [];
 		const payload: Record<string, unknown> = { label: newBucketLabel.value, widgets };
-		if (template?.task) {
-			payload.task = template.task;
-		}
 		if (template?.importer) {
 			payload.importer = template.importer;
 		}
@@ -187,7 +184,11 @@ async function createBucket() {
 		showCreateBucket.value = false;
 		const location = response.headers('Location');
 		if (location) {
-			window.location.hash = `#${location}`;
+			const query: Record<string, string> = {};
+			if (template?.task) {
+				query.task = template.task;
+			}
+			await router.push({ path: location, query });
 		}
 		await loadBuckets();
 	} catch (e: unknown) {

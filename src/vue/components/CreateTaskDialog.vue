@@ -7,6 +7,7 @@ import { getNumericFieldNames, getUnitsForField, TIMESTAMP_SUBFIELDS } from '../
 const props = defineProps<{
 	bucketId: string;
 	modelValue: boolean;
+	initialType?: string;
 }>();
 
 const emit = defineEmits<{
@@ -496,8 +497,9 @@ function initSettings(taskType: TaskType) {
 
 function init() {
 	message.value = '';
-	selectedType.value = types[0];
-	initSettings(types[0]);
+	const initial = props.initialType ? types.find((t) => t.id === props.initialType) ?? types[0] : types[0];
+	selectedType.value = initial;
+	initSettings(initial);
 }
 
 watch(

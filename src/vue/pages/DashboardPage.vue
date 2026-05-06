@@ -302,6 +302,7 @@ const showEditBucketDialog = ref(false);
 const showSaveAsViewDialog = ref(false);
 const showTaskListDialog = ref(false);
 const showCreateTaskDialog = ref(false);
+const pendingTaskType = ref<string | undefined>(undefined);
 const showImportDialog = ref(false);
 const showExportDialog = ref(false);
 
@@ -356,6 +357,7 @@ async function onTaskCreated(taskId: string) {
 }
 
 function openCreateTaskFromList() {
+	pendingTaskType.value = undefined;
 	showCreateTaskDialog.value = true;
 }
 
@@ -423,9 +425,26 @@ function onCredentialsMessage(event: MessageEvent) {
 	}
 }
 
+function consumeTaskQuery() {
+	const taskParam = route.query.task;
+	if (typeof taskParam === 'string' && taskParam) {
+		pendingTaskType.value = taskParam;
+		showCreateTaskDialog.value = true;
+		const { task: _omit, ...rest } = route.query;
+		router.replace({ query: rest });
+	}
+}
+
 onMounted(() => {
 	loadBucket();
+	consumeTaskQuery();
 	window.addEventListener('message', onCredentialsMessage);
+});
+
+watch(showCreateTaskDialog, (open) => {
+	if (!open) {
+		pendingTaskType.value = undefined;
+	}
 });
 
 onUnmounted(() => {
@@ -438,6 +457,7 @@ watch(bucketId, () => {
 	activeTabs.value = {};
 	dirty.value = false;
 	loadBucket();
+	consumeTaskQuery();
 });
 
 watch(
@@ -560,7 +580,7 @@ watch(
 
 		<TaskListDialog v-model="showTaskListDialog" :bucket-id="bucketId" @open-create-task="openCreateTaskFromList" @task-ran="() => { dashboard.refresh(); reloadBuckets() }" />
 
-		<CreateTaskDialog v-model="showCreateTaskDialog" :bucket-id="bucketId" @created="onTaskCreated" />
+		<CreateTaskDialog v-model="showCreateTaskDialog" :bucket-id="bucketId" :initial-type="pendingTaskType" @created="onTaskCreated" />
 
 		<ImportDialog v-model="showImportDialog" :bucket-id="bucketId" @imported="onImported" />
 
