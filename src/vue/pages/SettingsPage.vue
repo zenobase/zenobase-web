@@ -6,6 +6,7 @@ import LoadingState from '../components/LoadingState.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { formatDuration } from '../utils/eventFormatter';
+import { formatAge } from '../utils/formatAge';
 
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
@@ -52,6 +53,47 @@ async function copyToken() {
 	} catch {
 		alertApi.show("Couldn't copy token to clipboard.", 'error');
 	}
+}
+
+// Passkeys
+type Passkey = { id: string; name?: string; created: string; last_auth?: string; user_agent?: string };
+const passkeys = ref<Passkey[] | null>(null);
+
+async function loadPasskeys() {
+	try {
+		const response = await api.get<Passkey[]>(`/users/${auth.user.value!['@id']}/passkeys`);
+		passkeys.value = response.data;
+	} catch {
+		passkeys.value = [];
+	}
+}
+
+async function deletePasskey(id: string) {
+	if (!confirm('Remove this passkey? You will no longer be able to sign in with it.')) return;
+	alertApi.clear();
+	try {
+		await api.del(`/users/${auth.user.value!['@id']}/passkeys/${id}`);
+		alertApi.show('Passkey removed.', 'success', '');
+		await loadPasskeys();
+	} catch (e: unknown) {
+		const status = (e as { status?: number }).status;
+		alertApi.show(status && status < 500 ? "Can't remove this passkey." : "Couldn't remove passkey. Try again later or contact support.", 'error');
+	}
+}
+
+function passkeyLabel(p: Passkey): string {
+	return p.name || passkeyDeviceLabel(p.user_agent) || 'Passkey';
+}
+
+function passkeyDeviceLabel(ua: string | undefined): string | null {
+	if (!ua) return null;
+	if (/iPhone/i.test(ua)) return 'iPhone';
+	if (/iPad/i.test(ua)) return 'iPad';
+	if (/Android/i.test(ua)) return 'Android';
+	if (/Mac OS X/i.test(ua)) return 'Mac';
+	if (/Windows/i.test(ua)) return 'Windows';
+	if (/Linux/i.test(ua)) return 'Linux';
+	return null;
 }
 
 // Credentials
@@ -127,6 +169,7 @@ function onRowLongPress(id: string) {
 
 function refresh() {
 	loadQuota();
+	loadPasskeys();
 	loadCredentials();
 }
 
@@ -135,7 +178,7 @@ watch(
 	async () => {
 		if (!auth.user.value?.name) return;
 		settingsEmail.value = (auth.user.value as typeof auth.user.value & { email?: string }).email || '';
-		await Promise.all([loadQuota(), loadCredentials()]);
+		await Promise.all([loadQuota(), loadPasskeys(), loadCredentials()]);
 	},
 	{ immediate: true },
 );
@@ -184,6 +227,36 @@ watch(
 					<v-spacer />
 					<v-btn color="primary" :disabled="!emailDirty" @click="saveEmail()">Save</v-btn>
 				</div>
+			</section>
+
+			<v-divider class="my-8" />
+
+			<!-- Passkeys -->
+			<section>
+				<h2 class="settings-heading">Passkeys</h2>
+				<p class="settings-subtitle">
+					Sign in without a password using a fingerprint, face scan, or PIN.
+					To add a passkey, sign out and sign back in on the device you'd like to enroll &mdash; you'll be prompted to create one.
+				</p>
+				<v-table>
+					<tbody>
+						<tr v-if="passkeys === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
+						<tr v-else-if="passkeys.length === 0"><td colspan="2"><i>No passkeys enrolled</i></td></tr>
+						<tr v-for="p in passkeys" :key="p.id" class="credentials-row" @contextmenu.prevent="onRowLongPress(p.id)">
+							<td>
+								<div>{{ passkeyLabel(p) }}</div>
+								<div class="text-caption" style="color: rgba(0,0,0,0.6)">
+									Added {{ formatAge(p.created, 7 * 24 * 60 * 60 * 1000) }}<span v-if="p.last_auth"> &middot; last used {{ formatAge(p.last_auth, 30 * 24 * 60 * 60 * 1000) }}</span>
+								</div>
+							</td>
+							<td style="text-align: right; position: relative; overflow: visible">
+								<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === p.id }">
+									<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Remove" @click.stop="deletePasskey(p.id)" />
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</v-table>
 			</section>
 
 			<v-divider class="my-8" />
