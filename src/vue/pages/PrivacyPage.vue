@@ -1,4 +1,8 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { SUPPORT_EMAIL } from '../constants';
+
+const mailto = `mailto:${SUPPORT_EMAIL}?subject=Privacy+Policy`;
+</script>
 
 <template>
 	<div id="privacy" class="mx-auto" style="max-width: 70ch">
@@ -65,7 +69,7 @@
 
 		<p>
 			Questions about this Privacy Policy should be sent to
-			<a href="mailto:info@zenobase.com?subject=Privacy+Policy">support@zenobase.com</a>.
+			<a :href="mailto">{{ SUPPORT_EMAIL }}</a>.
 		</p>
 	</div>
 </template>

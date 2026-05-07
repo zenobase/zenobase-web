@@ -1,4 +1,8 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { SUPPORT_EMAIL } from '../constants';
+
+const mailto = `mailto:${SUPPORT_EMAIL}?subject=Terms+of+Service`;
+</script>
 
 <template>
 	<div id="terms" class="mx-auto" style="max-width: 70ch">
@@ -185,7 +189,7 @@
 			</li>
 			<li>
 				Questions about the Terms of Service should be sent to
-				<a href="mailto:support@zenobase.com?subject=Terms+of+Service">support@zenobase.com</a>.
+				<a :href="mailto">{{ SUPPORT_EMAIL }}</a>.
 			</li>
 		</ol>
 	</div>
