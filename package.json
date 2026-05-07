@@ -14,8 +14,8 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "TZ=America/Los_Angeles vitest run",
+    "test:watch": "TZ=America/Los_Angeles vitest",
     "typecheck": "vue-tsc --noEmit",
     "prepare": "husky"
   },

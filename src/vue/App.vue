@@ -311,7 +311,12 @@ watch(
 	<v-app>
 		<v-system-bar v-if="auth.user.value?.suspended" :height="40" color="error" variant="tonal" style="padding: 8px 16px; justify-content: flex-start">
 			<v-icon icon="$error" class="mr-2" />
-			<span>This account has been suspended. Please contact support.</span>
+			<span>This account has been suspended. Please <a href="mailto:info@zenobase.com">contact support</a>.</span>
+		</v-system-bar>
+
+		<v-system-bar v-else-if="auth.user.value && auth.user.value.verified === false" :height="40" color="warning" variant="tonal" style="padding: 8px 16px; justify-content: flex-start">
+			<v-icon icon="mdi-alert-circle" class="mr-2" />
+			<span>Please verify your email address. Unverified accounts are suspended after 30 days.</span>
 		</v-system-bar>
 
 		<v-system-bar v-if="isStale" :height="40" color="info" variant="tonal" style="padding: 8px 16px; justify-content: flex-start">
