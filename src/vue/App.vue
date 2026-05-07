@@ -11,6 +11,7 @@ import { alertKey, useAlert } from './composables/useAlert';
 import { authKey, useAuth } from './composables/useAuth';
 import { reloadBucketsKey } from './composables/useBuckets';
 import { useVersionCheck } from './composables/useVersionCheck';
+import { SUPPORT_EMAIL } from './constants';
 
 const router = useRouter();
 const route = useRoute();
@@ -311,7 +312,7 @@ watch(
 	<v-app>
 		<v-system-bar v-if="auth.user.value?.suspended" :height="40" color="error" variant="tonal" style="padding: 8px 16px; justify-content: flex-start">
 			<v-icon icon="$error" class="mr-2" />
-			<span>This account has been suspended. Please <a href="mailto:info@zenobase.com">contact support</a>.</span>
+			<span>This account has been suspended. Please <a :href="`mailto:${SUPPORT_EMAIL}`">contact support</a>.</span>
 		</v-system-bar>
 
 		<v-system-bar v-else-if="auth.user.value && auth.user.value.verified === false" :height="40" color="warning" variant="tonal" style="padding: 8px 16px; justify-content: flex-start">
@@ -430,7 +431,7 @@ watch(
 					<router-link to="/terms" class="text-disabled">Terms</router-link>
 					<router-link to="/privacy" class="text-disabled">Privacy</router-link>
 					<router-link to="/api" class="text-disabled">API</router-link>
-					<a href="mailto:info@zenobase.com" class="text-disabled">Contact</a>
+					<a :href="`mailto:${SUPPORT_EMAIL}`" class="text-disabled">Contact</a>
 				</div>
 				<div class="d-flex justify-center ga-4">
 					<a href="https://blog.zenobase.com/" class="text-disabled" title="Blog"><v-icon icon="mdi-rss" size="small" /></a>

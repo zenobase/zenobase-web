@@ -5,6 +5,7 @@ import api from '../api';
 import LoadingState from '../components/LoadingState.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
+import { SUPPORT_EMAIL } from '../constants';
 import { formatDuration } from '../utils/eventFormatter';
 import { formatAge } from '../utils/formatAge';
 
@@ -199,7 +200,7 @@ watch(
 				<section>
 					<h2 class="settings-heading">Quota</h2>
 					<v-progress-linear :model-value="quota.used / quota.limit * 100" :color="quota.used >= quota.limit ? 'error' : quota.used >= quota.limit * 0.8 ? 'warning' : 'success'" height="10" rounded class="mb-2" />
-					<p class="text-body-2">{{ quota.used.toLocaleString() }} / {{ quota.limit.toLocaleString() }} events. {{ quotaResetLabel }}. <a href="mailto:support@zenobase.com">Contact support</a> to increase your quota.</p>
+					<p class="text-body-2">{{ quota.used.toLocaleString() }} / {{ quota.limit.toLocaleString() }} events. {{ quotaResetLabel }}. <a :href="`mailto:${SUPPORT_EMAIL}`">Contact support</a> to increase your quota.</p>
 				</section>
 				<v-divider class="my-8" />
 			</template>
