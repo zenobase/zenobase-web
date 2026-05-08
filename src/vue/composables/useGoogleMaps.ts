@@ -10,7 +10,7 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
 		if (!initialized) {
 			setOptions({
 				key: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-				v: '3.63',
+				v: '3.64',
 			});
 			initialized = true;
 		}
