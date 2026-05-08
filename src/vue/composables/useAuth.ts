@@ -34,10 +34,7 @@ export function useAuth() {
 	});
 
 	async function whoami(): Promise<void> {
-		try {
-			await authClient.getTokenSilently();
-		} catch {
-			// No auth session — skip /who, render signed-out
+		if (!(await authClient.isAuthenticated())) {
 			user.value = null;
 			loading.value = false;
 			return;
@@ -75,6 +72,9 @@ export function useAuth() {
 	}
 
 	async function getToken(): Promise<string | null> {
+		if (!(await authClient.isAuthenticated())) {
+			return null;
+		}
 		try {
 			return await authClient.getTokenSilently();
 		} catch {
