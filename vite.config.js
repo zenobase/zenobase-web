@@ -32,6 +32,7 @@ export default defineConfig({
 			output: {
 				codeSplitting: {
 					groups: [
+						{ name: 'preload-helper', test: /preload-helper/, priority: 100 },
 						{ name: 'echarts', test: /node_modules\/echarts/, priority: 10 },
 						{ name: 'deckgl', test: /node_modules\/@deck\.gl/, priority: 10 },
 						{ name: 'gmaps', test: /node_modules\/@googlemaps/, priority: 10 },
