@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, ref, watch } from 'vue';
+import { inject, nextTick, ref, watch } from 'vue';
 import api from '../api';
+import { isLocalDev } from '../authClient';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { getNumericFieldNames, getUnitsForField, TIMESTAMP_SUBFIELDS } from '../utils/fieldRegistry';
 
@@ -61,11 +62,15 @@ const timezones = Intl.supportedValuesOf('timeZone');
 const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const types: TaskType[] = [
-	{
-		id: 'demo',
-		description: 'Creates demo events.',
-		fields: [{ key: 'tag', label: 'Tag', type: 'text', default: 'demo', required: true }],
-	},
+	...(isLocalDev
+		? [
+				{
+					id: 'demo',
+					description: 'Creates demo events.',
+					fields: [{ key: 'tag', label: 'Tag', type: 'text', default: 'demo', required: true }],
+				} as TaskType,
+			]
+		: []),
 	{
 		id: 'fitbit-activities',
 		description: 'Creates an event for each activity.',
