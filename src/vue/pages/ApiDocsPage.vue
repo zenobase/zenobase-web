@@ -86,6 +86,10 @@ watch(() => route.params.section, scrollToSection);
 <h3>Changelog</h3>
 
 <dl>
+	<dt>May 12, 2026</dt>
+	<dd>Third-party apps can now authenticate via OAuth 2.1 with Dynamic Client Registration.<br/>
+		The MCP endpoint at <code>POST /mcp</code> exposes a user's buckets to LLM clients (Claude Desktop, etc.), subject to per-bucket consent managed in the <a href="/#/settings">Connected Apps</a> section of Settings.<br/>
+		See <a href="/#/api/auth">Authentication</a>.</dd>
     <dt>Apr 15, 2026</dt>
     <dd>API access tokens are now JWTs that expire.<br/>
 		Support for password and implicit grants has been removed.<br/>
@@ -692,11 +696,44 @@ X-Command-ID: p3ateetvs1</pre>
 
 <h3>Authentication</h3>
 
-<p>Requests for protected resources must include an <a href="http://oauth.net/2/">OAuth 2</a> <em>Authorization</em> header:</p>
+<p>Requests for protected resources must include an <a href="http://oauth.net/2/">OAuth 2.1</a> <em>Authorization</em> header:</p>
 
 <pre>Authorization: Bearer <em>&lt;access_token&gt;</em></pre>
 
-<p>Sign in to the web app and copy your current token from the <a href="/#/settings">settings page</a>.</p>
+<p>Tokens are JWTs issued by Zenobase's identity provider. Two kinds are accepted, depending on who's calling:</p>
+
+<h4>Personal use</h4>
+
+<p>For your own scripts and notebooks, sign in to the web app and copy your current token from the <a href="/#/settings">settings page</a>.
+This token grants the same access you have when signed in &mdash; all of your buckets.
+It expires after a short time, so you'll need to copy it again periodically (or use the OAuth 2.1 flow below).</p>
+
+<h4>Third-party apps</h4>
+
+<p>Third-party apps (including MCP clients like Claude Desktop, and other integrations) authenticate via <a href="https://datatracker.ietf.org/doc/html/rfc6749">OAuth 2.1</a> Authorization Code with PKCE.
+Discovery is via <a href="https://datatracker.ietf.org/doc/html/rfc9728">RFC 9728</a> Protected Resource Metadata:</p>
+
+<pre><code class="language-bash">curl https://api.zenobase.com/.well-known/oauth-protected-resource</code></pre>
+
+<pre><code class="language-json">{
+  "resource" : "https://api.zenobase.com/external",
+  "authorization_servers" : [ "https://&lt;tenant&gt;.auth0.com/" ],
+  "scopes_supported" : [ "external" ],
+  "bearer_methods_supported" : [ "header" ]
+}</code></pre>
+
+<p>Unauthenticated requests to third-party endpoints return a <code>401</code> with the same metadata URL in the <code>WWW-Authenticate</code> challenge header, so well-behaved clients can discover it automatically.
+Dynamic Client Registration (<a href="https://datatracker.ietf.org/doc/html/rfc7591">RFC 7591</a>) is enabled at the Authorization Server &mdash; clients can self-register without manual provisioning.</p>
+
+<p>Tokens issued via this flow carry the <code>external</code> audience, distinct from personal tokens.
+They <em>cannot</em> call the bucket / event endpoints documented above &mdash; only the <a href="https://modelcontextprotocol.io/">MCP endpoint</a> at <code>POST /mcp</code>.
+If you need a third-party REST surface beyond what MCP exposes, let us know.</p>
+
+<h4>Per-bucket consent for third-party apps</h4>
+
+<p>Third-party apps see only the buckets a user has explicitly granted them.
+On a fresh connection, no buckets are visible until the user opens the <a href="/#/settings">Connected Apps section</a> of their Settings and picks which buckets to share &mdash; they can grant some and not others, or revoke access entirely later.
+Calls referencing buckets that haven't been granted return a JSON-RPC error with code <code>-32002</code> (<em>access not granted</em>) and a <code>consent_url</code> in the error data.</p>
 
 </section>
 
