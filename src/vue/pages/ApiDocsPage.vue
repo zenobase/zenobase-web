@@ -88,7 +88,7 @@ watch(() => route.params.section, scrollToSection);
 <dl>
 	<dt>May 12, 2026</dt>
 	<dd>Third-party apps can now authenticate via OAuth 2.1 with Dynamic Client Registration.<br/>
-		The MCP endpoint at <code>POST /mcp</code> exposes a user's buckets to LLM clients (Claude Desktop, etc.), subject to per-bucket consent managed in the <a href="/#/settings">Connected Apps</a> section of Settings.<br/>
+		External-audience tokens can call bucket-scoped REST endpoints as well as the new <a href="https://modelcontextprotocol.io/">MCP endpoint</a> at <code>POST /mcp</code>, subject to per-bucket consent managed in the <a href="/#/settings">Connected Apps</a> section of Settings. Writes from external tokens are not yet supported.<br/>
 		See <a href="/#/api/auth">Authentication</a>.</dd>
     <dt>Apr 15, 2026</dt>
     <dd>API access tokens are now JWTs that expire.<br/>
@@ -710,7 +710,7 @@ It expires after a short time, so you'll need to copy it again periodically (or 
 
 <h4>Third-party apps</h4>
 
-<p>Third-party apps (including MCP clients like Claude Desktop, and other integrations) authenticate via <a href="https://datatracker.ietf.org/doc/html/rfc6749">OAuth 2.1</a> Authorization Code with PKCE.
+<p>Third-party apps (including MCP clients like Claude Desktop, custom scripts, or other integrations) authenticate via <a href="https://datatracker.ietf.org/doc/html/rfc6749">OAuth 2.1</a> Authorization Code with PKCE.
 Discovery is via <a href="https://datatracker.ietf.org/doc/html/rfc9728">RFC 9728</a> Protected Resource Metadata:</p>
 
 <pre><code class="language-bash">curl https://api.zenobase.com/.well-known/oauth-protected-resource</code></pre>
@@ -726,14 +726,26 @@ Discovery is via <a href="https://datatracker.ietf.org/doc/html/rfc9728">RFC 972
 Dynamic Client Registration (<a href="https://datatracker.ietf.org/doc/html/rfc7591">RFC 7591</a>) is enabled at the Authorization Server &mdash; clients can self-register without manual provisioning.</p>
 
 <p>Tokens issued via this flow carry the <code>external</code> audience, distinct from personal tokens.
-They <em>cannot</em> call the bucket / event endpoints documented above &mdash; only the <a href="https://modelcontextprotocol.io/">MCP endpoint</a> at <code>POST /mcp</code>.
-If you need a third-party REST surface beyond what MCP exposes, let us know.</p>
+They can call any bucket-scoped REST endpoint (<code>GET /buckets/<em>&lt;bucket_id&gt;</em></code>, <code>GET /buckets/<em>&lt;bucket_id&gt;</em>/</code>, <code>GET /buckets/<em>&lt;bucket_id&gt;</em>/schema</code>, etc.) as well as the <a href="https://modelcontextprotocol.io/">MCP endpoint</a> at <code>POST /mcp</code>.
+Cross-bucket routes (<code>/users/<em>&lt;user_id&gt;</em>/buckets/</code>, <code>/users/<em>&lt;user_id&gt;</em>/events/</code>, etc.) are first-party only and reject external tokens with <code>403</code>.</p>
 
 <h4>Per-bucket consent for third-party apps</h4>
 
 <p>Third-party apps see only the buckets a user has explicitly granted them.
-On a fresh connection, no buckets are visible until the user opens the <a href="/#/settings">Connected Apps section</a> of their Settings and picks which buckets to share &mdash; they can grant some and not others, or revoke access entirely later.
-Calls referencing buckets that haven't been granted return a JSON-RPC error with code <code>-32002</code> (<em>access not granted</em>) and a <code>consent_url</code> in the error data.</p>
+On a fresh connection, no buckets are visible until the user opens the <a href="/#/settings">Connected Apps section</a> of their Settings and picks which buckets to share &mdash; they can grant some and not others, or revoke access entirely later.</p>
+
+<p>Bucket-scoped REST calls referencing a bucket that hasn't been granted return:</p>
+
+<pre>HTTP/1.1 403 Forbidden
+Content-Type: application/json
+<code class="language-json">{
+  "message" : "This bucket has not been granted to this client",
+  "consent_url" : "https://zenobase.com/settings/connected-apps"
+}</code></pre>
+
+<p>For the MCP endpoint the equivalent error is a JSON-RPC error with code <code>-32002</code> (<em>access not granted</em>) and a <code>consent_url</code> in the error data.</p>
+
+<p>Write methods (<code>POST</code>, <code>PUT</code>, <code>DELETE</code>) on bucket-scoped routes are rejected for external tokens regardless of grant status &mdash; third-party clients are read-only today.</p>
 
 </section>
 
