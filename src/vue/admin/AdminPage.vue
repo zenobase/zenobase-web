@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { AdminBucket, AdminConnectedApp, AdminTask, AdminUser, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
+import type { AdminBucket, AdminExternalClient, AdminTask, AdminUser, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
 import { param } from '../../utils/helpers';
 import api, { ApiError } from '../api';
 import LoadingState from '../components/LoadingState.vue';
@@ -301,31 +301,31 @@ async function removeCredential(credentialsId: string) {
 	delay(() => refreshAll());
 }
 
-// --- Connected apps (third-party / MCP) ---
+// --- External clients (third-party / MCP) ---
 // The backend endpoint is per-user, so we only render this section when a user constraint is active.
 
-const connectedApps = reactive({
-	items: null as AdminConnectedApp[] | null,
+const externalClients = reactive({
+	items: null as AdminExternalClient[] | null,
 });
 
-async function refreshConnectedApps() {
+async function refreshExternalClients() {
 	if (!constraint.value) {
-		connectedApps.items = null;
+		externalClients.items = null;
 		return;
 	}
 	try {
-		const response = await api.get<{ connected_apps: AdminConnectedApp[] }>(
-			`/users/${constraint.value}/connected-apps/`,
+		const response = await api.get<{ external_clients: AdminExternalClient[] }>(
+			`/users/${constraint.value}/external-clients/`,
 		);
-		connectedApps.items = response.data.connected_apps.map((app) => ({ ...app, principal: constraint.value as string }));
+		externalClients.items = response.data.external_clients.map((app) => ({ ...app, principal: constraint.value as string }));
 	} catch {
-		connectedApps.items = [];
+		externalClients.items = [];
 	}
 }
 
-async function revokeConnectedApp(userId: string, clientId: string) {
-	await api.del(`/users/${userId}/connected-apps/${encodeURIComponent(clientId)}`);
-	delay(() => refreshConnectedApps());
+async function revokeExternalClient(userId: string, clientId: string) {
+	await api.del(`/users/${userId}/external-clients/${encodeURIComponent(clientId)}`);
+	delay(() => refreshExternalClients());
 }
 
 // --- Tasks ---
@@ -458,7 +458,7 @@ const SECTIONS: Record<string, { title: string; placeholder?: string }> = {
 	buckets: { title: 'Buckets', placeholder: '@id, refresh' },
 	users: { title: 'Users', placeholder: '@id, name, email, verified, suspended, quota' },
 	credentials: { title: 'Credentials', placeholder: '@id, type, authorizationUrl' },
-	'connected-apps': { title: 'Connected apps' },
+	'external-clients': { title: 'External clients' },
 	tasks: { title: 'Tasks', placeholder: '@id, type, status, bucket, completed' },
 	scheduler: { title: 'Scheduler' },
 	snapshots: { title: 'Snapshots' },
@@ -529,7 +529,7 @@ function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
 		case 'buckets': return refreshBuckets(overrides);
 		case 'users': return refreshUsers(overrides);
 		case 'credentials': return refreshCredentials(overrides);
-		case 'connected-apps': return refreshConnectedApps();
+		case 'external-clients': return refreshExternalClients();
 		case 'tasks': return refreshTasks(overrides);
 		case 'scheduler': return refreshScheduler();
 		case 'snapshots': return refreshSnapshots(overrides);
@@ -878,10 +878,10 @@ function blurOnEnter(event: KeyboardEvent) {
 						</div>
 					</div>
 
-					<!-- Connected apps -->
-					<div v-show="section === 'connected-apps'">
+					<!-- External clients -->
+					<div v-show="section === 'external-clients'">
 						<v-alert v-if="!constraint" type="info" variant="tonal" class="mb-4">
-							Select a user from the <a @click="router.push('/users')">Users</a> tab to view their connected apps.
+							Select a user from the <a @click="router.push('/users')">Users</a> tab to view their external clients.
 						</v-alert>
 						<v-table v-else>
 							<thead>
@@ -894,21 +894,21 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="app in connectedApps.items" :key="app.client_id" @contextmenu.prevent="onLongPress(app.client_id)">
+								<tr v-for="app in externalClients.items" :key="app.client_id" @contextmenu.prevent="onLongPress(app.client_id)">
 									<td class="text-no-wrap">{{ app.client_id }}</td>
 									<td>{{ app.client_name || '' }}</td>
 									<td class="text-no-wrap">{{ app.readable_buckets.length }}</td>
 									<td class="text-no-wrap"><abbr :title="String(app.first_seen_at)">{{ formatAge(app.first_seen_at) }}</abbr></td>
 									<td style="text-align: center; position: relative">
 										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === app.client_id }">
-											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Revoke" @click.stop="confirmAction('Revoke connected app', `Revoke ${app.client_name || app.client_id}?`, () => revokeConnectedApp(app.principal, app.client_id))" />
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Revoke" @click.stop="confirmAction('Revoke external client', `Revoke ${app.client_name || app.client_id}?`, () => revokeExternalClient(app.principal, app.client_id))" />
 										</div>
 									</td>
 								</tr>
-								<tr v-if="connectedApps.items === null">
+								<tr v-if="externalClients.items === null">
 									<td colspan="5"><LoadingState state="loading" /></td>
 								</tr>
-								<tr v-if="connectedApps.items?.length === 0">
+								<tr v-if="externalClients.items?.length === 0">
 									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>

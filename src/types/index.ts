@@ -39,7 +39,7 @@ export interface UnitValue {
  * Visible bucket access is controlled by `readable_buckets`; an empty list = pending first-use consent.
  * A future `writable_buckets` field will be added when write tools land.
  */
-export interface ConnectedApp {
+export interface ExternalClient {
 	client_id: string;
 	client_name?: string;
 	first_seen_at: string;

@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, ref, watch } from 'vue';
-import type { ConnectedApp } from '../../types';
+import type { ExternalClient } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 
 const props = defineProps<{
 	userId: string;
-	app: ConnectedApp;
+	app: ExternalClient;
 	buckets: Array<{ '@id': string; label?: string }>;
 	modelValue: boolean;
 }>();
 
 const emit = defineEmits<{
 	'update:modelValue': [value: boolean];
-	saved: [app: ConnectedApp];
+	saved: [app: ExternalClient];
 }>();
 
 const alertApi = inject<AlertApi>(alertKey)!;
@@ -60,8 +60,8 @@ async function save() {
 	message.value = '';
 	alertApi.clear();
 	try {
-		const response = await api.put<ConnectedApp>(
-			`/users/${props.userId}/connected-apps/${encodeURIComponent(props.app.client_id)}`,
+		const response = await api.put<ExternalClient>(
+			`/users/${props.userId}/external-clients/${encodeURIComponent(props.app.client_id)}`,
 			{ readable_buckets: Array.from(selected.value) },
 		);
 		alertApi.show(`Updated ${displayName.value}.`, 'success', '');

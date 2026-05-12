@@ -4,14 +4,14 @@ import type { ComponentPublicInstance } from 'vue';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-import type { ConnectedApp } from '../../../types';
+import type { ExternalClient } from '../../../types';
 import api from '../../api';
 import { alertKey, useAlert } from '../../composables/useAlert';
-import EditConnectedAppDialog from '../EditConnectedAppDialog.vue';
+import EditExternalClientDialog from '../EditExternalClientDialog.vue';
 
 const vuetify = createVuetify({ components, directives });
 
-function makeApp(overrides: Partial<ConnectedApp> = {}): ConnectedApp {
+function makeApp(overrides: Partial<ExternalClient> = {}): ExternalClient {
 	return {
 		client_id: 'claude-desktop',
 		client_name: 'Claude Desktop',
@@ -21,9 +21,9 @@ function makeApp(overrides: Partial<ConnectedApp> = {}): ConnectedApp {
 	};
 }
 
-async function mountDialog(app: ConnectedApp) {
+async function mountDialog(app: ExternalClient) {
 	const alertApi = useAlert();
-	const wrapper = mount(EditConnectedAppDialog, {
+	const wrapper = mount(EditExternalClientDialog, {
 		attachTo: document.body,
 		props: {
 			userId: 'user-1',
@@ -52,7 +52,7 @@ function dialogText(_wrapper: VueWrapper<ComponentPublicInstance>): string {
 	return document.body.textContent || '';
 }
 
-describe('EditConnectedAppDialog', () => {
+describe('EditExternalClientDialog', () => {
 	beforeEach(() => {
 		document.body.replaceChildren();
 		// jsdom doesn't ship visualViewport; Vuetify's VOverlay locationStrategies expects it.
@@ -111,7 +111,7 @@ describe('EditConnectedAppDialog', () => {
 		await wrapper.vm.$nextTick();
 		await vm.save();
 
-		expect(putSpy).toHaveBeenCalledWith('/users/user-1/connected-apps/claude-desktop', { readable_buckets: ['b1', 'b2'] });
+		expect(putSpy).toHaveBeenCalledWith('/users/user-1/external-clients/claude-desktop', { readable_buckets: ['b1', 'b2'] });
 		const events = wrapper.emitted('saved');
 		expect(events).toBeTruthy();
 		expect(events![0][0]).toEqual(updated);
@@ -135,6 +135,6 @@ describe('EditConnectedAppDialog', () => {
 		const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: makeApp(), status: 200, headers: () => null });
 		const { wrapper } = await mountDialog(makeApp({ client_id: 'has spaces/and slashes' }));
 		await (wrapper.vm as unknown as { save: () => Promise<void> }).save();
-		expect(putSpy).toHaveBeenCalledWith('/users/user-1/connected-apps/has%20spaces%2Fand%20slashes', expect.anything());
+		expect(putSpy).toHaveBeenCalledWith('/users/user-1/external-clients/has%20spaces%2Fand%20slashes', expect.anything());
 	});
 });
