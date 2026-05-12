@@ -51,8 +51,7 @@ export interface AdminConnectedApp {
 	client_id: string;
 	client_name?: string;
 	first_seen_at: string;
-	last_used_at: string;
-	granted_bucket_ids: string[];
+	readable_buckets: string[];
 }
 
 export interface AdminTask {

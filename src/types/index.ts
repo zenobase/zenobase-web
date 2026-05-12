@@ -36,14 +36,14 @@ export interface UnitValue {
 
 /**
  * A third-party client (MCP app, REST integration) that a user has connected to their Zenobase account.
- * Visible bucket access is controlled by `granted_bucket_ids`; an empty list = pending first-use consent.
+ * Visible bucket access is controlled by `readable_buckets`; an empty list = pending first-use consent.
+ * A future `writable_buckets` field will be added when write tools land.
  */
 export interface ConnectedApp {
 	client_id: string;
 	client_name?: string;
 	first_seen_at: string;
-	last_used_at: string;
-	granted_bucket_ids: string[];
+	readable_buckets: string[];
 }
 
 export interface ResourceRef {

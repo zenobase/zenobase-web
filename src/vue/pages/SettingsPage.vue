@@ -161,8 +161,8 @@ async function revokeConnectedApp(app: ConnectedApp) {
 	}
 }
 
-function grantedBucketsLabel(app: ConnectedApp): string {
-	const n = app.granted_bucket_ids.length;
+function readableBucketsLabel(app: ConnectedApp): string {
+	const n = app.readable_buckets.length;
 	if (n === 0) return 'No buckets granted';
 	if (n === 1) return '1 bucket';
 	return `${n} buckets`;
@@ -341,10 +341,10 @@ watch(
 							<td @click="editConnectedApp(app)" style="cursor: pointer">
 								<div class="d-flex align-center ga-2">
 									<span>{{ app.client_name || app.client_id }}</span>
-									<v-chip v-if="app.granted_bucket_ids.length === 0" color="warning" size="x-small" variant="tonal">Pending</v-chip>
+									<v-chip v-if="app.readable_buckets.length === 0" color="warning" size="x-small" variant="tonal">Pending</v-chip>
 								</div>
 								<div class="text-caption" style="color: rgba(0,0,0,0.6)">
-									{{ grantedBucketsLabel(app) }} &middot; last used {{ formatAge(app.last_used_at, 30 * 24 * 60 * 60 * 1000) }}
+									{{ readableBucketsLabel(app) }} &middot; connected {{ formatAge(app.first_seen_at, 30 * 24 * 60 * 60 * 1000) }}
 								</div>
 							</td>
 							<td style="text-align: right; position: relative; overflow: visible">

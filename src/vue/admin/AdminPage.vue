@@ -888,9 +888,8 @@ function blurOnEnter(event: KeyboardEvent) {
 								<tr>
 									<th style="width: 0">Client</th>
 									<th style="width: 99%">Name</th>
-									<th style="width: 0">Granted buckets</th>
+									<th style="width: 0">Readable buckets</th>
 									<th style="width: 0">First seen</th>
-									<th style="width: 0">Last used</th>
 									<th style="width: 0"></th>
 								</tr>
 							</thead>
@@ -898,9 +897,8 @@ function blurOnEnter(event: KeyboardEvent) {
 								<tr v-for="app in connectedApps.items" :key="app.client_id" @contextmenu.prevent="onLongPress(app.client_id)">
 									<td class="text-no-wrap">{{ app.client_id }}</td>
 									<td>{{ app.client_name || '' }}</td>
-									<td class="text-no-wrap">{{ app.granted_bucket_ids.length }}</td>
+									<td class="text-no-wrap">{{ app.readable_buckets.length }}</td>
 									<td class="text-no-wrap"><abbr :title="String(app.first_seen_at)">{{ formatAge(app.first_seen_at) }}</abbr></td>
-									<td class="text-no-wrap"><abbr :title="String(app.last_used_at)">{{ formatAge(app.last_used_at) }}</abbr></td>
 									<td style="text-align: center; position: relative">
 										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === app.client_id }">
 											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Revoke" @click.stop="confirmAction('Revoke connected app', `Revoke ${app.client_name || app.client_id}?`, () => revokeConnectedApp(app.principal, app.client_id))" />
@@ -908,10 +906,10 @@ function blurOnEnter(event: KeyboardEvent) {
 									</td>
 								</tr>
 								<tr v-if="connectedApps.items === null">
-									<td colspan="6"><LoadingState state="loading" /></td>
+									<td colspan="5"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="connectedApps.items?.length === 0">
-									<td colspan="6"><i>None</i></td>
+									<td colspan="5"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>

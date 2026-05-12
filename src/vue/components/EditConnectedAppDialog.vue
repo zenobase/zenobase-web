@@ -24,9 +24,9 @@ const message = ref('');
 const selected = ref<Set<string>>(new Set());
 
 const displayName = computed(() => props.app.client_name || props.app.client_id);
-const isPending = computed(() => props.app.granted_bucket_ids.length === 0);
+const isPending = computed(() => props.app.readable_buckets.length === 0);
 const isDirty = computed(() => {
-	const current = new Set(props.app.granted_bucket_ids);
+	const current = new Set(props.app.readable_buckets);
 	if (current.size !== selected.value.size) return true;
 	for (const id of selected.value) {
 		if (!current.has(id)) return true;
@@ -61,8 +61,8 @@ async function save() {
 	alertApi.clear();
 	try {
 		const response = await api.put<ConnectedApp>(
-			`/users/${props.userId}/connected-apps/${encodeURIComponent(props.app.client_id)}/grants`,
-			{ bucket_ids: Array.from(selected.value), rights: 'read' },
+			`/users/${props.userId}/connected-apps/${encodeURIComponent(props.app.client_id)}`,
+			{ readable_buckets: Array.from(selected.value) },
 		);
 		alertApi.show(`Updated ${displayName.value}.`, 'success', '');
 		close();
@@ -85,7 +85,7 @@ watch(
 	(open) => {
 		if (open) {
 			message.value = '';
-			selected.value = new Set(props.app.granted_bucket_ids);
+			selected.value = new Set(props.app.readable_buckets);
 			nextTick(() => {
 				visible.value = true;
 			});

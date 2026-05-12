@@ -16,8 +16,7 @@ function makeApp(overrides: Partial<ConnectedApp> = {}): ConnectedApp {
 		client_id: 'claude-desktop',
 		client_name: 'Claude Desktop',
 		first_seen_at: '2026-05-01T00:00:00Z',
-		last_used_at: '2026-05-10T00:00:00Z',
-		granted_bucket_ids: ['b1'],
+		readable_buckets: ['b1'],
 		...overrides,
 	};
 }
@@ -87,13 +86,13 @@ describe('EditConnectedAppDialog', () => {
 	});
 
 	it('pre-checks currently-granted buckets', async () => {
-		const { wrapper } = await mountDialog(makeApp({ granted_bucket_ids: ['b1', 'b3'] }));
+		const { wrapper } = await mountDialog(makeApp({ readable_buckets: ['b1', 'b3'] }));
 		const checked = (wrapper.vm as unknown as { selected: Set<string> }).selected;
 		expect(Array.from(checked).sort()).toEqual(['b1', 'b3']);
 	});
 
 	it('shows a Pending chip when no buckets are granted', async () => {
-		const { wrapper } = await mountDialog(makeApp({ granted_bucket_ids: [] }));
+		const { wrapper } = await mountDialog(makeApp({ readable_buckets: [] }));
 		expect(dialogText(wrapper)).toContain('Pending');
 	});
 
@@ -103,7 +102,7 @@ describe('EditConnectedAppDialog', () => {
 	});
 
 	it('emits saved with the response after a successful PUT', async () => {
-		const updated = makeApp({ granted_bucket_ids: ['b1', 'b2'] });
+		const updated = makeApp({ readable_buckets: ['b1', 'b2'] });
 		const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: updated, status: 200, headers: () => null });
 
 		const { wrapper } = await mountDialog(makeApp());
@@ -112,7 +111,7 @@ describe('EditConnectedAppDialog', () => {
 		await wrapper.vm.$nextTick();
 		await vm.save();
 
-		expect(putSpy).toHaveBeenCalledWith('/users/user-1/connected-apps/claude-desktop/grants', { bucket_ids: ['b1', 'b2'], rights: 'read' });
+		expect(putSpy).toHaveBeenCalledWith('/users/user-1/connected-apps/claude-desktop', { readable_buckets: ['b1', 'b2'] });
 		const events = wrapper.emitted('saved');
 		expect(events).toBeTruthy();
 		expect(events![0][0]).toEqual(updated);
@@ -136,6 +135,6 @@ describe('EditConnectedAppDialog', () => {
 		const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: makeApp(), status: 200, headers: () => null });
 		const { wrapper } = await mountDialog(makeApp({ client_id: 'has spaces/and slashes' }));
 		await (wrapper.vm as unknown as { save: () => Promise<void> }).save();
-		expect(putSpy).toHaveBeenCalledWith('/users/user-1/connected-apps/has%20spaces%2Fand%20slashes/grants', expect.anything());
+		expect(putSpy).toHaveBeenCalledWith('/users/user-1/connected-apps/has%20spaces%2Fand%20slashes', expect.anything());
 	});
 });
