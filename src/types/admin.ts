@@ -42,6 +42,19 @@ export interface Credential {
 	created?: string;
 }
 
+/**
+ * Admin view of a user's connected third-party app. {@code principal} is the owning user (set client-side
+ * after fetching from {@code /users/{userId}/connected-apps/}).
+ */
+export interface AdminConnectedApp {
+	principal: string;
+	client_id: string;
+	client_name?: string;
+	first_seen_at: string;
+	last_used_at: string;
+	granted_bucket_ids: string[];
+}
+
 export interface AdminTask {
 	'@id': string;
 	principal: string;

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch } from 'vue';
+import type { ConnectedApp } from '../../types';
 import { param } from '../../utils/helpers';
 import api from '../api';
+import EditConnectedAppDialog from '../components/EditConnectedAppDialog.vue';
 import LoadingState from '../components/LoadingState.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
@@ -103,6 +105,69 @@ const credOffset = ref(0);
 const credLimit = 10;
 const credTotal = ref(0);
 
+// Connected apps (MCP / third-party clients)
+const connectedApps = ref<ConnectedApp[] | null>(null);
+const connectedAppsBuckets = ref<Array<{ '@id': string; label?: string }>>([]);
+const editingApp = ref<ConnectedApp | null>(null);
+const showEditApp = ref(false);
+
+async function loadConnectedApps() {
+	try {
+		const response = await api.get<{ total: number; connected_apps: ConnectedApp[] }>(
+			`/users/${auth.user.value!['@id']}/connected-apps/`,
+		);
+		connectedApps.value = response.data.connected_apps;
+	} catch {
+		connectedApps.value = [];
+	}
+}
+
+async function loadConnectedAppsBuckets() {
+	if (!auth.user.value) return;
+	try {
+		const response = await api.get<{ buckets: Array<{ '@id': string; label?: string }> }>(
+			`/users/${auth.user.value['@id']}/buckets/?${param({ order: 'label', offset: 0, limit: 100, labels_only: true })}`,
+		);
+		connectedAppsBuckets.value = response.data.buckets;
+	} catch {
+		connectedAppsBuckets.value = [];
+	}
+}
+
+function editConnectedApp(app: ConnectedApp) {
+	editingApp.value = app;
+	showEditApp.value = true;
+}
+
+function onConnectedAppSaved(updated: ConnectedApp) {
+	if (!connectedApps.value) return;
+	const index = connectedApps.value.findIndex((a) => a.client_id === updated.client_id);
+	if (index >= 0) {
+		connectedApps.value[index] = updated;
+	}
+}
+
+async function revokeConnectedApp(app: ConnectedApp) {
+	const name = app.client_name || app.client_id;
+	if (!confirm(`Revoke ${name}? It will lose access to all your buckets.`)) return;
+	alertApi.clear();
+	try {
+		await api.del(`/users/${auth.user.value!['@id']}/connected-apps/${encodeURIComponent(app.client_id)}`);
+		alertApi.show(`Revoked ${name}.`, 'success', '');
+		await loadConnectedApps();
+	} catch (e: unknown) {
+		const status = (e as { status?: number }).status;
+		alertApi.show(status && status < 500 ? "Can't revoke this app." : "Couldn't revoke this app. Try again later or contact support.", 'error');
+	}
+}
+
+function grantedBucketsLabel(app: ConnectedApp): string {
+	const n = app.granted_bucket_ids.length;
+	if (n === 0) return 'No buckets granted';
+	if (n === 1) return '1 bucket';
+	return `${n} buckets`;
+}
+
 
 async function loadQuota() {
 	try {
@@ -172,6 +237,8 @@ function refresh() {
 	loadQuota();
 	loadPasskeys();
 	loadCredentials();
+	loadConnectedApps();
+	loadConnectedAppsBuckets();
 }
 
 watch(
@@ -179,7 +246,7 @@ watch(
 	async () => {
 		if (!auth.user.value?.name) return;
 		settingsEmail.value = (auth.user.value as typeof auth.user.value & { email?: string }).email || '';
-		await Promise.all([loadQuota(), loadPasskeys(), loadCredentials()]);
+		await Promise.all([loadQuota(), loadPasskeys(), loadCredentials(), loadConnectedApps(), loadConnectedAppsBuckets()]);
 	},
 	{ immediate: true },
 );
@@ -259,6 +326,46 @@ watch(
 					</tbody>
 				</v-table>
 			</section>
+
+			<v-divider class="my-8" />
+
+			<!-- Connected apps -->
+			<section>
+				<h2 class="settings-heading">Connected apps</h2>
+				<p class="settings-subtitle">Third-party apps you've allowed to read your data.</p>
+				<v-table>
+					<tbody>
+						<tr v-if="connectedApps === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
+						<tr v-else-if="connectedApps.length === 0"><td colspan="2"><i>No apps connected</i></td></tr>
+						<tr v-for="app in connectedApps" :key="app.client_id" class="credentials-row" @contextmenu.prevent="onRowLongPress(app.client_id)">
+							<td @click="editConnectedApp(app)" style="cursor: pointer">
+								<div class="d-flex align-center ga-2">
+									<span>{{ app.client_name || app.client_id }}</span>
+									<v-chip v-if="app.granted_bucket_ids.length === 0" color="warning" size="x-small" variant="tonal">Pending</v-chip>
+								</div>
+								<div class="text-caption" style="color: rgba(0,0,0,0.6)">
+									{{ grantedBucketsLabel(app) }} &middot; last used {{ formatAge(app.last_used_at, 30 * 24 * 60 * 60 * 1000) }}
+								</div>
+							</td>
+							<td style="text-align: right; position: relative; overflow: visible">
+								<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === app.client_id }">
+									<v-btn icon="mdi-pencil-outline" size="small" variant="elevated" color="primary" title="Edit access" class="mr-1" @click.stop="editConnectedApp(app)" />
+									<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Revoke" @click.stop="revokeConnectedApp(app)" />
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</v-table>
+			</section>
+
+			<EditConnectedAppDialog
+				v-if="editingApp"
+				v-model="showEditApp"
+				:user-id="auth.user.value!['@id']"
+				:app="editingApp"
+				:buckets="connectedAppsBuckets"
+				@saved="onConnectedAppSaved"
+			/>
 
 			<v-divider class="my-8" />
 

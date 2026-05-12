@@ -34,6 +34,18 @@ export interface UnitValue {
 	unit?: string;
 }
 
+/**
+ * A third-party client (MCP app, REST integration) that a user has connected to their Zenobase account.
+ * Visible bucket access is controlled by `granted_bucket_ids`; an empty list = pending first-use consent.
+ */
+export interface ConnectedApp {
+	client_id: string;
+	client_name?: string;
+	first_seen_at: string;
+	last_used_at: string;
+	granted_bucket_ids: string[];
+}
+
 export interface ResourceRef {
 	title: string;
 	url: string;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { AdminBucket, AdminTask, AdminUser, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
+import type { AdminBucket, AdminConnectedApp, AdminTask, AdminUser, ClusterStatus, Credential, JournalCommand, PaginationParams, SchedulerJob, Snapshot } from '../../types/admin';
 import { param } from '../../utils/helpers';
 import api, { ApiError } from '../api';
 import LoadingState from '../components/LoadingState.vue';
@@ -301,6 +301,33 @@ async function removeCredential(credentialsId: string) {
 	delay(() => refreshAll());
 }
 
+// --- Connected apps (third-party / MCP) ---
+// The backend endpoint is per-user, so we only render this section when a user constraint is active.
+
+const connectedApps = reactive({
+	items: null as AdminConnectedApp[] | null,
+});
+
+async function refreshConnectedApps() {
+	if (!constraint.value) {
+		connectedApps.items = null;
+		return;
+	}
+	try {
+		const response = await api.get<{ connected_apps: AdminConnectedApp[] }>(
+			`/users/${constraint.value}/connected-apps/`,
+		);
+		connectedApps.items = response.data.connected_apps.map((app) => ({ ...app, principal: constraint.value as string }));
+	} catch {
+		connectedApps.items = [];
+	}
+}
+
+async function revokeConnectedApp(userId: string, clientId: string) {
+	await api.del(`/users/${userId}/connected-apps/${encodeURIComponent(clientId)}`);
+	delay(() => refreshConnectedApps());
+}
+
 // --- Tasks ---
 
 const tasks = reactive({
@@ -431,6 +458,7 @@ const SECTIONS: Record<string, { title: string; placeholder?: string }> = {
 	buckets: { title: 'Buckets', placeholder: '@id, refresh' },
 	users: { title: 'Users', placeholder: '@id, name, email, verified, suspended, quota' },
 	credentials: { title: 'Credentials', placeholder: '@id, type, authorizationUrl' },
+	'connected-apps': { title: 'Connected apps' },
 	tasks: { title: 'Tasks', placeholder: '@id, type, status, bucket, completed' },
 	scheduler: { title: 'Scheduler' },
 	snapshots: { title: 'Snapshots' },
@@ -501,6 +529,7 @@ function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
 		case 'buckets': return refreshBuckets(overrides);
 		case 'users': return refreshUsers(overrides);
 		case 'credentials': return refreshCredentials(overrides);
+		case 'connected-apps': return refreshConnectedApps();
 		case 'tasks': return refreshTasks(overrides);
 		case 'scheduler': return refreshScheduler();
 		case 'snapshots': return refreshSnapshots(overrides);
@@ -847,6 +876,45 @@ function blurOnEnter(event: KeyboardEvent) {
 							<span style="color: rgba(0,0,0,0.5)"><b>{{ credentials.offset + 1 }}</b>&ndash;<b>{{ credentials.offset + credentials.items.length }}</b> of <b>{{ formatNumber(credentials.total) }}</b></span>
 							<v-btn icon variant="text" title="Next" @click="refreshCredentials({ offset: credentials.offset + credentials.limit })" :disabled="credentials.offset + credentials.limit >= credentials.total"><v-icon icon="mdi-chevron-right" /></v-btn>
 						</div>
+					</div>
+
+					<!-- Connected apps -->
+					<div v-show="section === 'connected-apps'">
+						<v-alert v-if="!constraint" type="info" variant="tonal" class="mb-4">
+							Select a user from the <a @click="router.push('/users')">Users</a> tab to view their connected apps.
+						</v-alert>
+						<v-table v-else>
+							<thead>
+								<tr>
+									<th style="width: 0">Client</th>
+									<th style="width: 99%">Name</th>
+									<th style="width: 0">Granted buckets</th>
+									<th style="width: 0">First seen</th>
+									<th style="width: 0">Last used</th>
+									<th style="width: 0"></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="app in connectedApps.items" :key="app.client_id" @contextmenu.prevent="onLongPress(app.client_id)">
+									<td class="text-no-wrap">{{ app.client_id }}</td>
+									<td>{{ app.client_name || '' }}</td>
+									<td class="text-no-wrap">{{ app.granted_bucket_ids.length }}</td>
+									<td class="text-no-wrap"><abbr :title="String(app.first_seen_at)">{{ formatAge(app.first_seen_at) }}</abbr></td>
+									<td class="text-no-wrap"><abbr :title="String(app.last_used_at)">{{ formatAge(app.last_used_at) }}</abbr></td>
+									<td style="text-align: center; position: relative">
+										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === app.client_id }">
+											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Revoke" @click.stop="confirmAction('Revoke connected app', `Revoke ${app.client_name || app.client_id}?`, () => revokeConnectedApp(app.principal, app.client_id))" />
+										</div>
+									</td>
+								</tr>
+								<tr v-if="connectedApps.items === null">
+									<td colspan="6"><LoadingState state="loading" /></td>
+								</tr>
+								<tr v-if="connectedApps.items?.length === 0">
+									<td colspan="6"><i>None</i></td>
+								</tr>
+							</tbody>
+						</v-table>
 					</div>
 
 					<!-- Tasks -->
