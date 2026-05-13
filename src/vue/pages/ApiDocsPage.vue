@@ -705,47 +705,16 @@ X-Command-ID: p3ateetvs1</pre>
 <h4>Personal use</h4>
 
 <p>For your own scripts and notebooks, sign in to the web app and copy your current token from the <a href="/#/settings">settings page</a>.
-This token grants the same access you have when signed in &mdash; all of your buckets.
-It expires after a short time, so you'll need to copy it again periodically (or use the OAuth 2.1 flow below).</p>
+This token grants the same access you have when signed in. It expires after a short time, so you'll need to copy it again periodically (or use the OAuth 2.1 flow below).</p>
 
-<h4>Third-party apps</h4>
+<h4>Third-party clients</h4>
 
-<p>Third-party apps (including MCP clients like Claude Desktop, custom scripts, or other integrations) authenticate via <a href="https://datatracker.ietf.org/doc/html/rfc6749">OAuth 2.1</a> Authorization Code with PKCE.
+<p>Third-party apps (including MCP clients like Claude, or other integrations) authenticate via <a href="https://datatracker.ietf.org/doc/html/rfc6749">OAuth 2.1</a> Authorization Code with PKCE.
 Discovery is via <a href="https://datatracker.ietf.org/doc/html/rfc9728">RFC 9728</a> Protected Resource Metadata:</p>
 
 <pre><code class="language-bash">curl https://api.zenobase.com/.well-known/oauth-protected-resource</code></pre>
 
-<pre><code class="language-json">{
-  "resource" : "https://api.zenobase.com/external",
-  "authorization_servers" : [ "https://&lt;tenant&gt;.auth0.com/" ],
-  "scopes_supported" : [ "external" ],
-  "bearer_methods_supported" : [ "header" ]
-}</code></pre>
-
-<p>Unauthenticated requests to third-party endpoints return a <code>401</code> with the same metadata URL in the <code>WWW-Authenticate</code> challenge header, so well-behaved clients can discover it automatically.
-Dynamic Client Registration (<a href="https://datatracker.ietf.org/doc/html/rfc7591">RFC 7591</a>) is enabled at the Authorization Server &mdash; clients can self-register without manual provisioning.</p>
-
-<p>Tokens issued via this flow carry the <code>external</code> audience, distinct from personal tokens.
-They can call any bucket-scoped REST endpoint (<code>GET /buckets/<em>&lt;bucket_id&gt;</em></code>, <code>GET /buckets/<em>&lt;bucket_id&gt;</em>/</code>, <code>GET /buckets/<em>&lt;bucket_id&gt;</em>/schema</code>, etc.) as well as the <a href="https://modelcontextprotocol.io/">MCP endpoint</a> at <code>POST /mcp</code>.
-Cross-bucket routes (<code>/users/<em>&lt;user_id&gt;</em>/buckets/</code>, <code>/users/<em>&lt;user_id&gt;</em>/events/</code>, etc.) are first-party only and reject external tokens with <code>403</code>.</p>
-
-<h4>Per-bucket consent for third-party apps</h4>
-
-<p>Third-party apps see only the buckets a user has explicitly granted them.
-On a fresh connection, no buckets are visible until the user opens the <a href="/#/settings">API clients section</a> of their Settings and picks which buckets to share &mdash; they can grant some and not others, or revoke access entirely later.</p>
-
-<p>Bucket-scoped REST calls referencing a bucket that hasn't been granted return:</p>
-
-<pre>HTTP/1.1 403 Forbidden
-Content-Type: application/json
-<code class="language-json">{
-  "message" : "This bucket has not been granted to this client",
-  "consent_url" : "https://zenobase.com/settings/external-clients"
-}</code></pre>
-
-<p>For the MCP endpoint the equivalent error is a JSON-RPC error with code <code>-32002</code> (<em>access not granted</em>) and a <code>consent_url</code> in the error data.</p>
-
-<p>Write methods (<code>POST</code>, <code>PUT</code>, <code>DELETE</code>) on bucket-scoped routes are rejected for external tokens regardless of grant status &mdash; third-party clients are read-only today.</p>
+<p>Note that tokens issued via this flow are restricted to reading data from buckets to which access has been granted explicitly by the user.</p>
 
 </section>
 

@@ -309,7 +309,7 @@ watch(
 				<v-table>
 					<tbody>
 						<tr v-if="passkeys === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
-						<tr v-else-if="passkeys.length === 0"><td colspan="2"><i>No passkeys enrolled</i></td></tr>
+						<tr v-else-if="passkeys.length === 0"><td colspan="2"><i>None</i></td></tr>
 						<tr v-for="p in passkeys" :key="p.id" class="credentials-row" @contextmenu.prevent="onRowLongPress(p.id)">
 							<td>
 								<div>{{ passkeyLabel(p) }}</div>
@@ -331,12 +331,17 @@ watch(
 
 			<!-- API clients -->
 			<section>
-				<h2 class="settings-heading">API clients</h2>
-				<p class="settings-subtitle">Apps and scripts that can read your buckets on your behalf. Each app sees only the buckets you've shared with it.</p>
+				<h2 class="settings-heading">API Clients</h2>
+				<p class="settings-subtitle">
+					Services that can read your data in Zenobase.
+					You can also <a v-if="tokenExpiry" @click="copyToken()" style="cursor: pointer">copy a token</a>
+					for running a script against the <a href="/#/api">API</a>
+					<span v-if="tokenExpiryLabel"> ({{ tokenExpiryLabel.toLowerCase() }})</span>.
+				</p>
 				<v-table>
 					<tbody>
 						<tr v-if="externalClients === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
-						<tr v-else-if="externalClients.length === 0"><td colspan="2"><i>No apps connected</i></td></tr>
+						<tr v-else-if="externalClients.length === 0"><td colspan="2"><i>None</i></td></tr>
 						<tr v-for="app in externalClients" :key="app.client_id" class="credentials-row" @contextmenu.prevent="onRowLongPress(app.client_id)">
 							<td @click="editExternalClient(app)" style="cursor: pointer">
 								<div class="d-flex align-center ga-2">
@@ -356,11 +361,6 @@ watch(
 						</tr>
 					</tbody>
 				</v-table>
-				<p class="text-body-2 mt-4" style="color: rgba(0, 0, 0, 0.6)">
-					Need a quick token for a personal script or <a href="/#/api">API call</a>?
-					<a v-if="tokenExpiry" @click="copyToken()" style="cursor: pointer">Copy your access token</a>
-					<span v-if="tokenExpiryLabel"> &middot; {{ tokenExpiryLabel.toLowerCase() }}</span>.
-				</p>
 			</section>
 
 			<EditExternalClientDialog
@@ -376,8 +376,8 @@ watch(
 
 			<!-- Linked accounts -->
 			<section>
-				<h2 class="settings-heading">Linked accounts</h2>
-				<p class="settings-subtitle">Services that Zenobase reads on your behalf, like Fitbit and Strava.</p>
+				<h2 class="settings-heading">Linked Accounts</h2>
+				<p class="settings-subtitle">Services from which Zenobase can read data.</p>
 				<v-table>
 					<tbody>
 						<tr v-if="credentials === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
