@@ -139,6 +139,12 @@ function editExternalClient(app: ExternalClient) {
 	showEditApp.value = true;
 }
 
+// Clear the editing reference whenever the dialog closes so a stale revoked-app object can't leak back in via a
+// re-render. The dialog is mounted with `v-if="editingApp"`, so this also lets it unmount cleanly.
+watch(showEditApp, (open) => {
+	if (!open) editingApp.value = null;
+});
+
 function onExternalClientSaved(updated: ExternalClient) {
 	if (!externalClients.value) return;
 	const index = externalClients.value.findIndex((a) => a.client_id === updated.client_id);
@@ -154,6 +160,10 @@ async function revokeExternalClient(app: ExternalClient) {
 	try {
 		await api.del(`/users/${auth.user.value!['@id']}/external-clients/${encodeURIComponent(app.client_id)}`);
 		alertApi.show(`Revoked ${name}.`, 'success', '');
+		// If the dialog was open on the row we just revoked, close it so it doesn't show stale state.
+		if (editingApp.value?.client_id === app.client_id) {
+			showEditApp.value = false;
+		}
 		await loadExternalClients();
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;
