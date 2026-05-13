@@ -88,7 +88,7 @@ watch(() => route.params.section, scrollToSection);
 <dl>
 	<dt>May 12, 2026</dt>
 	<dd>Third-party apps can now authenticate via OAuth 2.1 with Dynamic Client Registration.<br/>
-		External-audience tokens can call bucket-scoped REST endpoints as well as the new <a href="https://modelcontextprotocol.io/">MCP endpoint</a> at <code>POST /mcp</code>, subject to per-bucket consent managed in the <a href="/#/settings">External Clients</a> section of Settings. Writes from external tokens are not yet supported.<br/>
+		External-audience tokens can call bucket-scoped REST endpoints as well as the new <a href="https://modelcontextprotocol.io/">MCP endpoint</a> at <code>POST /mcp</code>, subject to per-bucket consent managed in the <a href="/#/settings">API clients</a> section of Settings. Writes from external tokens are not yet supported.<br/>
 		See <a href="/#/api/auth">Authentication</a>.</dd>
     <dt>Apr 15, 2026</dt>
     <dd>API access tokens are now JWTs that expire.<br/>
@@ -732,7 +732,7 @@ Cross-bucket routes (<code>/users/<em>&lt;user_id&gt;</em>/buckets/</code>, <cod
 <h4>Per-bucket consent for third-party apps</h4>
 
 <p>Third-party apps see only the buckets a user has explicitly granted them.
-On a fresh connection, no buckets are visible until the user opens the <a href="/#/settings">External Clients section</a> of their Settings and picks which buckets to share &mdash; they can grant some and not others, or revoke access entirely later.</p>
+On a fresh connection, no buckets are visible until the user opens the <a href="/#/settings">API clients section</a> of their Settings and picks which buckets to share &mdash; they can grant some and not others, or revoke access entirely later.</p>
 
 <p>Bucket-scoped REST calls referencing a bucket that hasn't been granted return:</p>
 

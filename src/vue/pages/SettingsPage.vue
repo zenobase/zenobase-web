@@ -329,10 +329,10 @@ watch(
 
 			<v-divider class="my-8" />
 
-			<!-- External clients -->
+			<!-- API clients -->
 			<section>
-				<h2 class="settings-heading">External clients</h2>
-				<p class="settings-subtitle">Third-party apps you've allowed to read your data.</p>
+				<h2 class="settings-heading">API clients</h2>
+				<p class="settings-subtitle">Apps and scripts that can read your buckets on your behalf. Each app sees only the buckets you've shared with it.</p>
 				<v-table>
 					<tbody>
 						<tr v-if="externalClients === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
@@ -356,6 +356,11 @@ watch(
 						</tr>
 					</tbody>
 				</v-table>
+				<p class="text-body-2 mt-4" style="color: rgba(0, 0, 0, 0.6)">
+					Need a quick token for a personal script or <a href="/#/api">API call</a>?
+					<a v-if="tokenExpiry" @click="copyToken()" style="cursor: pointer">Copy your access token</a>
+					<span v-if="tokenExpiryLabel"> &middot; {{ tokenExpiryLabel.toLowerCase() }}</span>.
+				</p>
 			</section>
 
 			<EditExternalClientDialog
@@ -369,10 +374,10 @@ watch(
 
 			<v-divider class="my-8" />
 
-			<!-- Credentials -->
+			<!-- Linked accounts -->
 			<section>
-				<h2 class="settings-heading">Credentials</h2>
-				<p class="settings-subtitle">You have granted Zenobase access to data in these services</p>
+				<h2 class="settings-heading">Linked accounts</h2>
+				<p class="settings-subtitle">Services that Zenobase reads on your behalf, like Fitbit and Strava.</p>
 				<v-table>
 					<tbody>
 						<tr v-if="credentials === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
@@ -392,21 +397,6 @@ watch(
 					<v-btn icon variant="text" title="Previous" :disabled="credOffset <= 0" @click="() => { credOffset -= credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-left" /></v-btn>
 					<span style="color: rgba(0,0,0,0.5)"><b>{{ credOffset + 1 }}</b>&ndash;<b>{{ credOffset + (credentials?.length ?? 0) }}</b> of <b>{{ credTotal }}</b></span>
 					<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="() => { credOffset += credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-right" /></v-btn>
-				</div>
-			</section>
-
-			<v-divider class="my-8" />
-
-			<!-- API token -->
-			<section>
-				<h2 class="settings-heading">API Token</h2>
-				<p class="settings-subtitle">
-					Use this token for <a href="/#/api">API calls</a>.
-					<span v-if="tokenExpiryLabel">{{ tokenExpiryLabel }}.</span>
-				</p>
-				<div class="settings-actions">
-					<v-spacer />
-					<v-btn color="primary" :disabled="!tokenExpiry" @click="copyToken()">Copy token</v-btn>
 				</div>
 			</section>
 
