@@ -93,6 +93,7 @@ watch(
 			visible.value = false;
 		}
 	},
+	{ immediate: true },
 );
 </script>
 
