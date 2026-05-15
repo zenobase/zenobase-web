@@ -50,7 +50,7 @@ export interface AdminExternalClient {
 	principal: string;
 	client_id: string;
 	client_name?: string;
-	first_seen_at: string;
+	created: string;
 	readable_buckets: string[];
 }
 

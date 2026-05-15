@@ -15,7 +15,7 @@ function makeApp(overrides: Partial<ExternalClient> = {}): ExternalClient {
 	return {
 		client_id: 'claude-desktop',
 		client_name: 'Claude Desktop',
-		first_seen_at: '2026-05-01T00:00:00Z',
+		created: '2026-05-01T00:00:00Z',
 		readable_buckets: ['b1'],
 		...overrides,
 	};

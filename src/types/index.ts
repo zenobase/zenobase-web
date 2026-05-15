@@ -42,7 +42,7 @@ export interface UnitValue {
 export interface ExternalClient {
 	client_id: string;
 	client_name?: string;
-	first_seen_at: string;
+	created: string;
 	readable_buckets: string[];
 }
 

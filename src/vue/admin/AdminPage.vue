@@ -896,8 +896,8 @@ function blurOnEnter(event: KeyboardEvent) {
 									<th v-if="!constraint" style="width: 0">User</th>
 									<th style="width: 0">Client</th>
 									<th style="width: 99%">Name</th>
-									<th style="width: 0">Readable buckets</th>
-									<th style="width: 0">First seen</th>
+									<th style="width: 0">Buckets</th>
+									<th style="width: 0">Created</th>
 									<th style="width: 0"></th>
 								</tr>
 							</thead>
@@ -907,7 +907,7 @@ function blurOnEnter(event: KeyboardEvent) {
 									<td class="text-no-wrap">{{ app.client_id }}</td>
 									<td>{{ app.client_name || '' }}</td>
 									<td class="text-no-wrap">{{ app.readable_buckets.length }}</td>
-									<td class="text-no-wrap"><abbr :title="String(app.first_seen_at)">{{ formatAge(app.first_seen_at) }}</abbr></td>
+									<td class="text-no-wrap"><abbr :title="String(app.created)">{{ formatAge(app.created) }}</abbr></td>
 									<td style="text-align: center; position: relative">
 										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === app.principal + '/' + app.client_id }">
 											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Revoke" @click.stop="confirmAction('Revoke external client', `Revoke ${app.client_name || app.client_id}?`, () => revokeExternalClient(app.principal, app.client_id))" />

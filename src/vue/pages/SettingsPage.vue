@@ -359,7 +359,7 @@ watch(
 									<v-chip v-if="app.readable_buckets.length === 0" color="warning" size="x-small" variant="tonal">Pending</v-chip>
 								</div>
 								<div class="text-caption" style="color: rgba(0,0,0,0.6)">
-									{{ readableBucketsLabel(app) }} &middot; connected {{ formatAge(app.first_seen_at, 30 * 24 * 60 * 60 * 1000) }}
+									{{ readableBucketsLabel(app) }} &middot; connected {{ formatAge(app.created, 30 * 24 * 60 * 60 * 1000) }}
 								</div>
 							</td>
 							<td style="text-align: right; position: relative; overflow: visible">
