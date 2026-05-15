@@ -468,7 +468,7 @@ const SECTIONS: Record<string, { title: string; placeholder?: string }> = {
 	buckets: { title: 'Buckets', placeholder: '@id, refresh' },
 	users: { title: 'Users', placeholder: '@id, name, email, verified, suspended, quota' },
 	credentials: { title: 'Credentials', placeholder: '@id, type, authorizationUrl' },
-	'external-clients': { title: 'External clients' },
+	'external-clients': { title: 'External Clients' },
 	tasks: { title: 'Tasks', placeholder: '@id, type, status, bucket, completed' },
 	scheduler: { title: 'Scheduler' },
 	snapshots: { title: 'Snapshots' },

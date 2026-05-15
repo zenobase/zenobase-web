@@ -339,11 +339,11 @@ watch(
 
 			<v-divider class="my-8" />
 
-			<!-- API clients -->
+			<!-- External Clients -->
 			<section>
-				<h2 class="settings-heading">API Clients</h2>
+				<h2 class="settings-heading">Access you've granted others</h2>
 				<p class="settings-subtitle">
-					Services that can read your data in Zenobase.
+					Third-party services that can access Zenobase.
 					You can also <a v-if="tokenExpiry" @click="copyToken()" style="cursor: pointer">copy a token</a>
 					for running a script against the <a href="/#/api">API</a>
 					<span v-if="tokenExpiryLabel"> ({{ tokenExpiryLabel.toLowerCase() }})</span>.
@@ -384,10 +384,10 @@ watch(
 
 			<v-divider class="my-8" />
 
-			<!-- Linked accounts -->
+			<!-- Credentials -->
 			<section>
-				<h2 class="settings-heading">Linked Accounts</h2>
-				<p class="settings-subtitle">Services from which Zenobase can read data.</p>
+				<h2 class="settings-heading">Access you've granted us</h2>
+				<p class="settings-subtitle">Third-party services that Zenobase can access on your behalf.</p>
 				<v-table>
 					<tbody>
 						<tr v-if="credentials === null"><td colspan="2"><LoadingState state="loading" /></td></tr>

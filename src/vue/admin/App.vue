@@ -18,7 +18,7 @@ const sections = [
 	{ value: 'buckets', title: 'Buckets', icon: 'mdi-view-dashboard' },
 	{ value: 'users', title: 'Users', icon: 'mdi-account-group' },
 	{ value: 'credentials', title: 'Credentials', icon: 'mdi-key' },
-	{ value: 'external-clients', title: 'External clients', icon: 'mdi-application-outline' },
+	{ value: 'external-clients', title: 'External Clients', icon: 'mdi-robot-outline' },
 	{ value: 'tasks', title: 'Tasks', icon: 'mdi-cog-sync' },
 	{ value: 'scheduler', title: 'Scheduler', icon: 'mdi-calendar-clock' },
 	{ value: 'snapshots', title: 'Snapshots', icon: 'mdi-camera' },
