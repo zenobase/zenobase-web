@@ -302,22 +302,32 @@ async function removeCredential(credentialsId: string) {
 }
 
 // --- External clients (third-party / MCP) ---
-// The backend endpoint is per-user, so we only render this section when a user constraint is active.
 
 const externalClients = reactive({
+	offset: 0,
+	limit: 10,
+	total: 0,
 	items: null as AdminExternalClient[] | null,
 });
 
-async function refreshExternalClients() {
-	if (!constraint.value) {
-		externalClients.items = null;
-		return;
-	}
+async function refreshExternalClients(overrides?: { offset?: number }) {
+	const offset = overrides?.offset ?? externalClients.offset;
 	try {
-		const response = await api.get<{ external_clients: AdminExternalClient[] }>(
-			`/users/${constraint.value}/external-clients/`,
-		);
-		externalClients.items = response.data.external_clients.map((app) => ({ ...app, principal: constraint.value as string }));
+		if (constraint.value) {
+			const response = await api.get<{ total: number; external_clients: AdminExternalClient[] }>(
+				`/users/${constraint.value}/external-clients/`,
+			);
+			externalClients.offset = 0;
+			externalClients.total = response.data.total;
+			externalClients.items = response.data.external_clients.map((app) => ({ ...app, principal: constraint.value as string }));
+		} else {
+			const response = await api.get<{ total: number; external_clients: AdminExternalClient[] }>(
+				`/external-clients/?${param({ offset, limit: externalClients.limit })}`,
+			);
+			externalClients.offset = offset;
+			externalClients.total = response.data.total;
+			externalClients.items = response.data.external_clients;
+		}
 	} catch {
 		externalClients.items = [];
 	}
@@ -529,7 +539,7 @@ function refreshSection(name: string, overrides: Record<string, unknown> = {}) {
 		case 'buckets': return refreshBuckets(overrides);
 		case 'users': return refreshUsers(overrides);
 		case 'credentials': return refreshCredentials(overrides);
-		case 'external-clients': return refreshExternalClients();
+		case 'external-clients': return refreshExternalClients(overrides as { offset?: number });
 		case 'tasks': return refreshTasks(overrides);
 		case 'scheduler': return refreshScheduler();
 		case 'snapshots': return refreshSnapshots(overrides);
@@ -880,12 +890,10 @@ function blurOnEnter(event: KeyboardEvent) {
 
 					<!-- External clients -->
 					<div v-show="section === 'external-clients'">
-						<v-alert v-if="!constraint" type="info" variant="tonal" class="mb-4">
-							Select a user from the <a @click="router.push('/users')">Users</a> tab to view their external clients.
-						</v-alert>
-						<v-table v-else>
+						<v-table>
 							<thead>
 								<tr>
+									<th v-if="!constraint" style="width: 0">User</th>
 									<th style="width: 0">Client</th>
 									<th style="width: 99%">Name</th>
 									<th style="width: 0">Readable buckets</th>
@@ -894,25 +902,31 @@ function blurOnEnter(event: KeyboardEvent) {
 								</tr>
 							</thead>
 							<tbody>
-								<tr v-for="app in externalClients.items" :key="app.client_id" @contextmenu.prevent="onLongPress(app.client_id)">
+								<tr v-for="app in externalClients.items" :key="app.principal + '/' + app.client_id" @contextmenu.prevent="onLongPress(app.principal + '/' + app.client_id)">
+									<td v-if="!constraint" class="text-no-wrap"><a @click="setConstraint(app.principal)">{{ app.principal }}</a></td>
 									<td class="text-no-wrap">{{ app.client_id }}</td>
 									<td>{{ app.client_name || '' }}</td>
 									<td class="text-no-wrap">{{ app.readable_buckets.length }}</td>
 									<td class="text-no-wrap"><abbr :title="String(app.first_seen_at)">{{ formatAge(app.first_seen_at) }}</abbr></td>
 									<td style="text-align: center; position: relative">
-										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === app.client_id }">
+										<div class="row-actions" :class="{ 'row-actions--visible': longPressedId === app.principal + '/' + app.client_id }">
 											<v-btn icon="mdi-delete-outline" size="x-small" variant="elevated" color="primary" title="Revoke" @click.stop="confirmAction('Revoke external client', `Revoke ${app.client_name || app.client_id}?`, () => revokeExternalClient(app.principal, app.client_id))" />
 										</div>
 									</td>
 								</tr>
 								<tr v-if="externalClients.items === null">
-									<td colspan="5"><LoadingState state="loading" /></td>
+									<td :colspan="constraint ? 5 : 6"><LoadingState state="loading" /></td>
 								</tr>
 								<tr v-if="externalClients.items?.length === 0">
-									<td colspan="5"><i>None</i></td>
+									<td :colspan="constraint ? 5 : 6"><i>None</i></td>
 								</tr>
 							</tbody>
 						</v-table>
+						<div v-if="!constraint && externalClients.items?.length" class="d-flex align-center justify-end mt-2">
+							<v-btn icon variant="text" title="Previous" :disabled="externalClients.offset <= 0" @click="refreshExternalClients({ offset: externalClients.offset - externalClients.limit })"><v-icon icon="mdi-chevron-left" /></v-btn>
+							<span style="color: rgba(0,0,0,0.5)"><b>{{ externalClients.offset + 1 }}</b>&ndash;<b>{{ externalClients.offset + externalClients.items.length }}</b> of <b>{{ formatNumber(externalClients.total) }}</b></span>
+							<v-btn icon variant="text" title="Next" :disabled="externalClients.offset + externalClients.limit >= externalClients.total" @click="refreshExternalClients({ offset: externalClients.offset + externalClients.limit })"><v-icon icon="mdi-chevron-right" /></v-btn>
+						</div>
 					</div>
 
 					<!-- Tasks -->
