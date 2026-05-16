@@ -2,11 +2,24 @@
 import '../../css/home.css';
 
 import { inject, type Ref } from 'vue';
+import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
 import { FIELD_REGISTRY } from '../utils/eventFormatter';
 
 const auth = inject<AuthApi>(authKey)!;
+const alertApi = inject<AlertApi>(alertKey)!;
 const drawer = inject<Ref<boolean>>('drawer')!;
+
+const MCP_URL = 'https://api.zenobase.com/mcp';
+
+async function copyMcpUrl() {
+	try {
+		await navigator.clipboard.writeText(MCP_URL);
+		alertApi.show('MCP URL copied to clipboard.', 'success', '');
+	} catch {
+		alertApi.show("Couldn't copy URL to clipboard.", 'error');
+	}
+}
 
 const excludeFields = new Set(['source', 'author', 'moon', 'percentage']);
 
@@ -154,6 +167,24 @@ const integrations: Record<string, string[]> = {
 					</tbody>
 				</v-table>
 			</div>
+		</div>
+
+		<!-- MCP -->
+		<div class="landing-section landing-section--tinted">
+			<div class="section-header">
+				<h2>Ask your data anything</h2>
+				<p class="section-desc">
+					Zenobase supports MCP, an open protocol that lets LLMs like Claude and ChatGPT connect to your data.
+				</p>
+			</div>
+			<div class="mcp-screenshot">
+				<img src="/img/home/sleep-analysis.png" alt="Claude analyzing sleep data alongside room temperature from Zenobase" />
+			</div>
+			<div class="mcp-url">
+				<code>{{ MCP_URL }}</code>
+				<v-btn size="small" variant="outlined" prepend-icon="mdi-content-copy" @click="copyMcpUrl">Copy</v-btn>
+			</div>
+			<p class="mcp-instruction">Add this URL as a custom connector in your LLM client.</p>
 		</div>
 	</div>
 </template>

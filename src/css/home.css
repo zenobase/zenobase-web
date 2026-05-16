@@ -186,3 +186,43 @@
 .integration-matrix tbody tr:hover {
 	background-color: rgba(59, 134, 198, 0.04);
 }
+
+/* ── MCP ── */
+
+.mcp-screenshot {
+	max-width: 640px;
+	margin: 0 auto 24px;
+	text-align: center;
+}
+
+.mcp-screenshot img {
+	max-width: 100%;
+	height: auto;
+}
+
+.mcp-url {
+	max-width: 640px;
+	margin: 0 auto 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.mcp-url code {
+	background-color: rgba(0, 0, 0, 0.04);
+	padding: 6px 12px;
+	border-radius: 4px;
+	font-size: 0.95rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	color: rgba(0, 0, 0, 0.82);
+}
+
+.mcp-instruction {
+	max-width: 640px;
+	margin: 0 auto;
+	text-align: center;
+	font-size: 0.9rem;
+	color: rgba(0, 0, 0, 0.5);
+}
