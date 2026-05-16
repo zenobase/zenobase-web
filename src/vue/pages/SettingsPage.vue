@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch } from 'vue';
+import type { ExternalClient } from '../../types';
 import { param } from '../../utils/helpers';
 import api from '../api';
+import EditExternalClientDialog from '../components/EditExternalClientDialog.vue';
 import LoadingState from '../components/LoadingState.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
@@ -103,6 +105,79 @@ const credOffset = ref(0);
 const credLimit = 10;
 const credTotal = ref(0);
 
+// External clients (MCP / third-party clients)
+const externalClients = ref<ExternalClient[] | null>(null);
+const externalClientsBuckets = ref<Array<{ '@id': string; label?: string }>>([]);
+const editingApp = ref<ExternalClient | null>(null);
+const showEditApp = ref(false);
+
+async function loadExternalClients() {
+	try {
+		const response = await api.get<{ total: number; external_clients: ExternalClient[] }>(
+			`/users/${auth.user.value!['@id']}/external-clients/`,
+		);
+		externalClients.value = response.data.external_clients;
+	} catch {
+		externalClients.value = [];
+	}
+}
+
+async function loadExternalClientBuckets() {
+	if (!auth.user.value) return;
+	try {
+		const response = await api.get<{ buckets: Array<{ '@id': string; label?: string }> }>(
+			`/users/${auth.user.value['@id']}/buckets/?${param({ order: 'label', offset: 0, limit: 100, labels_only: true })}`,
+		);
+		externalClientsBuckets.value = response.data.buckets;
+	} catch {
+		externalClientsBuckets.value = [];
+	}
+}
+
+function editExternalClient(app: ExternalClient) {
+	editingApp.value = app;
+	showEditApp.value = true;
+}
+
+// Clear the editing reference whenever the dialog closes so a stale revoked-app object can't leak back in via a
+// re-render. The dialog is mounted with `v-if="editingApp"`, so this also lets it unmount cleanly.
+watch(showEditApp, (open) => {
+	if (!open) editingApp.value = null;
+});
+
+function onExternalClientSaved(updated: ExternalClient) {
+	if (!externalClients.value) return;
+	const index = externalClients.value.findIndex((a) => a.client_id === updated.client_id);
+	if (index >= 0) {
+		externalClients.value[index] = updated;
+	}
+}
+
+async function revokeExternalClient(app: ExternalClient) {
+	const name = app.client_name || app.client_id;
+	if (!confirm(`Revoke ${name}? It will lose access to all your buckets.`)) return;
+	alertApi.clear();
+	try {
+		await api.del(`/users/${auth.user.value!['@id']}/external-clients/${encodeURIComponent(app.client_id)}`);
+		alertApi.show(`Revoked ${name}.`, 'success', '');
+		// If the dialog was open on the row we just revoked, close it so it doesn't show stale state.
+		if (editingApp.value?.client_id === app.client_id) {
+			showEditApp.value = false;
+		}
+		await loadExternalClients();
+	} catch (e: unknown) {
+		const status = (e as { status?: number }).status;
+		alertApi.show(status && status < 500 ? "Can't revoke this app." : "Couldn't revoke this app. Try again later or contact support.", 'error');
+	}
+}
+
+function readableBucketsLabel(app: ExternalClient): string {
+	const n = app.readable_buckets.length;
+	if (n === 0) return 'No buckets granted';
+	if (n === 1) return '1 bucket';
+	return `${n} buckets`;
+}
+
 
 async function loadQuota() {
 	try {
@@ -172,6 +247,8 @@ function refresh() {
 	loadQuota();
 	loadPasskeys();
 	loadCredentials();
+	loadExternalClients();
+	loadExternalClientBuckets();
 }
 
 watch(
@@ -179,7 +256,7 @@ watch(
 	async () => {
 		if (!auth.user.value?.name) return;
 		settingsEmail.value = (auth.user.value as typeof auth.user.value & { email?: string }).email || '';
-		await Promise.all([loadQuota(), loadPasskeys(), loadCredentials()]);
+		await Promise.all([loadQuota(), loadPasskeys(), loadCredentials(), loadExternalClients(), loadExternalClientBuckets()]);
 	},
 	{ immediate: true },
 );
@@ -242,7 +319,7 @@ watch(
 				<v-table>
 					<tbody>
 						<tr v-if="passkeys === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
-						<tr v-else-if="passkeys.length === 0"><td colspan="2"><i>No passkeys enrolled</i></td></tr>
+						<tr v-else-if="passkeys.length === 0"><td colspan="2"><i>None</i></td></tr>
 						<tr v-for="p in passkeys" :key="p.id" class="credentials-row" @contextmenu.prevent="onRowLongPress(p.id)">
 							<td>
 								<div>{{ passkeyLabel(p) }}</div>
@@ -262,10 +339,55 @@ watch(
 
 			<v-divider class="my-8" />
 
+			<!-- External Clients -->
+			<section>
+				<h2 class="settings-heading">Access you've granted others</h2>
+				<p class="settings-subtitle">
+					Third-party services that can access Zenobase.
+					You can also <a v-if="tokenExpiry" @click="copyToken()" style="cursor: pointer">copy a token</a>
+					for running a script against the <a href="/#/api">API</a>
+					<span v-if="tokenExpiryLabel"> ({{ tokenExpiryLabel.toLowerCase() }})</span>.
+				</p>
+				<v-table>
+					<tbody>
+						<tr v-if="externalClients === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
+						<tr v-else-if="externalClients.length === 0"><td colspan="2"><i>None</i></td></tr>
+						<tr v-for="app in externalClients" :key="app.client_id" class="credentials-row" @contextmenu.prevent="onRowLongPress(app.client_id)">
+							<td @click="editExternalClient(app)" style="cursor: pointer">
+								<div class="d-flex align-center ga-2">
+									<span>{{ app.client_name || app.client_id }}</span>
+									<v-chip v-if="app.readable_buckets.length === 0" color="warning" size="x-small" variant="tonal">Pending</v-chip>
+								</div>
+								<div class="text-caption" style="color: rgba(0,0,0,0.6)">
+									{{ readableBucketsLabel(app) }} &middot; connected {{ formatAge(app.created, 30 * 24 * 60 * 60 * 1000) }}
+								</div>
+							</td>
+							<td style="text-align: right; position: relative; overflow: visible">
+								<div class="row-actions" :class="{ 'row-actions--visible': longPressedRowId === app.client_id }">
+									<v-btn icon="mdi-pencil-outline" size="small" variant="elevated" color="primary" title="Edit access" class="mr-1" @click.stop="editExternalClient(app)" />
+									<v-btn icon="mdi-delete-outline" size="small" variant="elevated" color="error" title="Revoke" @click.stop="revokeExternalClient(app)" />
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</v-table>
+			</section>
+
+			<EditExternalClientDialog
+				v-if="editingApp"
+				v-model="showEditApp"
+				:user-id="auth.user.value!['@id']"
+				:app="editingApp"
+				:buckets="externalClientsBuckets"
+				@saved="onExternalClientSaved"
+			/>
+
+			<v-divider class="my-8" />
+
 			<!-- Credentials -->
 			<section>
-				<h2 class="settings-heading">Credentials</h2>
-				<p class="settings-subtitle">You have granted Zenobase access to data in these services</p>
+				<h2 class="settings-heading">Access you've granted us</h2>
+				<p class="settings-subtitle">Third-party services that Zenobase can access on your behalf.</p>
 				<v-table>
 					<tbody>
 						<tr v-if="credentials === null"><td colspan="2"><LoadingState state="loading" /></td></tr>
@@ -285,21 +407,6 @@ watch(
 					<v-btn icon variant="text" title="Previous" :disabled="credOffset <= 0" @click="() => { credOffset -= credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-left" /></v-btn>
 					<span style="color: rgba(0,0,0,0.5)"><b>{{ credOffset + 1 }}</b>&ndash;<b>{{ credOffset + (credentials?.length ?? 0) }}</b> of <b>{{ credTotal }}</b></span>
 					<v-btn icon variant="text" title="Next" :disabled="credOffset + credLimit >= credTotal" @click="() => { credOffset += credLimit; loadCredentials() }"><v-icon icon="mdi-chevron-right" /></v-btn>
-				</div>
-			</section>
-
-			<v-divider class="my-8" />
-
-			<!-- API token -->
-			<section>
-				<h2 class="settings-heading">API Token</h2>
-				<p class="settings-subtitle">
-					Use this token for <a href="/#/api">API calls</a>.
-					<span v-if="tokenExpiryLabel">{{ tokenExpiryLabel }}.</span>
-				</p>
-				<div class="settings-actions">
-					<v-spacer />
-					<v-btn color="primary" :disabled="!tokenExpiry" @click="copyToken()">Copy token</v-btn>
 				</div>
 			</section>
 

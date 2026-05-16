@@ -86,6 +86,10 @@ watch(() => route.params.section, scrollToSection);
 <h3>Changelog</h3>
 
 <dl>
+	<dt>May 12, 2026</dt>
+	<dd>Third-party apps can now authenticate via OAuth 2.1 with Dynamic Client Registration.<br/>
+		External-audience tokens can call bucket-scoped REST endpoints as well as the new <a href="https://modelcontextprotocol.io/">MCP endpoint</a> at <code>POST /mcp</code>, subject to per-bucket consent managed in the <a href="/#/settings">API clients</a> section of Settings. Writes from external tokens are not yet supported.<br/>
+		See <a href="/#/api/auth">Authentication</a>.</dd>
     <dt>Apr 15, 2026</dt>
     <dd>API access tokens are now JWTs that expire.<br/>
 		Support for password and implicit grants has been removed.<br/>
@@ -692,11 +696,25 @@ X-Command-ID: p3ateetvs1</pre>
 
 <h3>Authentication</h3>
 
-<p>Requests for protected resources must include an <a href="http://oauth.net/2/">OAuth 2</a> <em>Authorization</em> header:</p>
+<p>Requests for protected resources must include an <a href="http://oauth.net/2/">OAuth 2.1</a> <em>Authorization</em> header:</p>
 
 <pre>Authorization: Bearer <em>&lt;access_token&gt;</em></pre>
 
-<p>Sign in to the web app and copy your current token from the <a href="/#/settings">settings page</a>.</p>
+<p>Tokens are JWTs issued by Zenobase's identity provider. Two kinds are accepted, depending on who's calling:</p>
+
+<h4>Personal use</h4>
+
+<p>For your own scripts and notebooks, sign in to the web app and copy your current token from the <a href="/#/settings">settings page</a>.
+This token grants the same access you have when signed in. It expires after a short time, so you'll need to copy it again periodically (or use the OAuth 2.1 flow below).</p>
+
+<h4>Third-party clients</h4>
+
+<p>Third-party apps (including MCP clients like Claude, or other integrations) authenticate via <a href="https://datatracker.ietf.org/doc/html/rfc6749">OAuth 2.1</a> Authorization Code with PKCE.
+Discovery is via <a href="https://datatracker.ietf.org/doc/html/rfc9728">RFC 9728</a> Protected Resource Metadata:</p>
+
+<pre><code class="language-bash">curl https://api.zenobase.com/.well-known/oauth-protected-resource</code></pre>
+
+<p>Note that tokens issued via this flow are restricted to reading data from buckets to which access has been granted explicitly by the user.</p>
 
 </section>
 
