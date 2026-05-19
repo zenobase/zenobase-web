@@ -46,7 +46,15 @@ export function useDashboard(
 	function parseConstraints(value: string | string[] | undefined): Constraint[] {
 		if (!value) return [];
 		const values = Array.isArray(value) ? value : value.split('|');
-		return values.map((s) => Constraint.parse(s));
+		const result: Constraint[] = [];
+		for (const s of values) {
+			try {
+				result.push(Constraint.parse(s));
+			} catch {
+				// drop malformed entries (e.g. stale URL with q=*)
+			}
+		}
+		return result;
 	}
 
 	function updateConstraints() {
@@ -84,9 +92,16 @@ export function useDashboard(
 		return response.data;
 	}
 
+	const FIELD_KEYS = ['field', 'key_field', 'value_field', 'field_x', 'field_y'];
+
+	function hasIncompleteFieldRef(p: BaseWidgetParams): boolean {
+		const entries = p as unknown as Record<string, unknown>;
+		return FIELD_KEYS.some((k) => k in entries && (entries[k] === '' || entries[k] === null || entries[k] === undefined));
+	}
+
 	function buildFacets(params: BaseWidgetParams[]): string[] {
 		return params
-			.filter((p) => p != null)
+			.filter((p) => p != null && !hasIncompleteFieldRef(p))
 			.map((p) =>
 				Object.entries(p)
 					.map(([key, value]) => (value !== undefined && value !== null && value !== '' ? `${key}:${escapeCommas(value)}` : null))
