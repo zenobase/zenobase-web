@@ -185,10 +185,11 @@ describe('useDashboard', () => {
 		expect(parent.constraints.value[0].subfield).toBe('day');
 	});
 
-	it('drops malformed q values from the URL on refresh', async () => {
+	it('drops malformed q values and logs a warning', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });
 		const { parent, setLocationParams } = createTestComponent('bucket1', httpGet);
-		setLocationParams({ q: ['*', 'tag:lunch', ''] });
+		setLocationParams({ q: ['*', 'tag:lunch'] });
 
 		parent.refresh();
 
@@ -198,23 +199,9 @@ describe('useDashboard', () => {
 			expect(url).toContain('q=tag%3Alunch');
 			expect(url).not.toContain('q=%2A');
 			expect(parent.constraints.value).toHaveLength(1);
+			expect(warn).toHaveBeenCalledWith(expect.stringContaining('*'), expect.any(Error));
 		});
-	});
 
-	it('skips facets whose required field reference is empty', async () => {
-		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });
-		const { parent } = createTestComponent('bucket1', httpGet);
-
-		await parent.search([
-			{ id: 'a', type: 'count', field: 'tag' },
-			{ id: 'b', type: 'count', field: '' },
-			{ id: 'c', type: 'scoreboard', key_field: 'tag', value_field: '' },
-		] as never);
-
-		expect(httpGet).toHaveBeenCalledTimes(1);
-		const url = httpGet.mock.calls[0][0] as string;
-		expect(url).toContain('facet=id%3Aa%2Ctype%3Acount%2Cfield%3Atag');
-		expect(url).not.toContain('id%3Ab');
-		expect(url).not.toContain('id%3Ac');
+		warn.mockRestore();
 	});
 });

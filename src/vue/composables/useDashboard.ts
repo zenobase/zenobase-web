@@ -50,8 +50,8 @@ export function useDashboard(
 		for (const s of values) {
 			try {
 				result.push(Constraint.parse(s));
-			} catch {
-				// drop malformed entries (e.g. stale URL with q=*)
+			} catch (e) {
+				console.warn(`Dropping malformed constraint: ${s}`, e);
 			}
 		}
 		return result;
@@ -92,16 +92,9 @@ export function useDashboard(
 		return response.data;
 	}
 
-	const FIELD_KEYS = ['field', 'key_field', 'value_field', 'field_x', 'field_y'];
-
-	function hasIncompleteFieldRef(p: BaseWidgetParams): boolean {
-		const entries = p as unknown as Record<string, unknown>;
-		return FIELD_KEYS.some((k) => k in entries && (entries[k] === '' || entries[k] === null || entries[k] === undefined));
-	}
-
 	function buildFacets(params: BaseWidgetParams[]): string[] {
 		return params
-			.filter((p) => p != null && !hasIncompleteFieldRef(p))
+			.filter((p) => p != null)
 			.map((p) =>
 				Object.entries(p)
 					.map(([key, value]) => (value !== undefined && value !== null && value !== '' ? `${key}:${escapeCommas(value)}` : null))
