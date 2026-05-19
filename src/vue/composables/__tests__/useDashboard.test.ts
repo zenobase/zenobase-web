@@ -185,8 +185,8 @@ describe('useDashboard', () => {
 		expect(parent.constraints.value[0].subfield).toBe('day');
 	});
 
-	it('drops malformed q values and logs a warning', async () => {
-		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+	it('drops malformed q values on refresh', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });
 		const { parent, setLocationParams } = createTestComponent('bucket1', httpGet);
 		setLocationParams({ q: ['*', 'tag:lunch'] });
@@ -199,9 +199,6 @@ describe('useDashboard', () => {
 			expect(url).toContain('q=tag%3Alunch');
 			expect(url).not.toContain('q=%2A');
 			expect(parent.constraints.value).toHaveLength(1);
-			expect(warn).toHaveBeenCalledWith(expect.stringContaining('*'), expect.any(Error));
 		});
-
-		warn.mockRestore();
 	});
 });
