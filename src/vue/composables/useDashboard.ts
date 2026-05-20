@@ -46,7 +46,15 @@ export function useDashboard(
 	function parseConstraints(value: string | string[] | undefined): Constraint[] {
 		if (!value) return [];
 		const values = Array.isArray(value) ? value : value.split('|');
-		return values.map((s) => Constraint.parse(s));
+		const result: Constraint[] = [];
+		for (const s of values) {
+			try {
+				result.push(Constraint.parse(s));
+			} catch (e) {
+				console.warn(`Dropping malformed constraint: ${s}`, e);
+			}
+		}
+		return result;
 	}
 
 	function updateConstraints() {
@@ -89,8 +97,7 @@ export function useDashboard(
 			.filter((p) => p != null)
 			.map((p) =>
 				Object.entries(p)
-					.map(([key, value]) => (value !== undefined && value !== null && value !== '' ? `${key}:${escapeCommas(value)}` : null))
-					.filter((v) => v != null)
+					.map(([key, value]) => `${key}:${escapeCommas(value)}`)
 					.join(','),
 			);
 	}

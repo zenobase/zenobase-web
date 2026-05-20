@@ -184,4 +184,21 @@ describe('useDashboard', () => {
 		expect(parent.constraints.value[0].field).toBe('timestamp');
 		expect(parent.constraints.value[0].subfield).toBe('day');
 	});
+
+	it('drops malformed q values on refresh', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });
+		const { parent, setLocationParams } = createTestComponent('bucket1', httpGet);
+		setLocationParams({ q: ['*', 'tag:lunch'] });
+
+		parent.refresh();
+
+		await vi.waitFor(() => {
+			expect(httpGet).toHaveBeenCalledTimes(1);
+			const url = httpGet.mock.calls[0][0] as string;
+			expect(url).toContain('q=tag%3Alunch');
+			expect(url).not.toContain('q=%2A');
+			expect(parent.constraints.value).toHaveLength(1);
+		});
+	});
 });
