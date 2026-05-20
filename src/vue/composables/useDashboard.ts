@@ -97,6 +97,7 @@ export function useDashboard(
 			.filter((p) => p != null)
 			.map((p) =>
 				Object.entries(p)
+					.filter(([, value]) => value != null)
 					.map(([key, value]) => `${key}:${escapeCommas(value)}`)
 					.join(','),
 			);
