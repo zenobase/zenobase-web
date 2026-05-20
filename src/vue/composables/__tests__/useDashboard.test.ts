@@ -185,6 +185,16 @@ describe('useDashboard', () => {
 		expect(parent.constraints.value[0].subfield).toBe('day');
 	});
 
+	it('omits facet entries whose value is null or undefined', async () => {
+		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });
+		const { parent } = createTestComponent('bucket1', httpGet);
+
+		await parent.search([{ id: 'x', type: 'timeline', field: 'timestamp', unit: undefined, filter: undefined } as never]);
+
+		const url = httpGet.mock.calls[0][0] as string;
+		expect(url).not.toContain('undefined');
+	});
+
 	it('drops malformed q values on refresh', async () => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });
