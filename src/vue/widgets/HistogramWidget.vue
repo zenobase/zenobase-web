@@ -120,7 +120,7 @@ function draw() {
 			trigger: 'item',
 			formatter: (params: { name: string; value: number }) => {
 				if (params?.value === undefined) return '';
-				return `<b>${esc(params.name)}</b>: ${params.value}`;
+				return `<b>${esc(params.name)}</b>: ${esc(params.value)}`;
 			},
 		},
 		series,

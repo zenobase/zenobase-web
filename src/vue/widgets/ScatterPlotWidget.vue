@@ -313,7 +313,7 @@ function draw() {
 				trigger: 'item',
 				formatter: (params: { value: number[] }) => {
 					if (!params?.value) return '';
-					return "<b>Spearman's rho:</b> " + params.value[1].toFixed(3);
+					return "<b>Spearman's rho:</b> " + esc(params.value[1].toFixed(3));
 				},
 			},
 			series: rSeries,
