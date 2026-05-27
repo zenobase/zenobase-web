@@ -6,6 +6,7 @@ import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
+import { esc } from '../utils/eventFormatter';
 import { downloadCsv, toFilename, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
@@ -177,7 +178,7 @@ function draw() {
 			trigger: 'item',
 			formatter: (params: { name: string; value: number }) => {
 				if (params?.value === undefined) return '';
-				return '<b>' + params.name + '</b>: ' + (field.toText(params.value) || params.value) + (props.settings.unit || '');
+				return '<b>' + esc(params.name) + '</b>: ' + esc(field.toText(params.value) || params.value) + esc(props.settings.unit || '');
 			},
 		},
 		series: allSeries,
