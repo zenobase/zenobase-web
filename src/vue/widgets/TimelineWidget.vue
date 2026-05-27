@@ -9,6 +9,7 @@ import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { BRAND_BLUE_RGB, BRAND_ORANGE_RGB } from '../plugins/vuetify';
+import { esc } from '../utils/eventFormatter';
 import { downloadCsv, toFilename, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
@@ -565,7 +566,7 @@ function draw() {
 			formatter: (params: { value: unknown[] }) => {
 				if (!params?.value) return '';
 				const v = params.value[1];
-				return `<b>${labelMap[params.value[0] as number] ?? ''}</b>: ${isDuration ? compactDuration(v as number) : field.toText(v)}`;
+				return `<b>${esc(labelMap[params.value[0] as number] ?? '')}</b>: ${esc(isDuration ? compactDuration(v as number) : field.toText(v))}`;
 			},
 		},
 		dataZoom: [{ type: 'inside', xAxisIndex: 0, moveOnMouseMove: false, moveOnMouseWheel: false }],

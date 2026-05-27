@@ -7,6 +7,7 @@ import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { BRAND_BLUE_RGB, BRAND_ORANGE_RGB } from '../plugins/vuetify';
+import { esc } from '../utils/eventFormatter';
 import { downloadCsv, toFilename } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
@@ -187,12 +188,12 @@ function draw() {
 				if (!params?.value) return '';
 				return (
 					'<b>x</b>: ' +
-					(isDurationX ? compactDuration(params.value[0]) : xField.toText(params.value[0]) || params.value[0]) +
-					(props.settings.unit_x || '') +
+					esc(isDurationX ? compactDuration(params.value[0]) : xField.toText(params.value[0]) || params.value[0]) +
+					esc(props.settings.unit_x || '') +
 					', ' +
 					'<b>y</b>: ' +
-					(isDurationY ? compactDuration(params.value[1]) : yField.toText(params.value[1]) || params.value[1]) +
-					(props.settings.unit_y || '')
+					esc(isDurationY ? compactDuration(params.value[1]) : yField.toText(params.value[1]) || params.value[1]) +
+					esc(props.settings.unit_y || '')
 				);
 			},
 		},
