@@ -1,4 +1,4 @@
-.claude/
+.claude/settings*.json
 .idea/
 .playwright-mcp/
 .pnpm-store/
