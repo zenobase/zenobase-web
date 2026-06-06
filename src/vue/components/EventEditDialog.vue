@@ -489,6 +489,7 @@ watch(
 		if (open) {
 			loadSchema();
 			init(props.event);
+			tags.value = [];
 			nextTick(() => {
 				visible.value = true;
 			});
@@ -525,10 +526,7 @@ watch(
 
 					<!-- Tag -->
 					<template v-if="fieldCategory === 'tag'">
-						<v-text-field label="Value" v-model="newValue" list="tag-suggestions" @keyup.enter="addEntry()" style="max-width: 200px" />
-						<datalist id="tag-suggestions">
-							<option v-for="t in tags" :key="t" :value="t" />
-						</datalist>
+						<v-combobox label="Value" :items="tags" v-model="newValue" @keyup.enter="addEntry()" style="max-width: 200px" />
 					</template>
 
 					<!-- Note -->
