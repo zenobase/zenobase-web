@@ -2,10 +2,11 @@
 
 exports[`RatingsWidget > matches snapshot 1`] = `
 "<div>
-  <div class="v-table v-theme--light v-table--density-default" style="">
+  <div class="v-table v-table--gridlines-horizontal v-theme--light v-table--density-default" style="">
     <!---->
     <div class="v-table__wrapper">
       <table>
+        <!---->
         <thead>
           <tr>
             <th>Rating</th>
