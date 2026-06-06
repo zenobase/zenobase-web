@@ -489,6 +489,7 @@ watch(
 		if (open) {
 			loadSchema();
 			init(props.event);
+			tags.value = [];
 			nextTick(() => {
 				visible.value = true;
 			});
