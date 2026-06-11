@@ -14,4 +14,4 @@ TypeScript / Vue.js SPA frontend for [zenobase](https://github.com/zenobase/zeno
 
 - Check your code with `pnpm lint`, `pnpm typecheck`, and `pnpm test`; a pre-commit hook runs the first two checks automatically
 - Pushing to `main` triggers GitHub Actions workflows that run all checks, build the app, upload the assets to S3, update the CloudFront distribution, and invalidate the CloudFront cache
-- Changes to [infra/](./infra/) must be deployed first by running `pulumi up` locally (`webOriginPath` can be left blank)
+- Changes to [infra/](./infra/) must be deployed first by running `./deploy.sh` locally, which runs `pulumi up` with the compliance [policy pack](./infra/policy/) enforced (`webOriginPath` can be left blank)

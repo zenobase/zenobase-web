@@ -1,0 +1,18 @@
+{
+    "aws-s3-bucket-enable-server-side-encryption": {
+        "reason": "zenobase-web serves public static assets and already uses S3 default SSE-S3 (AES256); KMS/CMK is unjustified, and declaring inline SSE would surface 3 KMS/bucket-key/CMK findings.",
+        "excludeFor": ["^zenobase-web$"]
+    },
+    "aws-s3-bucket-enable-replication-configuration": {
+        "reason": "zenobase-web holds disposable static assets rebuilt and re-uploaded from CI on every deploy; cross-region replication is unwarranted.",
+        "excludeFor": ["^zenobase-web$"]
+    },
+    "aws-cloudfront-distribution-enable-access-logging": {
+        "reason": "Static public-asset distribution; the only sensitive routes (/oauth/callback/*, /to) are proxied to the API origin which logs them authoritatively, so edge access logging adds marginal security value.",
+        "excludeFor": ["^zenobase-web$"]
+    },
+    "aws-cloudfront-distribution-configure-waf": {
+        "reason": "OAC-locked static origin with strong CSP/security headers; the proxied API routes are covered by the backend ALB WAF, so a CloudFront WebACL adds little.",
+        "excludeFor": ["^zenobase-web$"]
+    }
+}
