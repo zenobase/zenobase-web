@@ -2,9 +2,11 @@
 import '../../css/home.css';
 
 import { inject, type Ref } from 'vue';
+import type { ZenoEvent } from '../../types';
+import EventFieldItem from '../components/EventFieldItem.vue';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';
-import { FIELD_REGISTRY } from '../utils/eventFormatter';
+import { formatEvent } from '../utils/eventFormatter';
 
 const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
@@ -52,10 +54,7 @@ const sampleValues: Record<string, unknown> = {
 	location: { lat: 47.62, lon: -122.349 },
 };
 
-const fieldExamples = FIELD_REGISTRY.filter((f) => !excludeFields.has(f.name)).map((f) => ({
-	name: f.name,
-	html: f.toHtml(sampleValues[f.name]),
-}));
+const fieldExamples = formatEvent(sampleValues as ZenoEvent, excludeFields);
 
 const widgets = [
 	{ type: 'map', label: 'Visualize' },
@@ -121,7 +120,7 @@ const integrations: Record<string, string[]> = {
 				<p class="section-desc">Combine any number of unit-aware fields.</p>
 			</div>
 			<div class="field-cloud">
-				<span v-for="field in fieldExamples" :key="field.name" :title="field.name" class="field-cloud-item" v-html="field.html" />
+				<span v-for="(field, i) in fieldExamples" :key="field.name + '-' + i" :title="field.name" class="field-cloud-item"><EventFieldItem :segment="field" /></span>
 			</div>
 		</div>
 
