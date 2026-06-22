@@ -24,7 +24,7 @@ describe('FIELD_REGISTRY toHtml', () => {
 
 	it('resource', () => {
 		expect(toHtml('resource', { title: 'Example', url: 'https://example.com' })).toBe(
-			'<span><i class="mdi mdi-bookmark" title="Resource"></i>&nbsp;<a href="/to?url=https://example.com" target="_blank" rel="nofollow noopener noreferrer">Example</a></span>',
+			'<span><i class="mdi mdi-bookmark" title="Resource"></i>&nbsp;<a href="https://example.com" target="_blank" rel="nofollow noopener">Example</a></span>',
 		);
 	});
 
@@ -212,7 +212,7 @@ describe('FIELD_REGISTRY toHtml', () => {
 
 	it('source', () => {
 		expect(toHtml('source', { title: 'Blog', url: 'https://blog.example.com' })).toBe(
-			'<span class="text-no-wrap"><i class="mdi mdi-open-in-new" title="Source"></i> <a href="/to?url=https://blog.example.com" target="_blank" rel="nofollow noopener noreferrer">Blog</a></span>',
+			'<span class="text-no-wrap"><i class="mdi mdi-open-in-new" title="Source"></i> <a href="https://blog.example.com" target="_blank" rel="nofollow noopener">Blog</a></span>',
 		);
 	});
 

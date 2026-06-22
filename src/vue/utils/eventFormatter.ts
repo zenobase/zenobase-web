@@ -78,7 +78,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 	field('resource', 'mdi-bookmark', 'Resource', (v, i, t) => {
 		const obj = v as ResourceRef;
 		if (!obj?.title) return '';
-		return '<span>' + ic(i, t) + '&nbsp;<a href="/to?url=' + esc(obj.url) + '" target="_blank" rel="nofollow noopener noreferrer">' + esc(obj['title']) + '</a></span>';
+		return '<span>' + ic(i, t) + '&nbsp;<a href="' + esc(obj.url) + '" target="_blank" rel="nofollow noopener">' + esc(obj['title']) + '</a></span>';
 	}),
 	simple('distance', 'mdi-arrow-left-right', 'Distance', (v) => esc(textWithUnit(v))),
 	simple('height', 'mdi-arrow-up-down', 'Height', (v) => esc(textWithUnit(v))),
@@ -125,7 +125,7 @@ export const FIELD_REGISTRY: FieldDef[] = [
 	field('source', 'mdi-open-in-new', 'Source', (v, i, t) => {
 		const obj = v as ResourceRef;
 		if (!obj?.title) return '';
-		return '<span class="text-no-wrap">' + ic(i, t) + ' <a href="/to?url=' + esc(obj.url) + '" target="_blank" rel="nofollow noopener noreferrer">' + esc(obj.title) + '</a></span>';
+		return '<span class="text-no-wrap">' + ic(i, t) + ' <a href="' + esc(obj.url) + '" target="_blank" rel="nofollow noopener">' + esc(obj.title) + '</a></span>';
 	}),
 ];
 
