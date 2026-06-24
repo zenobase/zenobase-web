@@ -59,4 +59,11 @@ describe('formatAge', () => {
 	it('does not use fallback for recent timestamps', () => {
 		expect(formatAge('2025-06-15T11:00:00Z', 79200000)).toBe('1h ago');
 	});
+
+	it("renders the fallback in the timestamp's own offset, not the browser zone", () => {
+		// 14:30 at +05:45 (Nepal) should read "2:30 PM" regardless of the browser's timezone.
+		const result = formatAge('2025-06-13T14:30:00+05:45', 79200000);
+		expect(result).toContain('2:30');
+		expect(result).toContain('Jun 13, 2025');
+	});
 });

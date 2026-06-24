@@ -3,10 +3,11 @@ import moment from 'moment';
 export function formatAge(date: string | null | undefined, fallbackAfterMs?: number): string {
 	if (!date) return '';
 	const now = moment();
-	const m = moment(date);
+	const m = moment.parseZone(date);
 	const diff = now.valueOf() - m.valueOf();
 	if (fallbackAfterMs !== undefined && diff >= fallbackAfterMs) {
-		return m.toDate().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+		const wallClock = new Date(m.valueOf() + m.utcOffset() * 60000);
+		return wallClock.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' });
 	}
 	if (diff < 60000) return 'just now';
 	const years = now.diff(m, 'years');
