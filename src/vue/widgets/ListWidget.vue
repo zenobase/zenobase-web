@@ -1,23 +1,13 @@
 <script setup lang="ts">
 import { inject, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue';
-import type { GeoPoint, ZenoEvent } from '../../types';
+import type { ZenoEvent } from '../../types';
 import type { ListParams, SearchResult } from '../../types/search';
 import { Constraint } from '../../utils/constraint';
+import EventFields from '../components/EventFields.vue';
 import LoadingState from '../components/LoadingState.vue';
 import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
-import { esc, formatEventHtml, locationText } from '../utils/eventFormatter';
 import { resolveUserNames } from '../utils/userNames';
-
-function locationToHtml(v: unknown): string {
-	const obj = v as GeoPoint;
-	if (!obj || !('lat' in obj)) return '';
-	const text = locationText(obj);
-	const filter = text.replace(' ', '') + '~100 m';
-	return '<span class="text-no-wrap"><i class="mdi mdi-map-marker" title="Location"></i> <a class="location-filter" data-filter="' + esc(filter) + '">' + esc(text) + '</a></span>';
-}
-
-const FIELD_OVERRIDES: Record<string, (value: unknown) => string> = { location: locationToHtml };
 
 interface FilterField {
 	id: string;
@@ -155,18 +145,8 @@ function selectField(field: FilterField) {
 	dropdownOpen.value = false;
 }
 
-function onEventClick(e: MouseEvent) {
-	const target = e.target as HTMLElement;
-	if (target.closest('a')) {
-		const locationLink = target.closest('.location-filter') as HTMLElement | null;
-		if (locationLink) {
-			e.preventDefault();
-			const filter = locationLink.dataset.filter;
-			if (filter) {
-				dashboard.addConstraint('location', filter, false);
-			}
-		}
-	}
+function onFilter(field: string, value: string) {
+	dashboard.addConstraint(field, value, false);
 }
 
 function closeDropdownOnOutsideClick(e: MouseEvent) {
@@ -216,9 +196,9 @@ onBeforeUnmount(() => {
 
 		<v-table v-show="items?.length" density="default">
 			<tbody>
-				<tr v-for="event in items" :key="event['@id'] as string" class="event-row" :class="{ 'event-row--editable': editable && !isVirtual }" @click="onEventClick($event)" @contextmenu.prevent="editable && !isVirtual && onLongPress(event)">
+				<tr v-for="event in items" :key="event['@id'] as string" class="event-row" :class="{ 'event-row--editable': editable && !isVirtual }" @contextmenu.prevent="editable && !isVirtual && onLongPress(event)">
 					<td style="line-height: 1.5; border-style: none; position: relative; overflow: visible">
-						<span v-html="formatEventHtml(event, undefined, FIELD_OVERRIDES)" />
+						<EventFields :event="event" location-filter @filter="onFilter" />
 						<div v-if="editable && !isVirtual" class="row-actions" :class="{ 'row-actions--visible': longPressedEventId === event['@id'] }">
 							<v-btn icon="mdi-pencil" size="small" variant="elevated" color="primary" title="Edit" @click.stop="emit('openDialog', 'edit-event-dialog', event)" />
 						</div>

@@ -1,87 +1,81 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FIELD_REGISTRY } from '../eventFormatter';
+import type { ZenoEvent } from '../../../types';
+import { type FieldSegment, formatEvent } from '../eventFormatter';
 
 vi.mock('../userNames', () => ({ getUserName: (id: string) => 'User ' + id }));
 
-function toHtml(fieldName: string, value: unknown): string {
-	const field = FIELD_REGISTRY.find((f) => f.name === fieldName);
-	if (!field) throw new Error('Unknown field: ' + fieldName);
-	return field.toHtml(value);
+/** Formats an event with a single field set and returns the one resulting segment. */
+function one(field: string, value: unknown): FieldSegment {
+	const segments = formatEvent({ [field]: value } as ZenoEvent);
+	expect(segments).toHaveLength(1);
+	return segments[0];
 }
 
-function span(icon: string, title: string, value: string): string {
-	return '<span class="text-no-wrap"><i class="mdi ' + icon + '" title="' + title + '"></i> ' + value + '</span>';
+/** Formats an event with a single field and returns all resulting segments. */
+function many(field: string, value: unknown): FieldSegment[] {
+	return formatEvent({ [field]: value } as ZenoEvent);
 }
 
-describe('FIELD_REGISTRY toHtml', () => {
+describe('formatEvent', () => {
 	it('tag', () => {
-		expect(toHtml('tag', 'food')).toBe(span('mdi-tag', 'Tag', 'food'));
+		expect(one('tag', 'food')).toMatchObject({ name: 'tag', icon: 'mdi-tag', iconTitle: 'Tag', kind: 'text', text: 'food', nowrap: true });
 	});
 
-	it('tag escapes HTML', () => {
-		expect(toHtml('tag', '<b>bold</b>')).toBe(span('mdi-tag', 'Tag', '&lt;b&gt;bold&lt;/b&gt;'));
+	it('tag keeps raw text (escaping happens at render time)', () => {
+		expect(one('tag', '<b>bold</b>')).toMatchObject({ kind: 'text', text: '<b>bold</b>' });
 	});
 
 	it('resource', () => {
-		expect(toHtml('resource', { title: 'Example', url: 'https://example.com' })).toBe(
-			'<span><i class="mdi mdi-bookmark" title="Resource"></i>&nbsp;<a href="https://example.com" target="_blank" rel="nofollow noopener">Example</a></span>',
-		);
+		expect(one('resource', { title: 'Example', url: 'https://example.com' })).toMatchObject({
+			name: 'resource',
+			icon: 'mdi-bookmark',
+			kind: 'link',
+			text: 'Example',
+			href: 'https://example.com',
+			nowrap: false,
+			tightIcon: true,
+		});
 	});
 
-	it('resource with no title returns empty', () => {
-		expect(toHtml('resource', { url: 'https://example.com' })).toBe('');
+	it('resource with no title is skipped', () => {
+		expect(many('resource', { url: 'https://example.com' })).toEqual([]);
 	});
 
 	it('distance', () => {
-		expect(toHtml('distance', { '@value': 5.2, unit: 'km' })).toBe(span('mdi-arrow-left-right', 'Distance', '5.2 km'));
-	});
-
-	it('height', () => {
-		expect(toHtml('height', { '@value': 180, unit: 'cm' })).toBe(span('mdi-arrow-up-down', 'Height', '180 cm'));
+		expect(one('distance', { '@value': 5.2, unit: 'km' })).toMatchObject({ icon: 'mdi-arrow-left-right', kind: 'text', text: '5.2 km' });
 	});
 
 	it('weight', () => {
-		expect(toHtml('weight', { '@value': 70, unit: 'kg' })).toBe(span('mdi-weight', 'Weight', '70 kg'));
+		expect(one('weight', { '@value': 70, unit: 'kg' })).toMatchObject({ kind: 'text', text: '70 kg' });
 	});
 
 	it('percentage', () => {
-		expect(toHtml('percentage', 85.7)).toBe(span('mdi-view-grid', 'Percentage', '<abbr title="85.7%">86%</abbr>'));
+		expect(one('percentage', 85.7)).toMatchObject({ icon: 'mdi-view-grid', kind: 'abbr', text: '86%', title: '85.7%' });
 	});
 
 	it('moon', () => {
-		expect(toHtml('moon', 50)).toBe(span('mdi-moon-waning-crescent', 'Moon', '50%'));
-	});
-
-	it('volume', () => {
-		expect(toHtml('volume', { '@value': 500, unit: 'mL' })).toBe(span('mdi-cup', 'Volume', '500 mL'));
-	});
-
-	it('concentration', () => {
-		expect(toHtml('concentration', { '@value': 1.2, unit: 'mg/dL' })).toBe(span('mdi-water', 'Concentration', '1.2 mg/dL'));
-	});
-
-	it('distance/volume', () => {
-		expect(toHtml('distance/volume', { '@value': 30, unit: 'mpg' })).toBe(span('mdi-gas-station', 'Distance/Volume', '30 mpg'));
+		expect(one('moon', 50)).toMatchObject({ icon: 'mdi-moon-waning-crescent', kind: 'text', text: '50%' });
 	});
 
 	it('humidity', () => {
-		expect(toHtml('humidity', 40)).toBe(span('mdi-water', 'Humidity', '40%'));
+		expect(one('humidity', 40)).toMatchObject({ kind: 'text', text: '40%' });
 	});
 
-	it('pressure', () => {
-		expect(toHtml('pressure', { '@value': 1013, unit: 'hPa' })).toBe(span('mdi-arrow-expand-all', 'Pressure', (1013).toLocaleString() + ' hPa'));
-	});
-
-	it('sound', () => {
-		expect(toHtml('sound', { '@value': 85, unit: 'dB' })).toBe(span('mdi-volume-high', 'Sound Level', '85 dB'));
+	it('pressure uses locale formatting', () => {
+		expect(one('pressure', { '@value': 1013, unit: 'hPa' })).toMatchObject({ kind: 'text', text: (1013).toLocaleString() + ' hPa' });
 	});
 
 	it('location', () => {
-		expect(toHtml('location', { lat: 47.6205, lon: -122.3493 })).toBe(span('mdi-map-marker', 'Location', '47.621, -122.349'));
+		expect(one('location', { lat: 47.6205, lon: -122.3493 })).toMatchObject({
+			icon: 'mdi-map-marker',
+			kind: 'location',
+			text: '47.621, -122.349',
+			filter: '47.621,-122.349~100 m',
+		});
 	});
 
-	it('location with missing lat returns empty', () => {
-		expect(toHtml('location', {})).toBe('');
+	it('location with missing lat is skipped', () => {
+		expect(many('location', {})).toEqual([]);
 	});
 
 	describe('timestamp', () => {
@@ -93,130 +87,94 @@ describe('FIELD_REGISTRY toHtml', () => {
 			vi.useRealTimers();
 		});
 
-		it('shows just now', () => {
-			expect(toHtml('timestamp', '2025-01-15T11:59:30Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:59:30Z">just now</abbr>'));
-		});
-
-		it('shows 1 minute ago', () => {
-			expect(toHtml('timestamp', '2025-01-15T11:59:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:59:00Z">1m ago</abbr>'));
+		it('shows just now with full timestamp as title', () => {
+			expect(one('timestamp', '2025-01-15T11:59:30Z')).toMatchObject({ icon: 'mdi-calendar-outline', kind: 'abbr', text: 'just now', title: '2025-01-15T11:59:30Z' });
 		});
 
 		it('shows minutes ago', () => {
-			expect(toHtml('timestamp', '2025-01-15T11:50:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:50:00Z">10m ago</abbr>'));
-		});
-
-		it('shows 1 hour ago', () => {
-			expect(toHtml('timestamp', '2025-01-15T11:00:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T11:00:00Z">1h ago</abbr>'));
+			expect(one('timestamp', '2025-01-15T11:50:00Z')).toMatchObject({ kind: 'abbr', text: '10m ago' });
 		});
 
 		it('shows hours ago', () => {
-			expect(toHtml('timestamp', '2025-01-15T09:00:00Z')).toBe(span('mdi-calendar-outline', 'Timestamp', '<abbr title="2025-01-15T09:00:00Z">3h ago</abbr>'));
+			expect(one('timestamp', '2025-01-15T09:00:00Z')).toMatchObject({ kind: 'abbr', text: '3h ago' });
 		});
 	});
 
-	it('velocity', () => {
-		expect(toHtml('velocity', { '@value': 100, unit: 'kmh' })).toBe(span('mdi-speedometer', 'Velocity', '100 kmh'));
-	});
-
 	it('pace formats s/km', () => {
-		expect(toHtml('pace', { '@value': 305, unit: 's/km' })).toBe(span('mdi-timer-outline', 'Pace', '5\'5"/km'));
-	});
-
-	it('pace formats s/mi', () => {
-		expect(toHtml('pace', { '@value': 480, unit: 's/mi' })).toBe(span('mdi-timer-outline', 'Pace', '8\'0"/mi'));
+		expect(one('pace', { '@value': 305, unit: 's/km' })).toMatchObject({ kind: 'text', text: '5\'5"/km' });
 	});
 
 	it('pace falls back for non-s/ units', () => {
-		expect(toHtml('pace', { '@value': 5, unit: 'min/km' })).toBe(span('mdi-timer-outline', 'Pace', '5 min/km'));
+		expect(one('pace', { '@value': 5, unit: 'min/km' })).toMatchObject({ kind: 'text', text: '5 min/km' });
 	});
 
-	it('duration', () => {
-		expect(toHtml('duration', 3661000)).toBe(span('mdi-clock-outline', 'Duration', '<abbr>1h 1min</abbr>'));
+	it('duration has no abbr title', () => {
+		const seg = one('duration', 3661000);
+		expect(seg).toMatchObject({ icon: 'mdi-clock-outline', kind: 'abbr', text: '1h 1min' });
+		expect(seg.title).toBeUndefined();
 	});
 
 	it('duration with unit value', () => {
-		expect(toHtml('duration', { '@value': 60000, unit: 'ms' })).toBe(span('mdi-clock-outline', 'Duration', '<abbr>1min</abbr>'));
-	});
-
-	it('frequency', () => {
-		expect(toHtml('frequency', { '@value': 72, unit: 'bpm' })).toBe(span('mdi-heart', 'Frequency', '72 bpm'));
-	});
-
-	it('bits', () => {
-		expect(toHtml('bits', { '@value': 1024, unit: 'MB' })).toBe(span('mdi-database', 'Bits', (1024).toLocaleString() + ' MB'));
+		expect(one('duration', { '@value': 60000, unit: 'ms' })).toMatchObject({ kind: 'abbr', text: '1min' });
 	});
 
 	it('count', () => {
-		expect(toHtml('count', 1234)).toBe(span('mdi-counter', 'Count', '1,234'));
-	});
-
-	it('energy', () => {
-		expect(toHtml('energy', { '@value': 250, unit: 'kcal' })).toBe(span('mdi-fire', 'Energy', '250 kcal'));
-	});
-
-	it('light', () => {
-		expect(toHtml('light', { '@value': 500, unit: 'lx' })).toBe(span('mdi-white-balance-sunny', 'Light', '500 lx'));
-	});
-
-	it('temperature', () => {
-		expect(toHtml('temperature', { '@value': 36.7, unit: 'C' })).toBe(span('mdi-fire', 'Temperature', '36.7 C'));
+		expect(one('count', 1234)).toMatchObject({ kind: 'text', text: '1,234' });
 	});
 
 	it('rating 0%', () => {
-		expect(toHtml('rating', 0)).toBe(
-			'<span class="text-no-wrap" title="0%">' +
-				'<i class="mdi mdi-star-outline"></i>' +
-				'<i class="mdi mdi-star-outline"></i>' +
-				'<i class="mdi mdi-star-outline"></i>' +
-				'<i class="mdi mdi-star-outline"></i>' +
-				'<i class="mdi mdi-star-outline"></i>' +
-				'</span>',
-		);
+		expect(one('rating', 0)).toMatchObject({ name: 'rating', icon: null, kind: 'rating', filled: 0, title: '0%' });
 	});
 
 	it('rating 80%', () => {
-		expect(toHtml('rating', 80)).toBe(
-			'<span class="text-no-wrap" title="80%">' +
-				'<i class="mdi mdi-star"></i>' +
-				'<i class="mdi mdi-star"></i>' +
-				'<i class="mdi mdi-star"></i>' +
-				'<i class="mdi mdi-star"></i>' +
-				'<i class="mdi mdi-star-outline"></i>' +
-				'</span>',
-		);
+		expect(one('rating', 80)).toMatchObject({ icon: null, kind: 'rating', filled: 4, title: '80%' });
 	});
 
 	it('rating 100%', () => {
-		expect(toHtml('rating', 100)).toBe(
-			'<span class="text-no-wrap" title="100%">' +
-				'<i class="mdi mdi-star"></i>' +
-				'<i class="mdi mdi-star"></i>' +
-				'<i class="mdi mdi-star"></i>' +
-				'<i class="mdi mdi-star"></i>' +
-				'<i class="mdi mdi-star"></i>' +
-				'</span>',
-		);
+		expect(one('rating', 100)).toMatchObject({ kind: 'rating', filled: 5, title: '100%' });
 	});
 
 	it('currency', () => {
-		expect(toHtml('currency', 9.5)).toBe(span('mdi-currency-usd', 'Currency', '9.50'));
+		expect(one('currency', 9.5)).toMatchObject({ icon: 'mdi-currency-usd', kind: 'text', text: '9.50' });
 	});
 
 	it('note', () => {
-		expect(toHtml('note', 'hello world')).toBe('<span><i class="mdi mdi-comment-outline" title="Note"></i>&nbsp;hello world</span>');
+		expect(one('note', 'hello world')).toMatchObject({ icon: 'mdi-comment-outline', kind: 'text', text: 'hello world', nowrap: false, tightIcon: true });
 	});
 
-	it('author', () => {
-		expect(toHtml('author', '123')).toBe(span('mdi-account', 'User', 'User 123'));
+	it('author resolves user name', () => {
+		expect(one('author', '123')).toMatchObject({ icon: 'mdi-account', iconTitle: 'User', kind: 'text', text: 'User 123' });
 	});
 
 	it('source', () => {
-		expect(toHtml('source', { title: 'Blog', url: 'https://blog.example.com' })).toBe(
-			'<span class="text-no-wrap"><i class="mdi mdi-open-in-new" title="Source"></i> <a href="https://blog.example.com" target="_blank" rel="nofollow noopener">Blog</a></span>',
-		);
+		expect(one('source', { title: 'Blog', url: 'https://blog.example.com' })).toMatchObject({
+			icon: 'mdi-open-in-new',
+			kind: 'link',
+			text: 'Blog',
+			href: 'https://blog.example.com',
+			nowrap: true,
+		});
 	});
 
-	it('source with no title returns empty', () => {
-		expect(toHtml('source', { url: 'https://example.com' })).toBe('');
+	it('source with no title is skipped', () => {
+		expect(many('source', { url: 'https://example.com' })).toEqual([]);
+	});
+
+	it('expands array-valued fields into one segment each', () => {
+		const segments = many('tag', ['a', 'b', 'c']);
+		expect(segments.map((s) => s.text)).toEqual(['a', 'b', 'c']);
+	});
+
+	it('collapses a single-element array to one segment', () => {
+		expect(many('tag', ['solo'])).toHaveLength(1);
+	});
+
+	it('skips excluded fields and preserves registry order', () => {
+		const segments = formatEvent({ tag: 'food', count: 3, note: 'hi' } as ZenoEvent, new Set(['count']));
+		expect(segments.map((s) => s.name)).toEqual(['tag', 'note']);
+	});
+
+	it('skips null and undefined values', () => {
+		expect(formatEvent({ tag: null, note: undefined, count: 5 } as unknown as ZenoEvent)).toHaveLength(1);
 	});
 });

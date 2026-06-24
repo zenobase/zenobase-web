@@ -6,7 +6,7 @@ import { parseCSV } from '../../utils/importers/csv';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { dateParser } from '../utils/dateParser';
-import { formatEventHtml } from '../utils/eventFormatter';
+import EventFields from './EventFields.vue';
 
 const props = defineProps<{
 	bucketId: string;
@@ -223,7 +223,7 @@ watch(selectedFormat, () => {
 						<div class="text-body-2 mb-4" v-html="selectedFormat.description"></div>
 						<v-select v-if="events.length === 0 && selectedFormat.settingsType === 'timezone'" :items="timezones" v-model="settings.timezone" label="Timezone *" required hint="The timezone to use." persistent-hint />
 						<template v-if="events.length > 0">
-							<p v-html="formatEventHtml(events[previewOffset], previewExcludeFields)"></p>
+							<p><EventFields :event="events[previewOffset]" :exclude-fields="previewExcludeFields" /></p>
 							<div class="d-flex align-center mt-2">
 								<v-spacer />
 								<v-btn icon variant="text" title="Previous" :disabled="previewOffset === 0" @click="prevPreview()"><v-icon icon="mdi-chevron-left" /></v-btn>

@@ -1,7 +1,12 @@
-import type { ResourceRef, UnitValue, ZenoEvent } from '../../types';
+import type { GeoPoint, ResourceRef, UnitValue, ZenoEvent } from '../../types';
 import { formatAge } from './formatAge';
 import { getUserName } from './userNames';
 
+/**
+ * Escapes a value for safe interpolation into an HTML string. Still used by chart
+ * widgets that build markup by hand; event fields are rendered structurally via
+ * {@link formatEvent} + the EventField components, which let Vue handle escaping.
+ */
 function esc(value: unknown): string {
 	const div = document.createElement('div');
 	div.textContent = String(value ?? '');
@@ -31,16 +36,6 @@ function formatDuration(ms: number): string {
 	return parts.slice(0, 2).join(' ');
 }
 
-function ratingStarsHtml(value: number): string {
-	const stars = Math.round((value || 0) / 20);
-	let html = '<span class="text-no-wrap" title="' + value + '%">';
-	for (let i = 0; i < 5; ++i) {
-		html += '<i class="mdi ' + (stars > i ? 'mdi-star' : 'mdi-star-outline') + '"></i>';
-	}
-	html += '</span>';
-	return html;
-}
-
 function formatPace(value: unknown): string {
 	if (typeof value === 'object' && value !== null && '@value' in value) {
 		const obj = value as UnitValue;
@@ -58,78 +53,155 @@ function locationText(value: { lat: number; lon: number }): string {
 	return Math.round(Number(value['lat']) * 1000) / 1000 + ', ' + Math.round(Number(value['lon']) * 1000) / 1000;
 }
 
-function ic(icon: string, title: string): string {
-	return '<i class="mdi ' + icon + '" title="' + title + '"></i>';
+/**
+ * A single rendered field value. The {@link EventFieldItem} component renders this
+ * structurally, so all user-supplied strings (`text`, `href`, ...) are escaped by
+ * Vue per context rather than concatenated into an HTML string.
+ */
+export interface FieldSegment {
+	/** Field name (e.g. "resource"), used for keys and styling hooks. */
+	name: string;
+	/** Material Design icon class, or null when the value renders its own glyphs (rating). */
+	icon: string | null;
+	/** Tooltip/label for the icon. */
+	iconTitle: string;
+	/** Whether the field should avoid wrapping. */
+	nowrap: boolean;
+	/** Use a non-breaking space between icon and value (longer, wrap-friendly fields). */
+	tightIcon: boolean;
+	kind: 'text' | 'abbr' | 'link' | 'location' | 'rating';
+	/** Display text for text/abbr/link/location kinds. */
+	text: string;
+	/** abbr tooltip, or rating label (e.g. "80%"). */
+	title?: string;
+	/** Destination for link kind. */
+	href?: string;
+	/** Constraint expression for location kind (used when rendered as a filter link). */
+	filter?: string;
+	/** Number of filled stars (0-5) for rating kind. */
+	filled?: number;
 }
 
-type ToHtmlFn = (value: unknown, icon: string, title: string) => string;
-type FieldDef = { name: string; icon: string; title: string; toHtml: (value: unknown) => string };
+/** The value-specific part of a segment, before the field's icon/title metadata is attached. */
+type SegmentBody = {
+	kind: FieldSegment['kind'];
+	text?: string;
+	title?: string;
+	href?: string;
+	filter?: string;
+	filled?: number;
+	nowrap?: boolean;
+	tightIcon?: boolean;
+	noIcon?: boolean;
+};
 
-function field(name: string, icon: string, title: string, toHtml: ToHtmlFn): FieldDef {
-	return { name, icon, title, toHtml: (v) => toHtml(v, icon, title) };
-}
+type FieldDef = { name: string; icon: string; title: string; build: (value: unknown) => SegmentBody | null };
 
+/** A field rendered as icon + plain text, no wrapping. */
 function simple(name: string, icon: string, title: string, format: (v: unknown) => string): FieldDef {
-	return field(name, icon, title, (v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' ' + format(v) + '</span>');
+	return { name, icon, title, build: (v) => ({ kind: 'text', text: format(v) }) };
 }
 
 export const FIELD_REGISTRY: FieldDef[] = [
-	simple('tag', 'mdi-tag', 'Tag', (v) => esc(v)),
-	field('resource', 'mdi-bookmark', 'Resource', (v, i, t) => {
-		const obj = v as ResourceRef;
-		if (!obj?.title) return '';
-		return '<span>' + ic(i, t) + '&nbsp;<a href="' + esc(obj.url) + '" target="_blank" rel="nofollow noopener">' + esc(obj['title']) + '</a></span>';
-	}),
-	simple('distance', 'mdi-arrow-left-right', 'Distance', (v) => esc(textWithUnit(v))),
-	simple('height', 'mdi-arrow-up-down', 'Height', (v) => esc(textWithUnit(v))),
-	simple('weight', 'mdi-weight', 'Weight', (v) => esc(textWithUnit(v))),
-	field('percentage', 'mdi-view-grid', 'Percentage', (v, i, t) => {
-		const n = Number(v);
-		return '<span class="text-no-wrap">' + ic(i, t) + ' <abbr title="' + n + '%">' + Math.round(n) + '%</abbr></span>';
-	}),
+	simple('tag', 'mdi-tag', 'Tag', (v) => String(v ?? '')),
+	{
+		name: 'resource',
+		icon: 'mdi-bookmark',
+		title: 'Resource',
+		build: (v) => {
+			const obj = v as ResourceRef;
+			if (!obj?.title) return null;
+			return { kind: 'link', text: obj.title, href: obj.url, nowrap: false, tightIcon: true };
+		},
+	},
+	simple('distance', 'mdi-arrow-left-right', 'Distance', textWithUnit),
+	simple('height', 'mdi-arrow-up-down', 'Height', textWithUnit),
+	simple('weight', 'mdi-weight', 'Weight', textWithUnit),
+	{
+		name: 'percentage',
+		icon: 'mdi-view-grid',
+		title: 'Percentage',
+		build: (v) => {
+			const n = Number(v);
+			return { kind: 'abbr', text: Math.round(n) + '%', title: n + '%' };
+		},
+	},
 	simple('moon', 'mdi-moon-waning-crescent', 'Moon', (v) => v + '%'),
-	simple('volume', 'mdi-cup', 'Volume', (v) => esc(textWithUnit(v))),
-	simple('concentration', 'mdi-water', 'Concentration', (v) => esc(textWithUnit(v))),
-	simple('distance/volume', 'mdi-gas-station', 'Distance/Volume', (v) => esc(textWithUnit(v))),
+	simple('volume', 'mdi-cup', 'Volume', textWithUnit),
+	simple('concentration', 'mdi-water', 'Concentration', textWithUnit),
+	simple('distance/volume', 'mdi-gas-station', 'Distance/Volume', textWithUnit),
 	simple('humidity', 'mdi-water', 'Humidity', (v) => v + '%'),
-	simple('pressure', 'mdi-arrow-expand-all', 'Pressure', (v) => esc(textWithUnit(v))),
-	simple('sound', 'mdi-volume-high', 'Sound Level', (v) => esc(textWithUnit(v))),
-	field('location', 'mdi-map-marker', 'Location', (v, i, t) => {
-		const obj = v as { lat: number; lon: number };
-		if (!obj || !('lat' in obj)) return '';
-		const text = locationText(obj);
-		return '<span class="text-no-wrap">' + ic(i, t) + ' ' + esc(text) + '</span>';
-	}),
-	field(
-		'timestamp',
-		'mdi-calendar-outline',
-		'Timestamp',
-		(v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' <abbr title="' + esc(v) + '">' + esc(formatAge(String(v), 79200000)) + '</abbr></span>',
-	),
-	simple('velocity', 'mdi-speedometer', 'Velocity', (v) => esc(textWithUnit(v))),
-	simple('pace', 'mdi-timer-outline', 'Pace', (v) => esc(formatPace(v))),
-	field('duration', 'mdi-clock-outline', 'Duration', (v, i, t) => {
-		const ms = typeof v === 'number' ? v : typeof v === 'object' && v !== null && '@value' in v ? Number((v as UnitValue)['@value']) : 0;
-		return '<span class="text-no-wrap">' + ic(i, t) + ' <abbr>' + esc(formatDuration(ms)) + '</abbr></span>';
-	}),
-	simple('frequency', 'mdi-heart', 'Frequency', (v) => esc(textWithUnit(v))),
-	simple('bits', 'mdi-database', 'Bits', (v) => esc(textWithUnit(v))),
+	simple('pressure', 'mdi-arrow-expand-all', 'Pressure', textWithUnit),
+	simple('sound', 'mdi-volume-high', 'Sound Level', textWithUnit),
+	{
+		name: 'location',
+		icon: 'mdi-map-marker',
+		title: 'Location',
+		build: (v) => {
+			const obj = v as GeoPoint;
+			if (!obj || !('lat' in obj)) return null;
+			const text = locationText(obj);
+			return { kind: 'location', text, filter: text.replace(' ', '') + '~100 m' };
+		},
+	},
+	{
+		name: 'timestamp',
+		icon: 'mdi-calendar-outline',
+		title: 'Timestamp',
+		build: (v) => ({ kind: 'abbr', text: formatAge(String(v), 79200000), title: String(v) }),
+	},
+	simple('velocity', 'mdi-speedometer', 'Velocity', textWithUnit),
+	simple('pace', 'mdi-timer-outline', 'Pace', formatPace),
+	{
+		name: 'duration',
+		icon: 'mdi-clock-outline',
+		title: 'Duration',
+		build: (v) => {
+			const ms = typeof v === 'number' ? v : typeof v === 'object' && v !== null && '@value' in v ? Number((v as UnitValue)['@value']) : 0;
+			return { kind: 'abbr', text: formatDuration(ms) };
+		},
+	},
+	simple('frequency', 'mdi-heart', 'Frequency', textWithUnit),
+	simple('bits', 'mdi-database', 'Bits', textWithUnit),
 	simple('count', 'mdi-counter', 'Count', (v) => Number(v).toLocaleString()),
-	simple('energy', 'mdi-fire', 'Energy', (v) => esc(textWithUnit(v))),
-	simple('light', 'mdi-white-balance-sunny', 'Light', (v) => esc(textWithUnit(v))),
-	simple('temperature', 'mdi-fire', 'Temperature', (v) => esc(textWithUnit(v))),
-	{ name: 'rating', icon: 'mdi-star', title: 'Rating', toHtml: (v) => ratingStarsHtml(Number(v)) },
+	simple('energy', 'mdi-fire', 'Energy', textWithUnit),
+	simple('light', 'mdi-white-balance-sunny', 'Light', textWithUnit),
+	simple('temperature', 'mdi-fire', 'Temperature', textWithUnit),
+	{
+		name: 'rating',
+		icon: 'mdi-star',
+		title: 'Rating',
+		build: (v) => {
+			const value = Number(v);
+			return { kind: 'rating', filled: Math.round((value || 0) / 20), title: value + '%', noIcon: true };
+		},
+	},
 	simple('currency', 'mdi-currency-usd', 'Currency', (v) => Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })),
-	field('note', 'mdi-comment-outline', 'Note', (v, i, t) => '<span>' + ic(i, t) + '&nbsp;' + esc(v) + '</span>'),
-	field('author', 'mdi-account', 'User', (v, i, t) => '<span class="text-no-wrap">' + ic(i, t) + ' ' + esc(getUserName(String(v))) + '</span>'),
-	field('source', 'mdi-open-in-new', 'Source', (v, i, t) => {
-		const obj = v as ResourceRef;
-		if (!obj?.title) return '';
-		return '<span class="text-no-wrap">' + ic(i, t) + ' <a href="' + esc(obj.url) + '" target="_blank" rel="nofollow noopener">' + esc(obj.title) + '</a></span>';
-	}),
+	{
+		name: 'note',
+		icon: 'mdi-comment-outline',
+		title: 'Note',
+		build: (v) => ({ kind: 'text', text: String(v ?? ''), nowrap: false, tightIcon: true }),
+	},
+	{
+		name: 'author',
+		icon: 'mdi-account',
+		title: 'User',
+		build: (v) => ({ kind: 'text', text: getUserName(String(v)) }),
+	},
+	{
+		name: 'source',
+		icon: 'mdi-open-in-new',
+		title: 'Source',
+		build: (v) => {
+			const obj = v as ResourceRef;
+			if (!obj?.title) return null;
+			return { kind: 'link', text: obj.title, href: obj.url };
+		},
+	},
 ];
 
-export { esc, formatDuration, locationText, ratingStarsHtml, textWithUnit };
+export { esc, formatDuration, locationText, textWithUnit };
 
 export function getFieldIcon(fieldName: string): string {
 	const dot = fieldName.indexOf('.');
@@ -143,23 +215,39 @@ function unwrap(value: unknown): unknown {
 	return value;
 }
 
-export function formatEventHtml(event: ZenoEvent, excludeFields?: Set<string>, fieldOverrides?: Record<string, (value: unknown) => string>): string {
-	const parts: string[] = [];
+function toSegment(field: FieldDef, body: SegmentBody): FieldSegment {
+	return {
+		name: field.name,
+		icon: body.noIcon ? null : field.icon,
+		iconTitle: field.title,
+		nowrap: body.nowrap ?? true,
+		tightIcon: body.tightIcon ?? false,
+		kind: body.kind,
+		text: body.text ?? '',
+		title: body.title,
+		href: body.href,
+		filter: body.filter,
+		filled: body.filled,
+	};
+}
+
+/**
+ * Builds the renderable segments for an event, in field-registry order. Array-valued
+ * fields produce one segment per item. The returned data contains raw, unescaped
+ * strings; rendering safety is the responsibility of the EventField components.
+ */
+export function formatEvent(event: ZenoEvent, excludeFields?: Set<string>): FieldSegment[] {
+	const segments: FieldSegment[] = [];
 	for (const field of FIELD_REGISTRY) {
 		if (excludeFields?.has(field.name)) continue;
 		let value = event[field.name];
 		if (value === undefined || value === null) continue;
 		value = unwrap(value);
-		const toHtml = fieldOverrides?.[field.name] ?? field.toHtml;
-		if (Array.isArray(value)) {
-			for (const item of value) {
-				const html = toHtml(item);
-				if (html) parts.push(html);
-			}
-		} else {
-			const html = toHtml(value);
-			if (html) parts.push(html);
+		const items = Array.isArray(value) ? value : [value];
+		for (const item of items) {
+			const body = field.build(item);
+			if (body) segments.push(toSegment(field, body));
 		}
 	}
-	return parts.join(' &nbsp; ');
+	return segments;
 }
