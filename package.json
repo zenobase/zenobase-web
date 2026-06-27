@@ -20,7 +20,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.16",
+    "@biomejs/biome": "2.5.1",
     "@types/google.maps": "^3.65.2",
     "@types/papaparse": "^5.5.2",
     "@vue/test-utils": "^2.4.11",
