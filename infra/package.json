@@ -8,12 +8,12 @@
     "pnpm": "10.33.0"
   },
   "dependencies": {
-    "@pulumi/aws": "^7.32.0",
-    "@pulumi/pulumi": "^3.245.0"
+    "@pulumi/aws": "^7.34.0",
+    "@pulumi/pulumi": "^3.248.0"
   },
   "devDependencies": {
-    "@types/node": "^24.13.1",
-    "typescript": "^5.9.3"
+    "@types/node": "^24.13.2",
+    "typescript": "^6.0.3"
   },
   "pnpm": {
     "ignoredBuiltDependencies": [
