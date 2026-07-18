@@ -23,6 +23,11 @@ export default defineConfig({
 				inline: ['vuetify'],
 			},
 		},
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'lcov'],
+			include: ['src/**'],
+		},
 	},
 	build: {
 		cssMinify: false,
