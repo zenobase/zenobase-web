@@ -195,6 +195,27 @@ describe('useDashboard', () => {
 		expect(url).not.toContain('undefined');
 	});
 
+	it('escapes commas in facet values', async () => {
+		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });
+		const { parent } = createTestComponent('bucket1', httpGet);
+
+		await parent.search([{ id: 'x', type: 'list', filter: 'a,b' } as never]);
+
+		const url = decodeURIComponent(httpGet.mock.calls[0][0] as string);
+		expect(url).toContain('filter:a\\,b');
+	});
+
+	it('strips backslashes so they cannot escape the separator comma', async () => {
+		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });
+		const { parent } = createTestComponent('bucket1', httpGet);
+
+		await parent.search([{ id: 'x', type: 'list', filter: 'fo\\o\\', offset: 0 } as never]);
+
+		const url = decodeURIComponent(httpGet.mock.calls[0][0] as string);
+		expect(url).toContain('filter:foo,offset:0');
+		expect(url).not.toContain('\\');
+	});
+
 	it('drops malformed q values on refresh', async () => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const httpGet = vi.fn().mockResolvedValue({ data: { total: 1 } });

@@ -27,7 +27,10 @@ export interface DashboardApi {
 export const dashboardKey: InjectionKey<DashboardApi> = Symbol('dashboard');
 
 function escapeCommas(s: unknown): unknown {
-	return typeof s === 'string' ? s.replace(/,/g, '\\,') : s;
+	// Strip backslashes before escaping commas as \, — the backend treats backslash
+	// only as the comma-escape character (values carry no other escapes), so a stray
+	// backslash never adds meaning and could only corrupt the escaping.
+	return typeof s === 'string' ? s.replace(/\\/g, '').replace(/,/g, '\\,') : s;
 }
 
 export function useDashboard(
