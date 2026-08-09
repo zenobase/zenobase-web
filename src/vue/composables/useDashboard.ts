@@ -27,7 +27,8 @@ export interface DashboardApi {
 export const dashboardKey: InjectionKey<DashboardApi> = Symbol('dashboard');
 
 function escapeCommas(s: unknown): unknown {
-	return typeof s === 'string' ? s.replace(/,/g, '\\,') : s;
+	// Remove any trailing backslashes before escaping, to ensure that the separator comma itself isn't escaped
+	return typeof s === 'string' ? s.replace(/\\+$/, '').replace(/,/g, '\\,') : s;
 }
 
 export function useDashboard(
