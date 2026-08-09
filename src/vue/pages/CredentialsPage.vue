@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import api, { ApiError } from '../api';
+import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
-import { type AuthApi, authKey } from '../composables/useAuth';
 
 const route = useRoute();
 const router = useRouter();
-const auth = inject<AuthApi>(authKey)!;
 const alertApi = inject<AlertApi>(alertKey)!;
 
 const message = ref('');

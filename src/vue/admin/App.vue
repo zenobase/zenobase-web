@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, provide, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import api from '../api';
 import LoadingState from '../components/LoadingState.vue';
 import { authKey, useAuth } from '../composables/useAuth';
 
