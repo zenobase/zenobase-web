@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { inject, nextTick, ref, watch } from 'vue';
 import type { Bucket, WidgetSettings } from '../../types';
-import { deepExtend } from '../../utils/helpers';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 
@@ -127,8 +126,8 @@ function add(template: WidgetTemplate) {
 		type: template.type,
 		label: template.label,
 		placement: props.placement,
+		...template.settings,
 	};
-	deepExtend(settings, template.settings);
 	close();
 	emit('added', settings);
 }
