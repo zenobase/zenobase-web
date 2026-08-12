@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import type { Bucket, Role } from '../../types';
+import type { Bucket } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { type AuthApi, authKey } from '../composables/useAuth';

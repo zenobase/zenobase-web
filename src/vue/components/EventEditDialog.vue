@@ -23,7 +23,6 @@ const emit = defineEmits<{
 
 const alertApi = inject<AlertApi>(alertKey)!;
 
-const modalEl = ref<HTMLElement | null>(null);
 const message = ref('');
 const entries = ref<Array<{ field: string; value: string; stars?: number }>>([]);
 const newField = ref('');

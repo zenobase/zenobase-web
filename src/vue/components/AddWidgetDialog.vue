@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { inject, nextTick, ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import type { Bucket, WidgetSettings } from '../../types';
-import api from '../api';
-import { type AlertApi, alertKey } from '../composables/useAlert';
 
 const props = defineProps<{
 	bucketId: string;
@@ -15,8 +13,6 @@ const emit = defineEmits<{
 	'update:modelValue': [value: boolean];
 	added: [settings: WidgetSettings];
 }>();
-
-const alertApi = inject<AlertApi>(alertKey)!;
 
 interface WidgetTemplate {
 	type: string;
