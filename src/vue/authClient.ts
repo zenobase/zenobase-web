@@ -129,7 +129,9 @@ export function useAuthClient(): AuthClient {
 		},
 		async getTokenSilently(options) {
 			await waitForInit();
-			return auth0.getAccessTokenSilently({ cacheMode: options?.ignoreCache ? 'off' : 'on' });
+			const token = await auth0.getAccessTokenSilently({ cacheMode: options?.ignoreCache ? 'off' : 'on' });
+			if (!token) throw new Error('No access token');
+			return token;
 		},
 		async logout() {
 			await auth0.logout({ logoutParams: { returnTo: window.location.origin } });
