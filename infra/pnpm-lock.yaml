@@ -7,11 +7,11 @@ settings:
 catalogs:
   default:
     '@pulumi/pulumi':
-      specifier: ^3.256.0
-      version: 3.256.0
+      specifier: ^3.265.0
+      version: 3.265.0
     '@types/node':
-      specifier: ^24.13.3
-      version: 24.13.3
+      specifier: ^24.19.0
+      version: 24.19.0
     typescript:
       specifier: ^6.0.3
       version: 6.0.3
@@ -21,15 +21,15 @@ importers:
   .:
     dependencies:
       '@pulumi/aws':
-        specifier: ^7.41.0
-        version: 7.41.0(typescript@6.0.3)
+        specifier: ^7.48.0
+        version: 7.48.0(typescript@6.0.3)
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.256.0(typescript@6.0.3)
+        version: 3.265.0(typescript@6.0.3)
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
-        version: 24.13.3
+        version: 24.19.0
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -43,15 +43,15 @@ importers:
         specifier: 0.1.6
         version: 0.1.6(typescript@6.0.3)
       '@pulumi/policy':
-        specifier: ^1.13.0
+        specifier: ^1.21.0
         version: 1.21.0(typescript@6.0.3)
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.256.0(typescript@6.0.3)
+        version: 3.265.0(typescript@6.0.3)
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
-        version: 24.13.3
+        version: 24.19.0
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -302,8 +302,8 @@ packages:
   '@pulumi/aws@6.68.0':
     resolution: {integrity: sha512-uehJNSviSq3garkLXsy1zZzI7V6clBDQq8G83PSpNfdePdGeKtuRoxMSsuqkgpGkue+cGjoxJtC6QwdtzgaKBQ==}
 
-  '@pulumi/aws@7.41.0':
-    resolution: {integrity: sha512-FkmcmI2TZUh+tdMwofyJZ52gNP9hAe6xcbs+tP9ZC+C3/HxrsD6HKmT8WbYigowFp9ZXRJSOsF7YkBrtgjP7Fw==}
+  '@pulumi/aws@7.48.0':
+    resolution: {integrity: sha512-roKXYZ2EyjvapKYacvRQNUeW2UBI8MKwzO2338XwdXtCf75TabY4DVy56zY2HbnEU0H1fbBXct8oAx9ynQeMrA==}
 
   '@pulumi/compliance-policy-manager@0.1.6':
     resolution: {integrity: sha512-sMMQLacdQj9wSmyMUjMNxb03Iywh9wSGptNrFYVNd9elCpfEJv8+Opn9Z+AzYKrsBFTpOwV8efND0Y4UkWwVaQ==}
@@ -311,8 +311,8 @@ packages:
   '@pulumi/policy@1.21.0':
     resolution: {integrity: sha512-tLczMS7S2UUpc1qO9xvGY54GumUShTNxm/BY/T1fb0Hp/ILScxXzrmLpkbt4KUGZAcX/EdGLVuMGHyhreqbfvg==}
 
-  '@pulumi/pulumi@3.256.0':
-    resolution: {integrity: sha512-EK1TQieOmxTxbIpX5EKTPpC1WYappH3ASEZzN6Q9gs7rZjuZCATXI9Am8nszmlRdtPlAiVSW8NfQNKCnaNk34A==}
+  '@pulumi/pulumi@3.265.0':
+    resolution: {integrity: sha512-rg/aFiQ1DIWcqQOQLuzg/9vIC5J4L6eLLkT54FPlIf0yhYTvEnREF7uip+WLSdHhHTi81PzeU0MPYRtiPTJ+IQ==}
     engines: {node: '>=22'}
     peerDependencies:
       ts-node: '>= 7.0.1 < 12'
@@ -358,8 +358,8 @@ packages:
   '@types/google-protobuf@3.15.12':
     resolution: {integrity: sha512-40um9QqwHjRS92qnOaDpL7RmDK15NuZYo9HihiJRbYkMQZlWnuH8AdvbMy8/o6lgLmKbDUKa+OALCltHdbOTpQ==}
 
-  '@types/node@24.13.3':
-    resolution: {integrity: sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q==}
+  '@types/node@24.19.0':
+    resolution: {integrity: sha512-zY+5tKxXdhGh1PYI0ac+7juvEu4OI6vWtVVoj5i2m42jxAY1U+zHGt6QCyOFwykdP62sM3MJ9stoYYUw5aCWew==}
 
   '@types/semver@7.7.1':
     resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
@@ -611,8 +611,8 @@ packages:
     resolution: {integrity: sha512-FFUtZMpoZ8RqHS3XeXEmHWLA4thH+ZxCv2lOiPIn1Xc7CxrqhWzNSDzD+/chS/zbYezmiwWLdQC09JdQKmthOw==}
     engines: {node: '>=20'}
 
-  js-yaml@4.3.0:
-    resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
+  js-yaml@4.3.2:
+    resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
   json-parse-even-better-errors@5.0.0:
@@ -941,8 +941,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  undici-types@7.18.2:
-    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+  undici-types@7.24.6:
+    resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
 
   undici@6.26.0:
     resolution: {integrity: sha512-4yqz8a3n5HmGTlsbADNtr/dJlhkh/55Rq798G6ibiULcXbDtaLpTl1pvdqcbFfeoj3iSi52lePFM7h9H21cw/A==}
@@ -1314,7 +1314,7 @@ snapshots:
       '@pulumi/aws-native': 1.25.0(typescript@6.0.3)
       '@pulumi/compliance-policy-manager': 0.1.6(typescript@6.0.3)
       '@pulumi/policy': 1.21.0(typescript@6.0.3)
-      '@pulumi/pulumi': 3.256.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.265.0(typescript@6.0.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -1322,7 +1322,7 @@ snapshots:
 
   '@pulumi/aws-native@1.25.0(typescript@6.0.3)':
     dependencies:
-      '@pulumi/pulumi': 3.256.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.265.0(typescript@6.0.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -1330,16 +1330,16 @@ snapshots:
 
   '@pulumi/aws@6.68.0(typescript@6.0.3)':
     dependencies:
-      '@pulumi/pulumi': 3.256.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.265.0(typescript@6.0.3)
       mime: 2.6.0
     transitivePeerDependencies:
       - supports-color
       - ts-node
       - typescript
 
-  '@pulumi/aws@7.41.0(typescript@6.0.3)':
+  '@pulumi/aws@7.48.0(typescript@6.0.3)':
     dependencies:
-      '@pulumi/pulumi': 3.256.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.265.0(typescript@6.0.3)
       mime: 2.6.0
     transitivePeerDependencies:
       - supports-color
@@ -1359,14 +1359,14 @@ snapshots:
   '@pulumi/policy@1.21.0(typescript@6.0.3)':
     dependencies:
       '@grpc/grpc-js': 1.14.4
-      '@pulumi/pulumi': 3.256.0(typescript@6.0.3)
+      '@pulumi/pulumi': 3.265.0(typescript@6.0.3)
       google-protobuf: 3.21.4
     transitivePeerDependencies:
       - supports-color
       - ts-node
       - typescript
 
-  '@pulumi/pulumi@3.256.0(typescript@6.0.3)':
+  '@pulumi/pulumi@3.265.0(typescript@6.0.3)':
     dependencies:
       '@grpc/grpc-js': 1.14.4
       '@logdna/tail-file': 2.2.0
@@ -1386,7 +1386,7 @@ snapshots:
       execa: 5.1.1
       google-protobuf: 3.21.4
       ini: 2.0.0
-      js-yaml: 4.3.0
+      js-yaml: 4.3.2
       minimist: 1.2.8
       normalize-package-data: 6.0.2
       require-from-string: 2.0.2
@@ -1439,9 +1439,9 @@ snapshots:
 
   '@types/google-protobuf@3.15.12': {}
 
-  '@types/node@24.13.3':
+  '@types/node@24.19.0':
     dependencies:
-      undici-types: 7.18.2
+      undici-types: 7.24.6
 
   '@types/semver@7.7.1': {}
 
@@ -1668,7 +1668,7 @@ snapshots:
 
   isexe@4.0.0: {}
 
-  js-yaml@4.3.0:
+  js-yaml@4.3.2:
     dependencies:
       argparse: 2.0.1
 
@@ -1905,7 +1905,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.1
-      '@types/node': 24.13.3
+      '@types/node': 24.19.0
       long: 5.3.2
 
   read-cmd-shim@6.0.0: {}
@@ -2038,7 +2038,7 @@ snapshots:
 
   typescript@6.0.3: {}
 
-  undici-types@7.18.2: {}
+  undici-types@7.24.6: {}
 
   undici@6.26.0: {}
 
