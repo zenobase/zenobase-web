@@ -769,6 +769,7 @@ function blurOnEnter(event: KeyboardEvent) {
 											title="Open in Auth0"
 											class="ml-1"
 										>
+											<span class="d-sr-only">Open in Auth0</span>
 											<v-icon icon="mdi-open-in-new" size="x-small" />
 										</a>
 									</td>

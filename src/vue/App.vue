@@ -434,9 +434,9 @@ watch(
 					<a :href="`mailto:${SUPPORT_EMAIL}`" class="text-disabled">Contact</a>
 				</div>
 				<div class="d-flex justify-center ga-4">
-					<a href="https://blog.zenobase.com/" class="text-disabled" title="Blog"><v-icon icon="mdi-rss" size="small" /></a>
-					<a href="https://github.com/zenobase" class="text-disabled" title="GitHub"><v-icon icon="mdi-github" size="small" /></a>
-					<a href="https://www.linkedin.com/company/2676455" class="text-disabled" title="LinkedIn"><v-icon icon="mdi-linkedin" size="small" /></a>
+					<a href="https://blog.zenobase.com/" class="text-disabled" title="Blog"><span class="d-sr-only">Blog</span><v-icon icon="mdi-rss" size="small" /></a>
+					<a href="https://github.com/zenobase" class="text-disabled" title="GitHub"><span class="d-sr-only">GitHub</span><v-icon icon="mdi-github" size="small" /></a>
+					<a href="https://www.linkedin.com/company/2676455" class="text-disabled" title="LinkedIn"><span class="d-sr-only">LinkedIn</span><v-icon icon="mdi-linkedin" size="small" /></a>
 				</div>
 			</v-footer>
 		</v-main>
