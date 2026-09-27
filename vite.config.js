@@ -17,6 +17,8 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: 'jsdom',
+		// reuses one jsdom per worker while keeping per-file isolation
+		pool: 'vmThreads',
 		setupFiles: ['./src/vue/__tests__/setup.ts'],
 		server: {
 			deps: {
