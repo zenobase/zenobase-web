@@ -60,7 +60,8 @@ const { failed } = useWidgetData(dashboard, toRef(props, 'active'), params, { in
 			<tbody>
 				<tr v-for="rating in ratings" :key="rating.from ?? 'null'">
 					<td>
-						<a @click="filterByRating(rating)" aria-label="Filter by rating">
+						<a @click="filterByRating(rating)">
+							<span class="d-sr-only">Filter by rating</span>
 							<v-icon v-for="i in 5" :key="i" :icon="toStars(rating.from) >= i ? 'mdi-star' : 'mdi-star-outline'" size="small" />
 						</a>
 					</td>
