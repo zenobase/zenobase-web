@@ -1,6 +1,8 @@
+import { reactive } from 'vue';
 import api from '../api';
 
-const cache = new Map<string, string>();
+// Reactive so components that render names (e.g. via computed) update once they resolve.
+const cache = reactive(new Map<string, string>());
 const pending = new Map<string, Promise<void>>();
 
 export async function resolveUserNames(ids: string[]): Promise<void> {
