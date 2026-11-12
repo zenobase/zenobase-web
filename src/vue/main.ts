@@ -17,6 +17,21 @@ if (el) {
 		dsn: import.meta.env.VITE_SENTRY_DSN,
 		integrations: [Sentry.browserTracingIntegration({ router }), Sentry.captureConsoleIntegration({ levels: ['error'] })],
 		tracesSampleRate: 1.0,
+		// Sentry 11 collects everything when unset; this app holds personal tracking data, so opt out explicitly.
+		dataCollection: {
+			userInfo: false,
+			cookies: false,
+			httpHeaders: { request: false, response: false },
+			httpBodies: [],
+			urlQueryParams: false,
+			stackFrameVariables: false,
+			genAI: { inputs: false, outputs: false },
+			databaseQueryData: false,
+			graphQL: { document: false, variables: false },
+			queues: false,
+			mcp: { inputs: false, outputs: false },
+			frameContextLines: 5,
+		},
 	});
 
 	app.use(router);

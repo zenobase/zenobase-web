@@ -12,6 +12,7 @@ export default defineConfig({
 		sentryVitePlugin({
 			org: 'zenobase',
 			project: 'zenobase-web',
+			telemetry: false,
 		}),
 	],
 	test: {
