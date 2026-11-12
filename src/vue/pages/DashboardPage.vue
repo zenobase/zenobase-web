@@ -198,7 +198,7 @@ function getActiveTab(placement: string): string {
 
 function setActiveTab(placement: string, id: string) {
 	activeTabs.value[placement] = id;
-	nextTick(() => {
+	nextTick().then(() => {
 		const widget = widgetRefs.value[id];
 		if (widget && typeof (widget as unknown as { reflow: () => void }).reflow === 'function') {
 			(widget as unknown as { reflow: () => void }).reflow();
@@ -384,7 +384,7 @@ function onWidgetSettingsSaved(updated: WidgetSettings) {
 			activeTabs.value[updated.placement || 'top'] = updated.id;
 		}
 		setDirty();
-		nextTick(() => dashboard.refresh());
+		nextTick().then(() => dashboard.refresh());
 	}
 }
 

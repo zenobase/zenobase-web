@@ -546,7 +546,7 @@ watch(
 	(open) => {
 		if (open) {
 			init();
-			nextTick(() => {
+			nextTick().then(() => {
 				visible.value = true;
 			});
 		} else {

@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
 	"html": {
 		"experimentalFullSupportEnabled": true
 	},
@@ -39,6 +39,9 @@
 				"useValidAnchor": "off",
 				"useKeyWithClickEvents": "off",
 				"useAriaPropsSupportedByRole": "off"
+			},
+			"suspicious": {
+				"useScopedStyles": "off"
 			},
 			"complexity": {
 				"useLiteralKeys": "off",

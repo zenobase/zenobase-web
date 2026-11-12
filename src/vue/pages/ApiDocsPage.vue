@@ -25,7 +25,7 @@ function scrollToSection() {
 	const section = route.params.section as string | undefined;
 	if (section) {
 		const id = `api-${section}`;
-		nextTick(() => {
+		nextTick().then(() => {
 			const element = document.getElementById(id);
 			if (element) {
 				element.scrollIntoView(true);
