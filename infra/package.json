@@ -8,7 +8,7 @@
     "pnpm": "11.28.0"
   },
   "dependencies": {
-    "@pulumi/aws": "^7.48.0",
+    "@pulumi/aws": "^7.54.0",
     "@pulumi/pulumi": "catalog:"
   },
   "devDependencies": {
