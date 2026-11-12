@@ -20,6 +20,11 @@ decisions on any major-version bumps, follow-up notes.
   and run `biome migrate --write` to update `biome.json`; include any
   reformatted source files in the same commit
 - **Infra packages** in `infra/package.json`
-- **GitHub Actions** in `.github/workflows/`
+- **GitHub Actions** in `.github/workflows/` — third-party actions use exact
+  versions, GitHub-provided ones (`actions/*`) use major versions only. After
+  editing refs, run `gh actions-lock --no-narrow` (never without `--no-narrow`:
+  it rewrites refs) and `gh actions-lock --verify`, and commit `actions.lock`
+  with the workflow change. `gh` needs network access to GitHub, so run it
+  outside the sandbox if blocked.
 - **Node.js / pnpm** — `.nvmrc` and the `engines` field in `package.json`, and
-  GitHub Actions
+  GitHub Actions (then re-run `gh actions-lock --no-narrow`)
