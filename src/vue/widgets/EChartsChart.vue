@@ -53,13 +53,13 @@ function render(options: Record<string, unknown> | null) {
 
 watch(
 	() => props.options,
-	(options) => nextTick(() => render(options)),
+	(options) => nextTick().then(() => render(options)),
 	{ deep: true },
 );
 
 watch(
 	() => props.height,
-	() => nextTick(() => render(props.options)),
+	() => nextTick().then(() => render(props.options)),
 );
 
 function snapshot() {

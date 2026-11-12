@@ -139,7 +139,7 @@ watch(
 	() => props.modelValue,
 	(open) => {
 		if (open) {
-			nextTick(() => {
+			nextTick().then(() => {
 				visible.value = true;
 			});
 		} else {

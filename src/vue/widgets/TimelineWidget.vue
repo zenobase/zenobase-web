@@ -345,7 +345,7 @@ function params(): TimelineParams {
 function update(result: SearchResult, resultB?: SearchResult) {
 	times.value = (result[props.settings.id] as TimeEntry[]) || [];
 	timesB.value = (resultB?.[props.settings.id] as TimeEntry[]) || [];
-	nextTick(() => {
+	nextTick().then(() => {
 		draw();
 		computeEffectSize();
 	});

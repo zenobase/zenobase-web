@@ -86,7 +86,7 @@ watch(
 		if (open) {
 			message.value = '';
 			selected.value = new Set(props.app.readable_buckets);
-			nextTick(() => {
+			nextTick().then(() => {
 				visible.value = true;
 			});
 		} else {

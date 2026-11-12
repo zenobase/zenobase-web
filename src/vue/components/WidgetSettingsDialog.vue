@@ -68,7 +68,7 @@ watch(
 		if (open) {
 			draft.value = JSON.parse(JSON.stringify(props.settings)) as WidgetSettings;
 			originalJson.value = JSON.stringify(draft.value);
-			nextTick(() => {
+			nextTick().then(() => {
 				visible.value = true;
 			});
 		} else {

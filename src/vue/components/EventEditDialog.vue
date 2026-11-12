@@ -478,7 +478,7 @@ watch(newField, (field) => {
 		newTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 		newTimezone.value = getLocalTimezoneOffset();
 	} else if (field === 'location') {
-		nextTick(() => initLocationMap());
+		nextTick().then(() => initLocationMap());
 	}
 });
 
@@ -489,7 +489,7 @@ watch(
 			loadSchema();
 			init(props.event);
 			tags.value = [];
-			nextTick(() => {
+			nextTick().then(() => {
 				visible.value = true;
 			});
 		} else {
@@ -511,7 +511,7 @@ watch(
 				<v-alert v-if="message" type="error" variant="tonal" class="mb-4">{{ message }}</v-alert>
 
 				<v-autocomplete label="Field" :items="allFieldNames" v-model="newField" clearable style="max-width: 300px">
-						<template #item="{ item, props: itemProps }">
+						<template #item="{ props: itemProps }">
 							<v-list-item v-bind="itemProps">
 								<template v-if="commonFields.includes(String(itemProps.title))" #title>
 									<span style="font-weight: bold">{{ itemProps.title }}</span>
