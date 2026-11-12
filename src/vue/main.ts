@@ -8,9 +8,6 @@ import { auth0Config, isLocalDev } from './authClient';
 import vuetify from './plugins/vuetify';
 import router from './router';
 
-// Sentry's built-in denylist (auth, token, cookie-like keys, ...) always applies on top; these also drop IP-revealing headers.
-const ipHeaders = ['forwarded', '-ip', 'remote-', 'via', '-user'];
-
 const el = document.getElementById('vue-app');
 if (el) {
 	const app = createApp(App);
@@ -24,7 +21,8 @@ if (el) {
 		dataCollection: {
 			userInfo: false,
 			cookies: false,
-			httpHeaders: { request: { deny: ipHeaders }, response: { deny: ipHeaders } },
+			// The browser SDK only collects these two request headers (browser/OS info and referring page).
+			httpHeaders: { request: { allow: ['User-Agent', 'Referer'] }, response: false },
 			httpBodies: [],
 			urlQueryParams: false,
 			stackFrameVariables: false,
