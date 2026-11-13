@@ -328,6 +328,7 @@ async function refreshExternalClients(overrides?: { offset?: number }) {
 			externalClients.total = response.data.total;
 			externalClients.items = response.data.external_clients;
 		}
+		resolveUserNames(externalClients.items.map((app) => app.principal));
 	} catch {
 		externalClients.items = [];
 	}
@@ -904,7 +905,7 @@ function blurOnEnter(event: KeyboardEvent) {
 							</thead>
 							<tbody>
 								<tr v-for="app in externalClients.items" :key="app.principal + '/' + app.client_id" @contextmenu.prevent="onLongPress(app.principal + '/' + app.client_id)">
-									<td v-if="!constraint" class="text-no-wrap"><a @click="setConstraint(app.principal)">{{ app.principal }}</a></td>
+									<td v-if="!constraint" class="text-no-wrap"><a @click="setConstraint(app.principal)">{{ formatUsername(app.principal) }}</a></td>
 									<td class="text-no-wrap">{{ app.client_id }}</td>
 									<td>{{ app.client_name || '' }}</td>
 									<td class="text-no-wrap">{{ app.readable_buckets.length }}</td>
