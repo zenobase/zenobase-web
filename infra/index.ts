@@ -232,24 +232,34 @@ const distribution = new aws.cloudfront.Distribution("zenobase-web", {
     },
 }, webOriginPath ? {} : { ignoreChanges: ["origins"] });
 
-// S3 bucket policy — allow CloudFront OAC access
+// S3 bucket policy — TLS only, allow CloudFront OAC access
 new aws.s3.BucketPolicy("zenobase-web", {
     bucket: bucket.id,
     policy: pulumi.all([bucket.arn, distribution.arn]).apply(([bucketArn, distArn]) =>
         JSON.stringify({
             Version: "2012-10-17",
-            Statement: [{
-                Sid: "AllowCloudFrontOAC",
-                Effect: "Allow",
-                Principal: { Service: "cloudfront.amazonaws.com" },
-                Action: "s3:GetObject",
-                Resource: `${bucketArn}/*`,
-                Condition: {
-                    StringEquals: {
-                        "AWS:SourceArn": distArn,
+            Statement: [
+                {
+                    Sid: "DenyInsecureTransport",
+                    Effect: "Deny",
+                    Principal: "*",
+                    Action: "s3:*",
+                    Resource: [bucketArn, `${bucketArn}/*`],
+                    Condition: { Bool: { "aws:SecureTransport": "false" } },
+                },
+                {
+                    Sid: "AllowCloudFrontOAC",
+                    Effect: "Allow",
+                    Principal: { Service: "cloudfront.amazonaws.com" },
+                    Action: "s3:GetObject",
+                    Resource: `${bucketArn}/*`,
+                    Condition: {
+                        StringEquals: {
+                            "AWS:SourceArn": distArn,
+                        },
                     },
                 },
-            }],
+            ],
         }),
     ),
 });
