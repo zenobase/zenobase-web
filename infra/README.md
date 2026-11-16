@@ -3,7 +3,8 @@
 The Pulumi program in this directory manages the following AWS resources:
 
 - CloudFront, serves the web app from S3
-- S3 bucket for storing web app assets
+- S3 bucket for storing web app assets (versioned, TLS only)
+- S3 bucket for CloudFront (logging v2) and S3 server access logs, expiring after 90 days
 
 The following AWS resources are shared with the backend, and are not managed by Pulumi:
 
