@@ -6,64 +6,17 @@ const certificateArn = config.require("certificateArn");
 const webOriginPath = config.get("webOriginPath") || "";
 const apiHostname = config.get("apiHostname") || "";
 
-const accountId = aws.getCallerIdentityOutput().accountId;
-const region = aws.getRegionOutput().region;
+// S3 bucket
+const bucket = new aws.s3.Bucket("zenobase-web", {
+    bucket: "zenobase-web",
+});
 
-function denyInsecureTransport(bucketArn: string) {
-    return {
-        Sid: "DenyInsecureTransport",
-        Effect: "Deny",
-        Principal: "*",
-        Action: "s3:*",
-        Resource: [bucketArn, `${bucketArn}/*`],
-        Condition: { Bool: { "aws:SecureTransport": "false" } },
-    };
-}
-
-// Private, ACL-less, versioned bucket with a lifecycle rule
-function privateBucket(name: string, lifecycle: { noncurrentDays: number; expirationDays?: number }) {
-    const bucket = new aws.s3.Bucket(name, { bucket: name });
-    new aws.s3.BucketPublicAccessBlock(name, {
-        bucket: bucket.id,
-        blockPublicAcls: true,
-        blockPublicPolicy: true,
-        ignorePublicAcls: true,
-        restrictPublicBuckets: true,
-    });
-    new aws.s3.BucketOwnershipControls(name, {
-        bucket: bucket.id,
-        rule: { objectOwnership: "BucketOwnerEnforced" },
-    });
-    const versioning = new aws.s3.BucketVersioning(name, {
-        bucket: bucket.id,
-        versioningConfiguration: { status: "Enabled" },
-    });
-    new aws.s3.BucketLifecycleConfiguration(name, {
-        bucket: bucket.id,
-        rules: [{
-            id: "expire",
-            status: "Enabled",
-            filter: {},
-            ...(lifecycle.expirationDays ? { expiration: { days: lifecycle.expirationDays } } : {}),
-            noncurrentVersionExpiration: { noncurrentDays: lifecycle.noncurrentDays },
-            abortIncompleteMultipartUpload: { daysAfterInitiation: 7 },
-        }],
-    }, { dependsOn: versioning });
-    return bucket;
-}
-
-// Access logs for the web bucket (S3 server access logs) and CloudFront (logging v2)
-const logBucket = privateBucket("zenobase-web-logs", { expirationDays: 90, noncurrentDays: 1 });
-// S3 access logs go under s3/; CloudFront logs under the AWS-managed AWSLogs/<account>/CloudFront/
-const s3LogPrefix = "s3";
-
-// Web app assets
-const bucket = privateBucket("zenobase-web", { noncurrentDays: 30 });
-
-new aws.s3.BucketLogging("zenobase-web", {
+new aws.s3.BucketPublicAccessBlock("zenobase-web", {
     bucket: bucket.id,
-    targetBucket: logBucket.id,
-    targetPrefix: `${s3LogPrefix}/`,
+    blockPublicAcls: true,
+    blockPublicPolicy: true,
+    ignorePublicAcls: true,
+    restrictPublicBuckets: true,
 });
 
 // CloudFront OAC
@@ -286,7 +239,14 @@ new aws.s3.BucketPolicy("zenobase-web", {
         JSON.stringify({
             Version: "2012-10-17",
             Statement: [
-                denyInsecureTransport(bucketArn),
+                {
+                    Sid: "DenyInsecureTransport",
+                    Effect: "Deny",
+                    Principal: "*",
+                    Action: "s3:*",
+                    Resource: [bucketArn, `${bucketArn}/*`],
+                    Condition: { Bool: { "aws:SecureTransport": "false" } },
+                },
                 {
                     Sid: "AllowCloudFrontOAC",
                     Effect: "Allow",
@@ -303,72 +263,6 @@ new aws.s3.BucketPolicy("zenobase-web", {
         }),
     ),
 });
-
-// Log bucket policy — TLS only, allow S3 server access logging and CloudWatch Logs vended log delivery
-const logBucketPolicy = new aws.s3.BucketPolicy("zenobase-web-logs", {
-    bucket: logBucket.id,
-    policy: pulumi.all([logBucket.arn, bucket.arn, accountId, region]).apply(([logArn, webArn, account, logsRegion]) =>
-        JSON.stringify({
-            Version: "2012-10-17",
-            Statement: [
-                denyInsecureTransport(logArn),
-                {
-                    Sid: "AllowS3ServerAccessLogs",
-                    Effect: "Allow",
-                    Principal: { Service: "logging.s3.amazonaws.com" },
-                    Action: "s3:PutObject",
-                    Resource: `${logArn}/${s3LogPrefix}/*`,
-                    Condition: {
-                        ArnLike: { "aws:SourceArn": webArn },
-                        StringEquals: { "aws:SourceAccount": account },
-                    },
-                },
-                {
-                    Sid: "AWSLogDeliveryAclCheck",
-                    Effect: "Allow",
-                    Principal: { Service: "delivery.logs.amazonaws.com" },
-                    Action: "s3:GetBucketAcl",
-                    Resource: logArn,
-                    Condition: {
-                        StringEquals: { "aws:SourceAccount": account },
-                        ArnLike: { "aws:SourceArn": `arn:aws:logs:${logsRegion}:${account}:delivery-source:*` },
-                    },
-                },
-                {
-                    Sid: "AWSLogDeliveryWrite",
-                    Effect: "Allow",
-                    Principal: { Service: "delivery.logs.amazonaws.com" },
-                    Action: "s3:PutObject",
-                    Resource: `${logArn}/AWSLogs/${account}/*`,
-                    Condition: {
-                        StringEquals: { "s3:x-amz-acl": "bucket-owner-full-control", "aws:SourceAccount": account },
-                        ArnLike: { "aws:SourceArn": `arn:aws:logs:${logsRegion}:${account}:delivery-source:*` },
-                    },
-                },
-            ],
-        }),
-    ),
-});
-
-// CloudFront standard logging v2 → S3 (works with BucketOwnerEnforced, unlike legacy logging, which needs ACLs)
-const cloudFrontLogSource = new aws.cloudwatch.LogDeliverySource("zenobase-web-cloudfront", {
-    name: "zenobase-web-cloudfront",
-    logType: "ACCESS_LOGS",
-    resourceArn: distribution.arn,
-});
-
-const cloudFrontLogDestination = new aws.cloudwatch.LogDeliveryDestination("zenobase-web-cloudfront", {
-    name: "zenobase-web-cloudfront",
-    outputFormat: "w3c",
-    deliveryDestinationConfiguration: {
-        destinationResourceArn: logBucket.arn,
-    },
-});
-
-new aws.cloudwatch.LogDelivery("zenobase-web-cloudfront", {
-    deliverySourceName: cloudFrontLogSource.name,
-    deliveryDestinationArn: cloudFrontLogDestination.arn,
-}, { dependsOn: logBucketPolicy });
 
 // GitHub Actions IAM role
 const oidcProvider = aws.iam.getOpenIdConnectProvider({
@@ -438,7 +332,6 @@ new aws.iam.RolePolicy("GitHubActionsZenobaseWeb", {
 });
 
 export const bucketName = bucket.bucket;
-export const logBucketName = logBucket.bucket;
 export const distributionId = distribution.id;
 export const domainName = distribution.domainName;
 export const githubActionsRoleArn = githubActionsRole.arn;
