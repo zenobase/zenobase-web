@@ -22,7 +22,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.6",
+    "@biomejs/biome": "2.6.8",
     "@types/google.maps": "^3.67.0",
     "@types/papaparse": "^5.5.2",
     "@vitest/coverage-v8": "^5.1.1",
