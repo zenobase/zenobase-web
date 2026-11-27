@@ -505,17 +505,21 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
   },
   "concentration" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"g/L" | "mg/L" | "ug/L" | "ng/L" | "g/dL" | "mg/dL" | "ug/dL" | "ng/dL"&gt;</em>
+    "unit" : <em>&lt;"g/L" | "mg/L" | "ug/L" | "ng/L" | "pg/L" | "g/dL" | "mg/dL" | "ug/dL" | "ng/dL" | "pg/dL" | "g/mL" | "mg/mL" | "ug/mL" | "ng/mL" | "pg/mL"&gt;</em>
   },
   "count" : <em>&lt;Integer&gt;</em>,
   "distance" : {
     "@value" : <em>&lt;Number&gt;</em>,
     "unit" : <em>&lt;"mi" | "yd" | "ft" | "in" | "km" | "m" | "cm" | "mm"&gt;</em>
   },
+  "distance/volume" : {
+    "@value" : <em>&lt;Number&gt;</em>,
+    "unit" : <em>&lt;"mpg" | "kpl"&gt;</em>
+  },
   "duration" : <em>&lt;Milliseconds&gt;</em>,
   "energy" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"cal" | "kcal" | "L" | "kJ"&gt;</em>
+    "unit" : <em>&lt;"J" | "kJ" | "cal" | "kcal" | "kWh"&gt;</em>
   },
   "frequency" : {
     "@value" : <em>&lt;Number&gt;</em>,
@@ -543,7 +547,7 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
   "percentage" : <em>&lt;(0..100)&gt;</em>,
   "pressure" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"Pa" | "hPa" | "kPa" | "mbar" | "bar" | "mmHg" | "inHg" | "psi"&gt;</em>
+    "unit" : <em>&lt;"Pa" | "hPa" | "kPa" | "mbar" | "bar" | "mmHg" | "inHg" | "psi" | "cm_wg"&gt;</em>
   },
   "rating" : <em>&lt;(0..100)&gt;</em>,
   "resource" : {
@@ -570,11 +574,11 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
   },
   "volume" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"L" | "dL" | "cL" | "mL" | "gal" | "qt" | "pt" | "cup" | "fl_oz"&gt;</em>
+    "unit" : <em>&lt;"L" | "dL" | "cL" | "mL" | "gal" | "qt" | "pt" | "cups" | "fl_oz"&gt;</em>
   },
   "weight" : {
     "@value" : <em>&lt;Number&gt;</em>,
-    "unit" : <em>&lt;"lb" | "oz" | "kg" | "g" | "mg"&gt;</em>
+    "unit" : <em>&lt;"lb" | "oz" | "kg" | "g" | "mg" | "ug" | "ng" | "st"&gt;</em>
   }
 }</code></pre>
 
@@ -587,6 +591,14 @@ Authorization: Bearer <em>&lt;access_token&gt;</em>
 But if no <code>timestamp</code> is specified, a <code>timestamp</code>
 with the current time and a +00:00 time zone offset is added, and the
 <code>author</code> is always set to the current user.</p>
+
+<p>Each <code>@value</code> must be a number, and each <code>unit</code> one
+of the units listed for its field, or else the request fails with a
+<code>400 Bad Request</code>. An update may keep a unit the event already
+has, even if it is no longer listed. Events added by integrations may use
+the canonical form of a unit, e.g. <code>km/h</code> for <code>kmh</code>,
+<code>bpm</code> for <code>rpm</code>, or <code>hPa</code> for
+<code>mbar</code>; these are accepted as well.</p>
 
 <h5>Example:</h5>
 

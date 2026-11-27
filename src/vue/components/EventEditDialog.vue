@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, ref, watch } from 'vue';import type { ZenoEvent } from '../../types';
+import { computed, inject, nextTick, ref, watch } from 'vue';
+import type { ZenoEvent } from '../../types';
 import api from '../api';
 import { type AlertApi, alertKey } from '../composables/useAlert';
 import { GOOGLE_MAPS_MAP_ID, loadGoogleMaps } from '../composables/useGoogleMaps';
 import { formatDuration, getFieldIcon, locationText, textWithUnit } from '../utils/eventFormatter';
-import { getNumericFieldNames, getTextFieldNames, getUnitsForField } from '../utils/fieldRegistry';
+import { getNumericFieldNames, getStoredUnits, getTextFieldNames, getUnitOptions } from '../utils/fieldRegistry';
 import { formatAge } from '../utils/formatAge';
 
 let maps: typeof google.maps;
@@ -137,13 +138,25 @@ function getFieldCategory(field: string): FieldCategory {
 
 const fieldCategory = computed(() => (newField.value ? getFieldCategory(newField.value) : null));
 
+/** Pace units are offered without their `s/` prefix, which buildValue adds back. */
+function toUnitOption(unit: string): string | null {
+	if (fieldCategory.value !== 'pace') return unit;
+	return unit.startsWith('s/') ? unit.substring(2) : null;
+}
+
 const fieldUnits = computed(() => {
 	if (!newField.value) return [];
-	if (fieldCategory.value === 'pace') {
-		return getUnitsForField(newField.value).map((u) => u.substring(2));
-	}
-	return getUnitsForField(newField.value);
+	return getUnitOptions(newField.value, eventData.value[newField.value])
+		.map(toUnitOption)
+		.filter((u): u is string => u !== null);
 });
+
+/** v-model.number yields '' for a cleared input, which must not be sent as 0 or a string. */
+function toFiniteNumber(value: unknown): number | null {
+	return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+const paceSeconds = computed(() => (toFiniteNumber(newMinutes.value) ?? 0) * 60 + (toFiniteNumber(newSeconds.value) ?? 0));
 
 const isValid = computed(() => {
 	const cat = fieldCategory.value;
@@ -160,18 +173,18 @@ const isValid = computed(() => {
 		case 'timestamp':
 			return !!newDate.value && !!newTime.value && !!newTimezone.value && !Number.isNaN(new Date(`${newDate.value}T${newTime.value}${newTimezone.value}`).getTime());
 		case 'unit':
-			return Number.isFinite(Number(newNumValue.value)) && !!newUnit.value;
+			return toFiniteNumber(newNumValue.value) !== null && !!newUnit.value;
 		case 'duration':
 			return ((newDays.value * 24 + newHours.value) * 60 + newMinutes.value) * 60 + newSeconds.value > 0;
 		case 'pace':
-			return newMinutes.value + newSeconds.value > 0 && !!newUnit.value;
+			return paceSeconds.value > 0 && !!newUnit.value;
 		case 'count':
 			return newNumValue.value !== null && /^\d+$/.test(String(newNumValue.value));
 		case 'rating':
 			return newStars.value > 0;
 		case 'percent':
 		case 'currency':
-			return Number.isFinite(Number(newNumValue.value));
+			return toFiniteNumber(newNumValue.value) !== null;
 		default:
 			return false;
 	}
@@ -280,7 +293,7 @@ function buildValue(): unknown {
 		case 'duration':
 			return (((newDays.value * 24 + newHours.value) * 60 + newMinutes.value) * 60 + newSeconds.value) * 1000;
 		case 'pace':
-			return { '@value': newMinutes.value * 60 + newSeconds.value, unit: 's/' + newUnit.value };
+			return { '@value': paceSeconds.value, unit: 's/' + newUnit.value };
 		case 'count':
 		case 'percent':
 		case 'currency':
@@ -466,6 +479,10 @@ function geolocate() {
 
 watch(newField, (field) => {
 	resetInputs();
+	const storedUnit = getStoredUnits(eventData.value[field]).map(toUnitOption).find((u) => u !== null);
+	if (storedUnit) {
+		newUnit.value = storedUnit;
+	}
 	if (field === 'tag' && tags.value.length === 0) {
 		api.get<string[]>(`/buckets/${props.bucketId}/tags/`)
 			.then((response) => {
