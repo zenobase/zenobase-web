@@ -10,13 +10,16 @@ export interface DateParser {
 	parseTz(value: string, format: string, timezone: string): { format(fmt: string): string };
 }
 
-/** Skips readings without a numeric value, which the backend would reject. */
-function addGlucose(event: ZenoEvent, value: string | undefined, type: string): boolean {
-	const n = value?.trim() ? Number(value) : Number.NaN;
-	if (!Number.isFinite(n)) return false;
-	event['tag'] = ['Glucose', type];
-	event['concentration'] = { '@value': n, unit: 'mg/dL' };
-	return true;
+/** Record type → glucose column and tag. */
+const GLUCOSE_TYPES = new Map<string, [number, string]>([
+	['0', [4, 'Historic']],
+	['1', [5, 'Scan']],
+	['2', [14, 'Strip']],
+]);
+
+function parseFiniteNumber(s: string | undefined): number | undefined {
+	const n = s?.trim() ? Number(s) : Number.NaN;
+	return Number.isFinite(n) ? n : undefined;
 }
 
 export function parseLibreView(s: string, settings: LibreViewSettings, dateParser: DateParser): ZenoEvent[] {
@@ -43,22 +46,18 @@ export function parseLibreView(s: string, settings: LibreViewSettings, dateParse
 			tag: [settings.tag],
 			source: { title: row[0], url: 'https://www.libreview.com/' },
 		};
-		switch (row[3]) {
-			case '0':
-				if (!addGlucose(event, row[4], 'Historic')) continue;
-				break;
-			case '1':
-				if (!addGlucose(event, row[5], 'Scan')) continue;
-				break;
-			case '2':
-				if (!addGlucose(event, row[14], 'Strip')) continue;
-				break;
-			case '6':
-				event['tag'] = ['Note'];
-				event['note'] = row[13];
-				break;
-			default:
-				continue;
+		const glucose = GLUCOSE_TYPES.get(row[3]);
+		if (glucose) {
+			const value = parseFiniteNumber(row[glucose[0]]);
+			// the backend rejects non-numeric values
+			if (value === undefined) continue;
+			event['tag'] = ['Glucose', glucose[1]];
+			event['concentration'] = { '@value': value, unit: 'mg/dL' };
+		} else if (row[3] === '6') {
+			event['tag'] = ['Note'];
+			event['note'] = row[13];
+		} else {
+			continue;
 		}
 		events.push(event);
 	}

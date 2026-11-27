@@ -138,25 +138,16 @@ function getFieldCategory(field: string): FieldCategory {
 
 const fieldCategory = computed(() => (newField.value ? getFieldCategory(newField.value) : null));
 
-/** Pace units are offered without their `s/` prefix, which buildValue adds back. */
-function toUnitOption(unit: string): string | null {
-	if (fieldCategory.value !== 'pace') return unit;
-	return unit.startsWith('s/') ? unit.substring(2) : null;
-}
-
-const fieldUnits = computed(() => {
-	if (!newField.value) return [];
-	return getUnitOptions(newField.value, eventData.value[newField.value])
-		.map(toUnitOption)
-		.filter((u): u is string => u !== null);
-});
+const fieldUnits = computed(() => (newField.value ? getUnitOptions(newField.value, eventData.value[newField.value]) : []));
 
 /** v-model.number yields '' for a cleared input, which must not be sent as 0 or a string. */
 function toFiniteNumber(value: unknown): number | null {
 	return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+const numValue = computed(() => toFiniteNumber(newNumValue.value));
 const paceSeconds = computed(() => (toFiniteNumber(newMinutes.value) ?? 0) * 60 + (toFiniteNumber(newSeconds.value) ?? 0));
+const durationSeconds = computed(() => ((toFiniteNumber(newDays.value) ?? 0) * 24 + (toFiniteNumber(newHours.value) ?? 0)) * 3600 + paceSeconds.value);
 
 const isValid = computed(() => {
 	const cat = fieldCategory.value;
@@ -173,18 +164,18 @@ const isValid = computed(() => {
 		case 'timestamp':
 			return !!newDate.value && !!newTime.value && !!newTimezone.value && !Number.isNaN(new Date(`${newDate.value}T${newTime.value}${newTimezone.value}`).getTime());
 		case 'unit':
-			return toFiniteNumber(newNumValue.value) !== null && !!newUnit.value;
+			return numValue.value !== null && !!newUnit.value;
 		case 'duration':
-			return ((newDays.value * 24 + newHours.value) * 60 + newMinutes.value) * 60 + newSeconds.value > 0;
+			return durationSeconds.value > 0;
 		case 'pace':
 			return paceSeconds.value > 0 && !!newUnit.value;
 		case 'count':
-			return newNumValue.value !== null && /^\d+$/.test(String(newNumValue.value));
+			return numValue.value !== null && Number.isInteger(numValue.value) && numValue.value >= 0;
 		case 'rating':
 			return newStars.value > 0;
 		case 'percent':
 		case 'currency':
-			return toFiniteNumber(newNumValue.value) !== null;
+			return numValue.value !== null;
 		default:
 			return false;
 	}
@@ -289,15 +280,15 @@ function buildValue(): unknown {
 		case 'timestamp':
 			return `${newDate.value}T${newTime.value}:00.000${newTimezone.value}`;
 		case 'unit':
-			return { '@value': Number(newNumValue.value), unit: newUnit.value };
+			return { '@value': numValue.value, unit: newUnit.value };
 		case 'duration':
-			return (((newDays.value * 24 + newHours.value) * 60 + newMinutes.value) * 60 + newSeconds.value) * 1000;
+			return durationSeconds.value * 1000;
 		case 'pace':
-			return { '@value': paceSeconds.value, unit: 's/' + newUnit.value };
+			return { '@value': paceSeconds.value, unit: newUnit.value };
 		case 'count':
 		case 'percent':
 		case 'currency':
-			return Number(newNumValue.value);
+			return numValue.value;
 		case 'rating':
 			return newStars.value * 20;
 		default:
@@ -479,10 +470,7 @@ function geolocate() {
 
 watch(newField, (field) => {
 	resetInputs();
-	const storedUnit = getStoredUnits(eventData.value[field]).map(toUnitOption).find((u) => u !== null);
-	if (storedUnit) {
-		newUnit.value = storedUnit;
-	}
+	newUnit.value = getStoredUnits(eventData.value[field])[0] ?? '';
 	if (field === 'tag' && tags.value.length === 0) {
 		api.get<string[]>(`/buckets/${props.bucketId}/tags/`)
 			.then((response) => {
@@ -604,7 +592,7 @@ watch(
 							<v-text-field class="right-input" type="number" min="0" max="59" v-model.number="newMinutes" suffix="'" style="max-width: 70px" />
 							<v-text-field class="right-input" type="number" min="0" max="59" v-model.number="newSeconds" suffix="&quot;" style="max-width: 70px" />
 							<span>/</span>
-							<v-select :items="fieldUnits" v-model="newUnit" style="max-width: 120px" />
+							<v-select :items="fieldUnits" :item-title="(u: string) => u.replace(/^s\//, '')" v-model="newUnit" style="max-width: 120px" />
 						</div>
 					</template>
 

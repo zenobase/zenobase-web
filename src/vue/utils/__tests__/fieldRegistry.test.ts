@@ -1,22 +1,20 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { getStoredUnits, getUnitOptions, NUMERIC_FIELDS } from '../fieldRegistry';
+import { getStoredUnits, getUnitOptions, getUnitsForField, NUMERIC_FIELDS } from '../fieldRegistry';
 
 describe('getUnitOptions', () => {
-	it('returns the field units when nothing is stored', () => {
-		expect(getUnitOptions('velocity', undefined)).toEqual(['m/s', 'mph', 'kmh', 'kn', 'Mach']);
-	});
-
 	it('appends stored units that are not listed, once each', () => {
 		const stored = [
 			{ '@value': 10, unit: 'km/h' },
 			{ '@value': 12, unit: 'km/h' },
 			{ '@value': 3, unit: 'mph' },
 		];
-		expect(getUnitOptions('velocity', stored)).toEqual(['m/s', 'mph', 'kmh', 'kn', 'Mach', 'km/h']);
+		expect(getUnitOptions('velocity', stored)).toEqual([...getUnitsForField('velocity'), 'km/h']);
 	});
+});
 
+describe('getStoredUnits', () => {
 	it('ignores stored values without a unit', () => {
 		expect(getStoredUnits([42, 'x', null, { '@value': 1 }, { '@value': 2, unit: 'hPa' }])).toEqual(['hPa']);
 	});

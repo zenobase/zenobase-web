@@ -1,3 +1,5 @@
+import type { UnitValue } from '../../types';
+
 export interface FieldDefinition {
 	name: string;
 	type: 'text' | 'numeric' | 'object';
@@ -67,20 +69,17 @@ export function getUnitsForField(fieldName: string): string[] {
 	return field?.units ?? [];
 }
 
-/** Distinct units of a stored field value (one measure or an array of them). */
+/** Units of a stored field value (one measure or an array of them). */
 export function getStoredUnits(value: unknown): string[] {
-	const values = Array.isArray(value) ? value : [value];
-	const units = values.map((v) => (typeof v === 'object' && v !== null ? (v as { unit?: unknown }).unit : undefined));
-	return [...new Set(units.filter((u): u is string => typeof u === 'string' && u !== ''))];
+	return (Array.isArray(value) ? value : [value]).flatMap((v) => {
+		const unit = (v as UnitValue | null)?.unit;
+		return typeof unit === 'string' && unit ? [unit] : [];
+	});
 }
 
-/**
- * The field's units plus any others the stored value already uses (e.g. canonical `km/h` from integrations, or a
- * legacy unit), which the backend keeps accepting for that event.
- */
+/** Also offers stored units (e.g. canonical `km/h` from integrations, or legacy ones): the backend keeps accepting them for that event. */
 export function getUnitOptions(fieldName: string, storedValue: unknown): string[] {
-	const units = getUnitsForField(fieldName);
-	return [...units, ...getStoredUnits(storedValue).filter((u) => !units.includes(u))];
+	return [...new Set([...getUnitsForField(fieldName), ...getStoredUnits(storedValue)])];
 }
 
 export function getNumericFieldNames(): string[] {

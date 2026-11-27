@@ -55,22 +55,6 @@ function dialogText(_wrapper: VueWrapper<ComponentPublicInstance>): string {
 describe('EditExternalClientDialog', () => {
 	beforeEach(() => {
 		document.body.replaceChildren();
-		// jsdom doesn't ship visualViewport; Vuetify's VOverlay locationStrategies expects it.
-		const w = window as Window & { visualViewport?: unknown };
-		if (!w.visualViewport) {
-			Object.defineProperty(window, 'visualViewport', {
-				configurable: true,
-				value: {
-					width: window.innerWidth,
-					height: window.innerHeight,
-					offsetLeft: 0,
-					offsetTop: 0,
-					scale: 1,
-					addEventListener: () => {},
-					removeEventListener: () => {},
-				},
-			});
-		}
 	});
 	afterEach(() => {
 		vi.restoreAllMocks();

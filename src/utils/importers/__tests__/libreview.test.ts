@@ -20,7 +20,11 @@ describe('parseLibreView', () => {
 			{ '@value': 102, unit: 'mg/dL' },
 			{ '@value': 88, unit: 'mg/dL' },
 		]);
-		expect(events[1]['tag']).toEqual(['Glucose', 'Scan']);
+		expect(events.map((e) => e['tag'])).toEqual([
+			['Glucose', 'Historic'],
+			['Glucose', 'Scan'],
+			['Glucose', 'Strip'],
+		]);
 	});
 
 	it('skips readings without a numeric value', () => {
