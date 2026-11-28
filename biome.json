@@ -9,7 +9,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["src/**/*.{js,ts,vue}", "vite.config.js"]
+		"includes": ["src/**/*.{js,ts,vue}", "e2e/**/*.{ts,json}", "vite.config.js", "playwright.config.ts"]
 	},
 	"formatter": {
 		"indentStyle": "tab",

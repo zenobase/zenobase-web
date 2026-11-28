@@ -18,12 +18,15 @@
     "test": "TZ=America/Los_Angeles vitest run",
     "test:coverage": "TZ=America/Los_Angeles vitest run --coverage",
     "test:watch": "TZ=America/Los_Angeles vitest",
-    "typecheck": "vue-tsc --noEmit",
+    "test:e2e": "playwright test",
+    "typecheck": "vue-tsc --noEmit && tsc --noEmit -p e2e",
     "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
+    "@playwright/test": "^1.65.1",
     "@types/google.maps": "^3.67.0",
+    "@types/node": "^26.6.11",
     "@types/papaparse": "^5.5.2",
     "@vitest/coverage-v8": "^5.1.1",
     "@vue/test-utils": "^2.6.0",

@@ -21,6 +21,7 @@ export default defineConfig({
 		// reuses one jsdom per worker while keeping per-file isolation
 		pool: 'vmThreads',
 		setupFiles: ['./src/vue/__tests__/setup.ts'],
+		exclude: ['**/node_modules/**', '**/.git/**', 'e2e/**'],
 		server: {
 			deps: {
 				inline: ['vuetify'],
