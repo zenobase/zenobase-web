@@ -54,6 +54,8 @@ function subtractDate(unit: string, n: number): Date {
 			d.setFullYear(d.getFullYear() - n);
 			break;
 		case 'months':
+			// from the 1st, so that e.g. May 31 doesn't overflow to March 3 ("April 31")
+			d.setDate(1);
 			d.setMonth(d.getMonth() - n);
 			break;
 		case 'weeks':
