@@ -59,6 +59,53 @@ describe('PolarWidget', () => {
 		expect(series[1].name).toContain('-B');
 	});
 
+	describe('average interval highlight', () => {
+		type Series = { type: string; renderItem?: (params: unknown) => { shape: { startAngle: number; endAngle: number } } };
+		const coordSys = { cx: 0, cy: 0, r: 100, r0: 0 };
+		const width = (2 * Math.PI) / 24;
+		// Symmetric around 0h, so the average lands on index 0 and the sector straddles 12 o'clock.
+		const peakAtMidnight = mockData.map((d, i) => ({ ...d, count: i === 0 ? 10 : i === 1 || i === 23 ? 5 : 0 }));
+
+		function highlights(options: unknown): Series[] {
+			return ((options as Record<string, unknown>).series as Series[]).filter((s) => s.type === 'custom');
+		}
+
+		function sectorAngles(series: Series) {
+			const { shape } = series.renderItem!({ coordSys });
+			return [shape.startAngle, shape.endAngle];
+		}
+
+		it('is absent unless enabled', async () => {
+			const { dashboard, capturedOptions } = mountWithStub();
+			await feedData(dashboard, 'w1', peakAtMidnight);
+			await flushPromises();
+
+			expect(highlights(capturedOptions.value)).toHaveLength(0);
+		});
+
+		it('wraps around index 0', async () => {
+			const { dashboard, capturedOptions } = mountWithStub({ ...settings, mark: 'avg' });
+			await feedData(dashboard, 'w1', peakAtMidnight);
+			await flushPromises();
+
+			const [series] = highlights(capturedOptions.value);
+			const [start, end] = sectorAngles(series);
+			expect(start).toBeCloseTo(-Math.PI / 2 - width / 2);
+			expect(end).toBeCloseTo(-Math.PI / 2 + width / 2);
+		});
+
+		it('adds a highlight for the B series', async () => {
+			const { dashboard, capturedOptions } = mountWithStub({ ...settings, mark: 'avg' });
+			const peakAt6 = mockData.map((d, i) => ({ ...d, count: i === 6 ? 10 : 0 }));
+			await feedData(dashboard, 'w1', peakAtMidnight, peakAt6);
+			await flushPromises();
+
+			const series = highlights(capturedOptions.value);
+			expect(series).toHaveLength(2);
+			expect(sectorAngles(series[1])[0]).toBeCloseTo(-width / 2);
+		});
+	});
+
 	it('shows "None" for empty data', async () => {
 		const { wrapper, dashboard } = mountWithStub();
 		await feedData(dashboard, 'w1', []);
