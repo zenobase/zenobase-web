@@ -1,6 +1,6 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import { vi } from 'vitest';
-import { type Component, type ComponentPublicInstance, defineComponent, ref, watch } from 'vue';
+import { type Component, type ComponentPublicInstance, defineComponent, onMounted, ref, watch } from 'vue';
 import { createVuetify } from 'vuetify';
 import { type DashboardApi, dashboardKey } from '../../composables/useDashboard';
 
@@ -60,17 +60,28 @@ export function mountWidget(component: Component, settings: Record<string, unkno
 	return { wrapper, dashboard };
 }
 
+/** Stubs EChartsChart, capturing its options and emitting `ready` with a fake instance whose event handlers tests can call. */
 export function createEChartsStub(): {
 	Stub: ReturnType<typeof defineComponent>;
 	capturedOptions: { value: Record<string, unknown> | null };
 	allCapturedOptions: Array<Record<string, unknown>>;
+	handlers: Record<string, (params?: unknown) => void>;
+	instance: { on: (event: string, fn: (params?: unknown) => void) => void; dispatchAction: ReturnType<typeof vi.fn> };
 } {
 	const capturedOptions = { value: null as Record<string, unknown> | null };
 	const allCapturedOptions: Array<Record<string, unknown>> = [];
+	const handlers: Record<string, (params?: unknown) => void> = {};
+	const instance = {
+		on: (event: string, fn: (params?: unknown) => void) => {
+			handlers[event] = fn;
+		},
+		dispatchAction: vi.fn(),
+	};
 	const Stub = defineComponent({
 		props: ['options', 'height'],
 		emits: ['ready', 'snapshot'],
-		setup(props) {
+		setup(props, { emit }) {
+			onMounted(() => emit('ready', instance));
 			watch(
 				() => props.options,
 				(v: Record<string, unknown> | null) => {
@@ -84,5 +95,5 @@ export function createEChartsStub(): {
 		},
 		template: '<div class="echarts-stub" />',
 	});
-	return { Stub, capturedOptions, allCapturedOptions };
+	return { Stub, capturedOptions, allCapturedOptions, handlers, instance };
 }

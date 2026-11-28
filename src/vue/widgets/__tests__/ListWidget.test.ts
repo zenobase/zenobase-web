@@ -1,5 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
+import type { Constraint } from '../../../utils/constraint';
 import ListWidget from '../ListWidget.vue';
 import { mountWidget } from './helpers';
 
@@ -113,5 +114,59 @@ describe('ListWidget', () => {
 		await vi.dynamicImportSettled();
 
 		expect(wrapper.html()).toMatchSnapshot();
+	});
+
+	describe('search', () => {
+		interface ListVM {
+			filterValue: string;
+			FILTER_FIELDS: Array<{ id: string }>;
+			selectField(field: { id: string }): void;
+			applyFilter(): void;
+		}
+
+		async function search(fieldId: string, value: string) {
+			const { wrapper, dashboard } = mountWidget(ListWidget, settings);
+			await feedListData(dashboard, [], 0);
+			const vm = wrapper.vm as unknown as ListVM;
+			vm.selectField(vm.FILTER_FIELDS.find((f) => f.id === fieldId)!);
+			vm.filterValue = value;
+			return { vm, dashboard };
+		}
+
+		it('splits text fields into words and quoted phrases', async () => {
+			const { vm, dashboard } = await search('note', 'trail "long run"  hills');
+
+			vm.applyFilter();
+
+			const [[constraints]] = (dashboard.addConstraints as ReturnType<typeof vi.fn>).mock.calls as [[Constraint[]]];
+			expect(constraints.map((c) => c.toString())).toEqual(['note:trail', 'note:"long run"', 'note:hills']);
+			expect(vm.filterValue).toBe('');
+		});
+
+		it('keeps a tag as one value', async () => {
+			const { vm, dashboard } = await search('tag', 'long run');
+
+			vm.applyFilter();
+
+			expect((dashboard.addConstraints as ReturnType<typeof vi.fn>).mock.calls[0][0].map(String)).toEqual(['tag:long run']);
+		});
+
+		it('searches the list as you type, after a pause', async () => {
+			vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+			try {
+				const { dashboard } = await search('tag', 'ru');
+				const searchMock = dashboard.search as ReturnType<typeof vi.fn>;
+				searchMock.mockClear();
+				await flushPromises();
+				vi.advanceTimersByTime(299);
+				expect(searchMock).not.toHaveBeenCalled();
+
+				vi.advanceTimersByTime(1);
+
+				expect(searchMock).toHaveBeenCalledWith([expect.objectContaining({ filter: 'tag:ru', offset: 0 })]);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
 	});
 });

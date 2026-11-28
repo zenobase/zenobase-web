@@ -1,6 +1,5 @@
 import { flushPromises } from '@vue/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { defineComponent, onMounted } from 'vue';
 import { Constraint } from '../../../utils/constraint';
 import TimelineWidget from '../TimelineWidget.vue';
 import { createEChartsStub, feedData, mountWidget } from './helpers';
@@ -15,11 +14,11 @@ describe('TimelineWidget', () => {
 	];
 
 	function mountWithStub(settingsOverride?: Record<string, unknown>) {
-		const { Stub, capturedOptions, allCapturedOptions } = createEChartsStub();
+		const { Stub, ...stub } = createEChartsStub();
 		const result = mountWidget(TimelineWidget, settingsOverride ?? settings, {
 			stubs: { EChartsChart: Stub },
 		});
-		return { ...result, capturedOptions, allCapturedOptions };
+		return { ...result, ...stub };
 	}
 
 	it('shows loading state initially', () => {
@@ -162,23 +161,14 @@ describe('TimelineWidget', () => {
 	});
 
 	it('filters by the clicked and brushed periods', async () => {
-		const handlers: Record<string, (params?: unknown) => void> = {};
-		const instance = { on: (event: string, fn: (params?: unknown) => void) => (handlers[event] = fn), dispatchAction: vi.fn() };
-		const Stub = defineComponent({
-			emits: ['ready'],
-			setup(_, { emit }) {
-				onMounted(() => emit('ready', instance));
-			},
-			template: '<div />',
-		});
-		const { dashboard } = mountWidget(TimelineWidget, settings, { stubs: { EChartsChart: Stub } });
+		const { dashboard, handlers, instance } = mountWithStub();
 		await feedData(dashboard, 'w1', mockData);
 
-		handlers['click']?.({ value: [mockData[1].time, 8] });
-		handlers['brushSelected']?.({ batch: [{ areas: [{ coordRange: [mockData[0].time, mockData[1].time + 1] }] }] });
-		handlers['brushEnd']?.();
-		handlers['brushSelected']?.({ batch: [] });
-		handlers['brushEnd']?.();
+		handlers['click']!({ value: [mockData[1].time, 8] });
+		handlers['brushSelected']!({ batch: [{ areas: [{ coordRange: [mockData[0].time, mockData[1].time + 1] }] }] });
+		handlers['brushEnd']!();
+		handlers['brushSelected']!({ batch: [] });
+		handlers['brushEnd']!();
 
 		expect((dashboard.addConstraint as ReturnType<typeof vi.fn>).mock.calls).toEqual([
 			['timestamp', '2024-02', true],
