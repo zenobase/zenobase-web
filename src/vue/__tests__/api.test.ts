@@ -42,7 +42,6 @@ afterEach(() => {
 	fetchMock.mockReset();
 	vi.unstubAllGlobals();
 	vi.unstubAllEnvs();
-	vi.restoreAllMocks();
 });
 
 describe('request', () => {

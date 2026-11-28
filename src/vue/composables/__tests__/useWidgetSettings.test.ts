@@ -48,7 +48,11 @@ describe('useWidgetSettings', () => {
 	});
 
 	it('splits the order into a field and a direction', () => {
-		const { draft, orderField, isAsc } = setup({ order: '-count' });
+		const { draft, orderField, isAsc } = setup();
+		expect(orderField.value).toBe('');
+		expect(isAsc.value).toBe(true);
+
+		draft.value.order = '-count';
 		expect(orderField.value).toBe('count');
 		expect(isAsc.value).toBe(false);
 		isAsc.value = true;
@@ -58,11 +62,5 @@ describe('useWidgetSettings', () => {
 		isAsc.value = false;
 		orderField.value = 'max';
 		expect(draft.value.order).toBe('-max');
-	});
-
-	it('defaults to ascending with no order', () => {
-		const { orderField, isAsc } = setup();
-		expect(orderField.value).toBe('');
-		expect(isAsc.value).toBe(true);
 	});
 });

@@ -18,7 +18,6 @@ function open(initialType?: string) {
 
 describe('CreateTaskDialog', () => {
 	beforeEach(() => {
-		vi.restoreAllMocks();
 		vi.useFakeTimers({ now: new Date('2026-05-15T12:00:00Z'), toFake: ['Date'] });
 	});
 
@@ -50,32 +49,19 @@ describe('CreateTaskDialog', () => {
 		expect(vm.settings).toEqual({ tag: 'Book', shelf: 'read', marker: '2007-01-01' });
 	});
 
-	it('creates the task, dropping blank settings but keeping false ones', async () => {
+	it.each([
+		['rescuetime-productivity', { kind: 'overview' }, { kind: 'overview', timezone: 'America/Los_Angeles', marker: '2026-02-01' }],
+		['netatmo', { modules: false }, { modules: false, hourly: true, marker: '2026-02-01' }],
+		['trakt', { marker: '' }, undefined],
+	])('creates a %s task, dropping blank settings but keeping false ones', async (type, edits, settings) => {
 		const post = vi.spyOn(api, 'post').mockResolvedValue(apiResponse({ '@id': 't1' }));
-		const { wrapper, vm } = await open('rescuetime-productivity');
+		const { wrapper, vm } = await open(type);
 
-		vm.settings['kind'] = 'overview';
-		await vm.create();
-		vm.selectedType = vm.types.find((t) => t.id === 'netatmo')!;
-		await nextTick();
-		vm.settings['modules'] = false;
+		Object.assign(vm.settings, edits);
 		await vm.create();
 
-		expect(post.mock.calls).toEqual([
-			['/tasks/', { type: 'rescuetime-productivity', bucket: 'b1', settings: { kind: 'overview', timezone: 'America/Los_Angeles', marker: '2026-02-01' } }],
-			['/tasks/', { type: 'netatmo', bucket: 'b1', settings: { modules: false, hourly: true, marker: '2026-02-01' } }],
-		]);
-		expect(wrapper.emitted('created')).toEqual([['t1'], ['t1']]);
-	});
-
-	it('omits empty settings', async () => {
-		const post = vi.spyOn(api, 'post').mockResolvedValue(apiResponse({ '@id': 't1' }));
-		const { vm } = await open('trakt');
-
-		vm.settings['marker'] = '';
-		await vm.create();
-
-		expect(post).toHaveBeenCalledWith('/tasks/', { type: 'trakt', bucket: 'b1', settings: undefined });
+		expect(post).toHaveBeenCalledWith('/tasks/', { type, bucket: 'b1', settings });
+		expect(wrapper.emitted('created')).toEqual([['t1']]);
 	});
 
 	it('stays open when the task cannot be created', async () => {

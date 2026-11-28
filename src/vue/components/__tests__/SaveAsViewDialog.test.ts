@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Bucket } from '../../../types';
 import { Constraint } from '../../../utils/constraint';
 import { apiResponse, mountDialog } from '../../__tests__/mount';
@@ -18,10 +18,6 @@ function open(constraints: string[] = []) {
 }
 
 describe('SaveAsViewDialog', () => {
-	beforeEach(() => {
-		vi.restoreAllMocks();
-	});
-
 	it('creates a view aliasing the bucket with the current constraints', async () => {
 		const post = vi.spyOn(api, 'post').mockResolvedValue(apiResponse({}, { Location: '/buckets/v1' }));
 		const { wrapper, vm, router } = await open(['tag:run', 'distance:>5']);

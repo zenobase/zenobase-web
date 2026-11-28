@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ZenoEvent } from '../../../types';
 import { apiResponse, mountDialog } from '../../__tests__/mount';
 import api, { ApiError } from '../../api';
@@ -30,10 +30,6 @@ function utf16le(s: string) {
 }
 
 describe('ImportDialog', () => {
-	beforeEach(() => {
-		vi.restoreAllMocks();
-	});
-
 	it.each([
 		['a JSON array', '[{"tag":"run"}]'],
 		['an export object', '{"events":[{"tag":"run"}]}'],

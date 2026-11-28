@@ -1,14 +1,12 @@
-import { flushPromises } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import type { ZenoEvent } from '../../../types';
-import { apiResponse, mountDialog as mount } from '../../__tests__/mount';
+import { apiResponse, mountDialog } from '../../__tests__/mount';
 import api, { ApiError } from '../../api';
 import EventEditDialog from '../EventEditDialog.vue';
 
 interface DialogState {
 	newField: string;
-	newValue: string;
 	newUnit: string;
 	newNumValue: unknown;
 	newDays: unknown;
@@ -36,11 +34,7 @@ interface DialogState {
 
 async function open(event: ZenoEvent | null) {
 	vi.spyOn(api, 'get').mockResolvedValue(apiResponse({}));
-	return mount<DialogState>(EventEditDialog, { bucketId: 'b1', event });
-}
-
-async function mountDialog(event: ZenoEvent | null): Promise<DialogState> {
-	return (await open(event)).vm;
+	return mountDialog<DialogState>(EventEditDialog, { bucketId: 'b1', event });
 }
 
 async function selectField(vm: DialogState, field: string) {
@@ -49,15 +43,11 @@ async function selectField(vm: DialogState, field: string) {
 }
 
 describe('EventEditDialog', () => {
-	beforeEach(() => {
-		vi.restoreAllMocks();
-	});
-
 	it.each([
 		['velocity', 'km/h'],
 		['pace', 's/mi'],
 	])('offers and preselects the stored %s unit %s', async (field, unit) => {
-		const vm = await mountDialog({ '@id': 'e1', [field]: { '@value': 10, unit } });
+		const { vm } = await open({ '@id': 'e1', [field]: { '@value': 10, unit } });
 		await selectField(vm, field);
 		expect(vm.fieldUnits).toContain(unit);
 		expect(vm.newUnit).toBe(unit);
@@ -68,7 +58,7 @@ describe('EventEditDialog', () => {
 		['humidity', '', 70.5],
 		['currency', '', 70.5],
 	])('rejects an empty %s value instead of sending 0', async (field, unit, expected) => {
-		const vm = await mountDialog(null);
+		const { vm } = await open(null);
 		await selectField(vm, field);
 		vm.newUnit = unit;
 		vm.newNumValue = '';
@@ -80,7 +70,7 @@ describe('EventEditDialog', () => {
 	});
 
 	it('sends a numeric pace when one input is cleared', async () => {
-		const vm = await mountDialog(null);
+		const { vm } = await open(null);
 		await selectField(vm, 'pace');
 		vm.newUnit = 's/km';
 		vm.newMinutes = 5;
@@ -96,7 +86,7 @@ describe('EventEditDialog', () => {
 		['location', (vm: DialogState) => Object.assign(vm, { newLat: 47.6, newLon: -122.3 }), { lat: 47.6, lon: -122.3 }],
 		['resource', (vm: DialogState) => Object.assign(vm, { newUrl: 'https://example.com', newTitle: 'Example' }), { url: 'https://example.com', title: 'Example' }],
 	])('builds a %s value', async (field, fill, expected) => {
-		const vm = await mountDialog(null);
+		const { vm } = await open(null);
 		await selectField(vm, field);
 		fill(vm);
 		expect(vm.isValid).toBe(true);
@@ -108,21 +98,21 @@ describe('EventEditDialog', () => {
 		[91, 0],
 		[0, 181],
 	])('rejects the location %d,%d', async (lat, lon) => {
-		const vm = await mountDialog(null);
+		const { vm } = await open(null);
 		await selectField(vm, 'location');
 		Object.assign(vm, { newLat: lat, newLon: lon });
 		expect(vm.isValid).toBe(false);
 	});
 
 	it('defaults a new timestamp to now in the local timezone', async () => {
-		const vm = await mountDialog(null);
+		const { vm } = await open(null);
 		await selectField(vm, 'timestamp');
 		expect(vm.newDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 		expect(vm.newTimezone).toMatch(/^-0[78]:00$/);
 	});
 
 	it('collapses a field back to a single value as values are removed', async () => {
-		const vm = await mountDialog({ '@id': 'e1', tag: ['a', 'b', 'c'], count: 3 });
+		const { vm } = await open({ '@id': 'e1', tag: ['a', 'b', 'c'], count: 3 });
 		expect(vm.entries.map((e) => e.value)).toEqual(['a', 'b', 'c', '3']);
 
 		vm.removeEntry(1);
@@ -142,7 +132,7 @@ describe('EventEditDialog', () => {
 	});
 
 	it('fills in the title of a resource without overwriting one', async () => {
-		const vm = await mountDialog(null);
+		const { vm } = await open(null);
 		await selectField(vm, 'resource');
 		const get = vi
 			.spyOn(api, 'get')
@@ -189,7 +179,6 @@ describe('EventEditDialog', () => {
 		const { wrapper, vm } = await open({ '@id': 'e1', tag: 'run' });
 
 		await vm.save();
-		await flushPromises();
 
 		expect(vm.message).toBe(message);
 		expect(wrapper.emitted('saved')).toBeUndefined();

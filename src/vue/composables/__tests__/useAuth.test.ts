@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { apiResponse } from '../../__tests__/mount';
 import api from '../../api';
 import type { AuthClient } from '../../authClient';
 import { useAuth } from '../useAuth';
@@ -23,7 +24,6 @@ function setup() {
 
 describe('useAuth', () => {
 	beforeEach(() => {
-		vi.restoreAllMocks();
 		vi.spyOn(console, 'warn').mockImplementation(() => {});
 		for (const fn of Object.values(client)) fn.mockReset();
 	});
@@ -44,7 +44,7 @@ describe('useAuth', () => {
 	it('loads the user after the redirect callback', async () => {
 		const { auth } = setup();
 		client.isAuthenticated.mockResolvedValue(true);
-		const get = vi.spyOn(api, 'get').mockResolvedValue({ data: { '@id': 'u1' } } as never);
+		const get = vi.spyOn(api, 'get').mockResolvedValue(apiResponse({ '@id': 'u1' }));
 
 		await auth.handleCallback();
 

@@ -1,12 +1,11 @@
 import { flushPromises } from '@vue/test-utils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiResponse, mountDialog } from '../../__tests__/mount';
 import api, { ApiError } from '../../api';
 import TaskListDialog from '../TaskListDialog.vue';
 
 interface TaskListVM {
 	tasks: Array<{ '@id': string }> | null;
-	offset: number;
 	message: string;
 	hasPrev(): boolean;
 	hasNext(): boolean;
@@ -28,10 +27,6 @@ async function open() {
 }
 
 describe('TaskListDialog', () => {
-	beforeEach(() => {
-		vi.restoreAllMocks();
-	});
-
 	afterEach(() => {
 		vi.useRealTimers();
 		localStorage.clear();

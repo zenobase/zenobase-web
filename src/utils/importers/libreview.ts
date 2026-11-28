@@ -1,5 +1,5 @@
-import Papa from 'papaparse';
 import type { ZenoEvent } from '../../types';
+import { parseCSV } from './csv';
 
 export interface LibreViewSettings {
 	tag: string;
@@ -32,14 +32,8 @@ export function parseLibreView(s: string, settings: LibreViewSettings, dateParse
 	}
 	const cleaned = lines.join('\n');
 
-	const result = Papa.parse<string[]>(cleaned, { header: false, skipEmptyLines: true });
-	if (result.errors.length) {
-		const err = result.errors[0];
-		throw new Error(`${err.message} in row ${err.row}`);
-	}
-
 	const events: ZenoEvent[] = [];
-	for (const row of result.data) {
+	for (const row of parseCSV<string[]>(cleaned, { header: false }).data) {
 		const t = dateParser.parseTz(row[2], 'MM-DD-YYYY LT', settings.timezone);
 		const event: ZenoEvent = {
 			timestamp: t.format('YYYY-MM-DDTHH:mm:00.000Z'),

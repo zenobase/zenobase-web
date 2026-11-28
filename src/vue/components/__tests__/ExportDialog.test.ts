@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Constraint } from '../../../utils/constraint';
 import { mountDialog } from '../../__tests__/mount';
 import api, { ApiError } from '../../api';
@@ -15,10 +15,6 @@ function open(total: number, constraints: string[] = []) {
 }
 
 describe('ExportDialog', () => {
-	beforeEach(() => {
-		vi.restoreAllMocks();
-	});
-
 	it('downloads all events as json', async () => {
 		const download = vi.spyOn(api, 'download').mockResolvedValue();
 		const { wrapper, vm } = await open(5);

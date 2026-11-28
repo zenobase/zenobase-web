@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import type { Bucket, Role, User } from '../../../types';
 import { apiResponse, mountDialog } from '../../__tests__/mount';
@@ -53,10 +53,6 @@ function spyOnPut(...results: Array<Error | null>) {
 }
 
 describe('EditBucketDialog', () => {
-	beforeEach(() => {
-		vi.restoreAllMocks();
-	});
-
 	it('saves the edited copy and bumps its version', async () => {
 		const sent = spyOnPut();
 		const { wrapper, vm, alertApi, get } = await open({ refresh: true });
@@ -64,7 +60,7 @@ describe('EditBucketDialog', () => {
 
 		vm.newBucket.label = 'Morning runs';
 		vm.publish();
-		vm.publish();
+		vm.publish(); // adds the viewer role only once
 		await vm.save();
 
 		const saved = { '@id': 'b1', label: 'Morning runs', roles: [owner, { principal: '*', role: 'viewer' }], refresh: true };
@@ -145,20 +141,26 @@ describe('EditBucketDialog', () => {
 		expect(sent[1]).not.toHaveProperty('archived');
 	});
 
-	it.each([
-		[undefined, ''],
-		[403, "Can't delete this bucket."],
-		[500, "Couldn't delete this bucket. Try again later or contact support."],
-	])('deletes the bucket (error %s)', async (status, message) => {
-		const del = vi.spyOn(api, 'del');
-		if (status) del.mockRejectedValue(new ApiError(status, null));
-		else del.mockResolvedValue(apiResponse({}));
+	it('deletes the bucket and leaves the dashboard', async () => {
+		const del = vi.spyOn(api, 'del').mockResolvedValue(apiResponse({}));
 		const { vm, router } = await open();
 
 		await vm.deleteBucket();
 
 		expect(del).toHaveBeenCalledWith('/buckets/b1');
+		expect(router.push).toHaveBeenCalledWith('/');
+	});
+
+	it.each([
+		[403, "Can't delete this bucket."],
+		[500, "Couldn't delete this bucket. Try again later or contact support."],
+	])('shows an error when deleting fails with %d', async (status, message) => {
+		vi.spyOn(api, 'del').mockRejectedValue(new ApiError(status, null));
+		const { vm, router } = await open();
+
+		await vm.deleteBucket();
+
 		expect(vm.message).toBe(message);
-		expect(router.push).toHaveBeenCalledTimes(status ? 0 : 1);
+		expect(router.push).not.toHaveBeenCalled();
 	});
 });
