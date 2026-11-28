@@ -65,7 +65,6 @@ const widgets = [
 const dataTypes = ['Activities', 'Sleep', 'Steps', 'Heart Rate', 'Weight', 'Food', 'Other'];
 
 const integrations: Record<string, string[]> = {
-	Fitbit: ['x', 'x', 'x', 'x', 'x', 'x', ''],
 	Foursquare: ['', '', '', '', '', '', 'x'],
 	Goodreads: ['', '', '', '', '', '', 'x'],
 	'Google Fit': ['x', 'x', '', 'x', 'x', 'x', ''],
