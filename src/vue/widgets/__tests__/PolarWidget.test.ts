@@ -14,11 +14,11 @@ describe('PolarWidget', () => {
 	}));
 
 	function mountWithStub(settingsOverride?: Record<string, unknown>) {
-		const { Stub, capturedOptions } = createEChartsStub();
+		const { Stub, ...stub } = createEChartsStub();
 		const result = mountWidget(PolarWidget, settingsOverride ?? settings, {
 			stubs: { EChartsChart: Stub },
 		});
-		return { ...result, capturedOptions };
+		return { ...result, ...stub };
 	}
 
 	it('shows loading state initially', () => {
@@ -72,5 +72,18 @@ describe('PolarWidget', () => {
 		await flushPromises();
 
 		expect(capturedOptions.value).toMatchSnapshot();
+	});
+
+	it.each([
+		[0, '3'],
+		[1, '5'],
+	])('filters by the clicked interval of series %d', async (seriesIndex, value) => {
+		const { dashboard, handlers } = mountWithStub();
+		dashboard.constraintsB.value = [new Constraint('tag', 'x')];
+		await feedData(dashboard, 'w1', mockData, mockData.slice(2));
+
+		handlers['click']!({ seriesIndex, dataIndex: 3 });
+
+		expect(dashboard.addConstraint).toHaveBeenCalledWith('timestamp.hour_of_day', value, true, undefined);
 	});
 });

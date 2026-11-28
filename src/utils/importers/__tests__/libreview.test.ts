@@ -31,4 +31,12 @@ describe('parseLibreView', () => {
 		const events = parseLibreView([row('0', 4, ''), row('1', 5, 'n/a'), row('0', 4, '95')].join('\n'), { tag: 'x', timezone: 'UTC' }, dateParser);
 		expect(events.map((e) => e['concentration'])).toEqual([{ '@value': 95, unit: 'mg/dL' }]);
 	});
+
+	it('skips the export headers, imports notes and ignores other record types', () => {
+		const data = ['Export,2026-01-02', 'Meter,Serial Number,Device Timestamp,Record Type', row('6', 13, 'ate pasta'), row('5', 4, '1')].join('\n');
+
+		const events = parseLibreView(data, { tag: 'x', timezone: 'UTC' }, dateParser);
+
+		expect(events).toEqual([{ timestamp: '2026-01-01T00:00:00.000Z', tag: ['Note'], note: 'ate pasta', source: { title: 'FreeStyle', url: 'https://www.libreview.com/' } }]);
+	});
 });

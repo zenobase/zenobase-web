@@ -1,5 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { Constraint } from '../../../utils/constraint';
 import HistogramWidget from '../HistogramWidget.vue';
 import { createEChartsStub, feedData, mountWidget } from './helpers';
 
@@ -7,11 +8,11 @@ describe('HistogramWidget', () => {
 	const settings = { id: 'w1', field: 'duration', interval: 60 };
 
 	function mountWithStub(settingsOverride?: Record<string, unknown>) {
-		const { Stub, capturedOptions } = createEChartsStub();
+		const { Stub, ...stub } = createEChartsStub();
 		const result = mountWidget(HistogramWidget, settingsOverride ?? settings, {
 			stubs: { EChartsChart: Stub },
 		});
-		return { ...result, capturedOptions };
+		return { ...result, ...stub };
 	}
 
 	it('shows loading state initially', () => {
@@ -76,5 +77,30 @@ describe('HistogramWidget', () => {
 		await flushPromises();
 
 		expect(capturedOptions.value).toMatchSnapshot();
+	});
+
+	const miles = (from: number, to: number, count: number) => ({ from: { '@value': from, unit: 'mi' }, to: { '@value': to, unit: 'mi' }, count });
+
+	it('filters by the clicked bin', async () => {
+		const { dashboard, handlers } = mountWithStub({ id: 'w1', field: 'distance', interval: 5 });
+		await feedData(dashboard, 'w1', [miles(0, 5, 3), miles(5, 10, 1)]);
+
+		handlers['click']!({ dataIndex: 1 });
+
+		expect(dashboard.addConstraint).toHaveBeenCalledWith('distance', '[5 mi..10 mi)', true);
+	});
+
+	it('downloads A and B counts per bin, in order', async () => {
+		const { wrapper, dashboard } = mountWithStub({ id: 'w1', field: 'distance', interval: 5, label: 'Run distance' });
+		dashboard.constraintsB.value = [new Constraint('tag', 'x')];
+		await feedData(dashboard, 'w1', [miles(5, 10, 1)], [miles(0, 5, 2), miles(5, 10, 4)]);
+		const blob = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:1');
+		vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+		const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+		await wrapper.find('button[title="Download"]').trigger('click');
+
+		expect(await (blob.mock.calls[0][0] as Blob).text()).toBe('distance,count,count-B\n[0 mi..5 mi),0,2\n[5 mi..10 mi),1,4');
+		expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe('Run_distance.csv');
 	});
 });

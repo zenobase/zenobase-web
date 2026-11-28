@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { param } from '../helpers';
+import { compactNumber, param } from '../helpers';
 
 describe('param', () => {
 	it('serializes simple key-value pairs', () => {
@@ -20,5 +20,18 @@ describe('param', () => {
 
 	it('returns empty string for empty object', () => {
 		expect(param({})).toBe('');
+	});
+});
+
+describe('compactNumber', () => {
+	it.each([
+		[999, '999'],
+		[1500, '1.5k'],
+		[-12345, '-12.3k'],
+		[2_500_000, '2.5M'],
+		['1200', '1.2k'],
+		['n/a', 'n/a'],
+	])('compacts %j to %j', (value, expected) => {
+		expect(compactNumber(value)).toBe(expected);
 	});
 });

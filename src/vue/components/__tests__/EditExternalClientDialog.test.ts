@@ -1,15 +1,14 @@
-import { mount, type VueWrapper } from '@vue/test-utils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ComponentPublicInstance } from 'vue';
-import { createVuetify } from 'vuetify';
-import * as components from 'vuetify/components';
-import * as directives from 'vuetify/directives';
+import { describe, expect, it, vi } from 'vitest';
 import type { ExternalClient } from '../../../types';
+import { apiResponse, mountDialog as mount } from '../../__tests__/mount';
 import api from '../../api';
-import { alertKey, useAlert } from '../../composables/useAlert';
 import EditExternalClientDialog from '../EditExternalClientDialog.vue';
 
-const vuetify = createVuetify({ components, directives });
+interface EditExternalClientVM {
+	selected: Set<string>;
+	message: string;
+	save(): Promise<void>;
+}
 
 function makeApp(overrides: Partial<ExternalClient> = {}): ExternalClient {
 	return {
@@ -21,48 +20,24 @@ function makeApp(overrides: Partial<ExternalClient> = {}): ExternalClient {
 	};
 }
 
-async function mountDialog(app: ExternalClient) {
-	const alertApi = useAlert();
-	const wrapper = mount(EditExternalClientDialog, {
-		attachTo: document.body,
-		props: {
-			userId: 'user-1',
-			app,
-			buckets: [
-				{ '@id': 'b1', label: 'Weight' },
-				{ '@id': 'b2', label: 'Sleep' },
-				{ '@id': 'b3', label: 'Steps' },
-			],
-			modelValue: false,
-		},
-		global: {
-			plugins: [vuetify],
-			provide: { [alertKey as symbol]: alertApi },
-		},
-	});
-	// the dialog's watcher only fires on change, so toggle false -> true to open it
-	await wrapper.setProps({ modelValue: true });
-	await wrapper.vm.$nextTick();
-	await wrapper.vm.$nextTick();
-	return { wrapper, alertApi };
+function mountDialog(app: ExternalClient) {
+	const buckets = [
+		{ '@id': 'b1', label: 'Weight' },
+		{ '@id': 'b2', label: 'Sleep' },
+		{ '@id': 'b3', label: 'Steps' },
+	];
+	return mount<EditExternalClientVM>(EditExternalClientDialog, { userId: 'user-1', app, buckets });
 }
 
-function dialogText(_wrapper: VueWrapper<ComponentPublicInstance>): string {
-	// Vuetify dialogs render in a Teleport — read the whole document.
+// Vuetify dialogs render in a Teleport, so read the whole document.
+function dialogText(): string {
 	return document.body.textContent || '';
 }
 
 describe('EditExternalClientDialog', () => {
-	beforeEach(() => {
-		document.body.replaceChildren();
-	});
-	afterEach(() => {
-		vi.restoreAllMocks();
-	});
-
 	it('renders the client name and the buckets list', async () => {
-		const { wrapper } = await mountDialog(makeApp());
-		const text = dialogText(wrapper);
+		await mountDialog(makeApp());
+		const text = dialogText();
 		expect(text).toContain('Claude Desktop');
 		expect(text).toContain('Weight');
 		expect(text).toContain('Sleep');
@@ -70,29 +45,26 @@ describe('EditExternalClientDialog', () => {
 	});
 
 	it('pre-checks currently-granted buckets', async () => {
-		const { wrapper } = await mountDialog(makeApp({ readable_buckets: ['b1', 'b3'] }));
-		const checked = (wrapper.vm as unknown as { selected: Set<string> }).selected;
-		expect(Array.from(checked).sort()).toEqual(['b1', 'b3']);
+		const { vm } = await mountDialog(makeApp({ readable_buckets: ['b1', 'b3'] }));
+		expect(Array.from(vm.selected).sort()).toEqual(['b1', 'b3']);
 	});
 
 	it('shows a Pending chip when no buckets are granted', async () => {
-		const { wrapper } = await mountDialog(makeApp({ readable_buckets: [] }));
-		expect(dialogText(wrapper)).toContain('Pending');
+		await mountDialog(makeApp({ readable_buckets: [] }));
+		expect(dialogText()).toContain('Pending');
 	});
 
 	it('falls back to client_id when client_name is missing', async () => {
-		const { wrapper } = await mountDialog(makeApp({ client_name: undefined }));
-		expect(dialogText(wrapper)).toContain('claude-desktop');
+		await mountDialog(makeApp({ client_name: undefined }));
+		expect(dialogText()).toContain('claude-desktop');
 	});
 
 	it('emits saved with the response after a successful PUT', async () => {
 		const updated = makeApp({ readable_buckets: ['b1', 'b2'] });
-		const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: updated, status: 200, headers: () => null });
+		const putSpy = vi.spyOn(api, 'put').mockResolvedValue(apiResponse(updated));
 
-		const { wrapper } = await mountDialog(makeApp());
-		const vm = wrapper.vm as unknown as { selected: Set<string>; save: () => Promise<void> };
+		const { wrapper, vm } = await mountDialog(makeApp());
 		vm.selected = new Set(['b1', 'b2']);
-		await wrapper.vm.$nextTick();
 		await vm.save();
 
 		expect(putSpy).toHaveBeenCalledWith('/users/user-1/external-clients/claude-desktop', { readable_buckets: ['b1', 'b2'] });
@@ -103,10 +75,8 @@ describe('EditExternalClientDialog', () => {
 
 	it('shows an error message when the PUT fails', async () => {
 		vi.spyOn(api, 'put').mockRejectedValue({ status: 500 });
-		const { wrapper, alertApi } = await mountDialog(makeApp());
-		const vm = wrapper.vm as unknown as { selected: Set<string>; save: () => Promise<void>; message: string };
+		const { wrapper, vm, alertApi } = await mountDialog(makeApp());
 		vm.selected = new Set(['b1', 'b2']);
-		await wrapper.vm.$nextTick();
 		await vm.save();
 
 		expect(vm.message).toMatch(/Couldn't update this app/);
@@ -116,9 +86,9 @@ describe('EditExternalClientDialog', () => {
 	});
 
 	it('url-encodes the client_id when calling the API', async () => {
-		const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: makeApp(), status: 200, headers: () => null });
-		const { wrapper } = await mountDialog(makeApp({ client_id: 'has spaces/and slashes' }));
-		await (wrapper.vm as unknown as { save: () => Promise<void> }).save();
+		const putSpy = vi.spyOn(api, 'put').mockResolvedValue(apiResponse(makeApp()));
+		const { vm } = await mountDialog(makeApp({ client_id: 'has spaces/and slashes' }));
+		await vm.save();
 		expect(putSpy).toHaveBeenCalledWith('/users/user-1/external-clients/has%20spaces%2Fand%20slashes', expect.anything());
 	});
 });

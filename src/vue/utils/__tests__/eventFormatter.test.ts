@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ZenoEvent } from '../../../types';
-import { type FieldSegment, formatEvent } from '../eventFormatter';
+import { esc, type FieldSegment, formatEvent } from '../eventFormatter';
 
 vi.mock('../userNames', () => ({ getUserName: (id: string) => 'User ' + id }));
 
@@ -176,5 +176,12 @@ describe('formatEvent', () => {
 
 	it('skips null and undefined values', () => {
 		expect(formatEvent({ tag: null, note: undefined, count: 5 } as unknown as ZenoEvent)).toHaveLength(1);
+	});
+});
+
+describe('esc', () => {
+	it('escapes markup for chart tooltips', () => {
+		expect(esc('<img src=x onerror="alert(1)">&')).toBe('&lt;img src=x onerror="alert(1)"&gt;&amp;');
+		expect(esc(null)).toBe('');
 	});
 });

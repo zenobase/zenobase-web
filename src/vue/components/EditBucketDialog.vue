@@ -115,21 +115,20 @@ async function save() {
 async function archiveBucket(archive: boolean) {
 	if (!newBucket.value) return;
 	alertApi.clear();
-	if (archive) {
-		newBucket.value.archived = true;
-	} else {
-		delete newBucket.value.archived;
-	}
+	// update a copy, so that a failed request doesn't leave the flag set for the next save
+	const updated: Bucket = { ...newBucket.value, archived: true };
+	if (!archive) delete updated.archived;
 	try {
-		await api.put(`/buckets/${props.bucketId}`, newBucket.value);
-		if (newBucket.value.version !== undefined) {
-			newBucket.value.version += 1;
+		await api.put(`/buckets/${props.bucketId}`, updated);
+		if (updated.version !== undefined) {
+			updated.version += 1;
 		}
+		newBucket.value = updated;
 		close();
 		if (archive) {
 			router.push('/');
 		} else {
-			emit('saved', newBucket.value);
+			emit('saved', updated);
 		}
 	} catch (e: unknown) {
 		const status = (e as { status?: number }).status;

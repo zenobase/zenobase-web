@@ -232,4 +232,49 @@ describe('useDashboard', () => {
 			expect(parent.constraints.value).toHaveLength(1);
 		});
 	});
+
+	describe('comparison constraints', () => {
+		function setup() {
+			return createTestComponent('bucket1', vi.fn().mockResolvedValue({ data: { total: 42 } }));
+		}
+
+		it('adds, replaces, inverts and removes them independently of A', () => {
+			const { parent, locationChanges } = setup();
+			parent.addConstraint('tag', 'run');
+			parent.addConstraintB('tag', 'walk');
+			parent.addConstraintB('tag', 'walk');
+			parent.addConstraintB('distance$unit', 'km');
+			parent.addConstraintB('tag', 'hike', true);
+
+			expect(parent.constraintsB.value.map((c) => c.toString())).toEqual(['distance$unit:km', 'tag:hike']);
+			expect(parent.getConstraintsB('tag')).toHaveLength(1);
+			expect(locationChanges.at(-1)).toEqual({ q: ['tag:run'], r: ['distance$unit:km', 'tag:hike'] });
+
+			const [unit, tag] = parent.constraintsB.value;
+			parent.invertConstraintB(tag);
+			parent.removeConstraintB(unit);
+
+			expect(parent.constraintsB.value.map((c) => c.toString())).toEqual(['-tag:hike']);
+			expect(parent.constraints.value.map((c) => c.toString())).toEqual(['tag:run']);
+		});
+
+		it('swaps A and B', () => {
+			const { parent, locationChanges } = setup();
+			parent.addConstraint('tag', 'run');
+			parent.addConstraintB('tag', 'walk');
+
+			parent.swapAB();
+
+			expect(locationChanges.at(-1)).toEqual({ q: ['tag:walk'], r: ['tag:run'] });
+		});
+
+		it('starts a comparison from A when there is no B', () => {
+			const { parent, locationChanges } = setup();
+			parent.addConstraint('tag', 'run');
+
+			parent.swapAB();
+
+			expect(locationChanges.at(-1)).toEqual({ q: ['tag:run'], r: ['tag:run'] });
+		});
+	});
 });

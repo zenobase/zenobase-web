@@ -119,6 +119,11 @@ function onFormatChange() {
 	events.value = [];
 	previewOffset.value = 0;
 	initSettings();
+	resetFileInput();
+}
+
+/** Allows picking the same file again, e.g. after changing the timezone. */
+function resetFileInput() {
 	if (fileInput.value) {
 		fileInput.value.value = '';
 	}
@@ -139,7 +144,7 @@ function onFileSelected(e: Event) {
 		} catch (error: unknown) {
 			message.value = (error as Error).message || 'Failed to parse file.';
 			events.value = [];
-			settings.value = {};
+			resetFileInput();
 		}
 	};
 	const encoding = (settings.value.encoding as string) || undefined;
@@ -168,12 +173,9 @@ async function submit() {
 	} catch (e: unknown) {
 		const data = (e as { data?: { message?: string } }).data;
 		message.value = data?.message || "Couldn't import the file. Try again later, or contact support.";
-		settings.value = {};
 		events.value = [];
 		previewOffset.value = 0;
-		if (fileInput.value) {
-			fileInput.value.value = '';
-		}
+		resetFileInput();
 	} finally {
 		importing.value = false;
 	}
