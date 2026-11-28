@@ -1,0 +1,17 @@
+{
+	"@id": "b1",
+	"label": "Sleep",
+	"version": 1,
+	"roles": [{ "principal": "u1", "role": "owner" }],
+	"widgets": [
+		{ "id": "list", "type": "list", "label": "List", "placement": "top", "limit": 5 },
+		{ "id": "histogram", "type": "histogram", "label": "Histogram", "placement": "top", "field": "duration", "interval": 3600000 },
+		{ "id": "timeline", "type": "timeline", "label": "Timeline", "placement": "top", "field": "duration", "interval": "month" },
+		{ "id": "count", "type": "count", "label": "Count", "placement": "left", "field": "tag", "limit": 10, "order": "count" },
+		{ "id": "polar", "type": "polar", "label": "Polar", "placement": "left", "value_field": "duration", "interval": "hour_of_day" },
+		{ "id": "gantt", "type": "gantt", "label": "Frequency", "placement": "left", "field": "tag", "limit": 10 },
+		{ "id": "scoreboard", "type": "scoreboard", "label": "Scoreboard", "placement": "right", "key_field": "tag", "value_field": "duration", "limit": 10, "statistics": ["count", "avg"] },
+		{ "id": "scatterplot", "type": "scatterplot", "label": "Scatter Plot", "placement": "right", "field_x": "duration", "field_y": "rating" },
+		{ "id": "ratings", "type": "ratings", "label": "Ratings", "placement": "right" }
+	]
+}

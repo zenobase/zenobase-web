@@ -1,0 +1,7 @@
+{
+	"total": 2,
+	"buckets": [
+		{ "@id": "b1", "label": "Sleep", "size": 120, "roles": [{ "principal": "u1", "role": "owner" }] },
+		{ "@id": "b2", "label": "Workouts", "size": 42, "roles": [{ "principal": "u1", "role": "owner" }] }
+	]
+}

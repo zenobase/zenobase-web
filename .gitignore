@@ -4,5 +4,8 @@
 .pnpm-store/
 coverage/
 dist/
+dist-e2e/
 node_modules/
 .DS_Store
+playwright-report/
+test-results/
