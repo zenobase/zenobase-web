@@ -1,3 +1,5 @@
+import type { UnitValue } from '../../types';
+
 export interface FieldDefinition {
 	name: string;
 	type: 'text' | 'numeric' | 'object';
@@ -65,6 +67,19 @@ export function getUnitsForField(fieldName: string): string[] {
 	const all = [...NUMERIC_FIELDS, TIMESTAMP_FIELD, ...TEXT_FIELDS];
 	const field = all.find((f) => f.name === fieldName);
 	return field?.units ?? [];
+}
+
+/** Units of a stored field value (one measure or an array of them). */
+export function getStoredUnits(value: unknown): string[] {
+	return (Array.isArray(value) ? value : [value]).flatMap((v) => {
+		const unit = (v as UnitValue | null)?.unit;
+		return typeof unit === 'string' && unit ? [unit] : [];
+	});
+}
+
+/** Also offers stored units (e.g. canonical `km/h` from integrations, or legacy ones): the backend keeps accepting them for that event. */
+export function getUnitOptions(fieldName: string, storedValue: unknown): string[] {
+	return [...new Set([...getUnitsForField(fieldName), ...getStoredUnits(storedValue)])];
 }
 
 export function getNumericFieldNames(): string[] {

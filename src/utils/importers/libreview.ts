@@ -10,6 +10,18 @@ export interface DateParser {
 	parseTz(value: string, format: string, timezone: string): { format(fmt: string): string };
 }
 
+/** Record type → glucose column and tag. */
+const GLUCOSE_TYPES = new Map<string, [number, string]>([
+	['0', [4, 'Historic']],
+	['1', [5, 'Scan']],
+	['2', [14, 'Strip']],
+]);
+
+function parseFiniteNumber(s: string | undefined): number | undefined {
+	const n = s?.trim() ? Number(s) : Number.NaN;
+	return Number.isFinite(n) ? n : undefined;
+}
+
 export function parseLibreView(s: string, settings: LibreViewSettings, dateParser: DateParser): ZenoEvent[] {
 	const lines = s.split('\n');
 	if (lines.length > 0 && lines[0].startsWith('Export')) {
@@ -34,25 +46,18 @@ export function parseLibreView(s: string, settings: LibreViewSettings, dateParse
 			tag: [settings.tag],
 			source: { title: row[0], url: 'https://www.libreview.com/' },
 		};
-		switch (row[3]) {
-			case '0':
-				event['tag'] = ['Glucose', 'Historic'];
-				event['concentration'] = { '@value': Number(row[4]), unit: 'mg/dL' };
-				break;
-			case '1':
-				event['tag'] = ['Glucose', 'Scan'];
-				event['concentration'] = { '@value': Number(row[5]), unit: 'mg/dL' };
-				break;
-			case '2':
-				event['tag'] = ['Glucose', 'Strip'];
-				event['concentration'] = { '@value': Number(row[14]), unit: 'mg/dL' };
-				break;
-			case '6':
-				event['tag'] = ['Note'];
-				event['note'] = row[13];
-				break;
-			default:
-				continue;
+		const glucose = GLUCOSE_TYPES.get(row[3]);
+		if (glucose) {
+			const value = parseFiniteNumber(row[glucose[0]]);
+			// the backend rejects non-numeric values
+			if (value === undefined) continue;
+			event['tag'] = ['Glucose', glucose[1]];
+			event['concentration'] = { '@value': value, unit: 'mg/dL' };
+		} else if (row[3] === '6') {
+			event['tag'] = ['Note'];
+			event['note'] = row[13];
+		} else {
+			continue;
 		}
 		events.push(event);
 	}
