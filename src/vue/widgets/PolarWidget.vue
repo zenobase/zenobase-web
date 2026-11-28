@@ -63,6 +63,29 @@ function circularAvg(data: PolarEntry[]): number {
 	return (Math.round((z / f) * 2) / 2) % data.length;
 }
 
+/**
+ * Sector behind the bars, centred on the circular average. Drawn as a custom series
+ * because markArea doesn't support polar axes; a sector also wraps past index 0 on its own.
+ * The average stays out of the series data, which would otherwise stretch the radius axis.
+ */
+function avgHighlight(data: PolarEntry[], color: string): Record<string, unknown> {
+	const width = (2 * Math.PI) / data.length;
+	const avg = circularAvg(data);
+	return {
+		type: 'custom',
+		coordinateSystem: 'polar',
+		data: [0],
+		silent: true,
+		z: 1,
+		renderItem: (params: { coordSys: { cx: number; cy: number; r: number; r0: number } }) => {
+			// Category 0 is centred at 12 o'clock (see startAngle), and angles run clockwise.
+			const startAngle = -Math.PI / 2 + (avg - 0.5) * width;
+			const { cx, cy, r, r0 } = params.coordSys;
+			return { type: 'sector', shape: { cx, cy, r, r0, startAngle, endAngle: startAngle + width }, style: { fill: color } };
+		},
+	};
+}
+
 function filterByValue(value: string, negated?: boolean) {
 	dashboard.addConstraint((props.settings.key_field || keyField) + '.' + props.settings.interval, value, true, negated);
 }
@@ -135,21 +158,9 @@ function draw() {
 		});
 	}
 
-	const markAreaData: Record<string, unknown>[][] = [];
-
-	if (props.settings.mark === 'avg' && times.value?.length) {
-		const avg = circularAvg(times.value);
-		const from = avg - 0.5;
-		const to = avg + 0.5;
-		markAreaData.push([{ xAxis: from }, { xAxis: to }]);
-		if (from < 0) {
-			markAreaData.push([{ xAxis: times.value.length - 0.5 }, { xAxis: times.value.length }]);
-		}
-	}
-
-	if (timesB.value?.length && props.settings.mark === 'avg') {
-		const avgB = circularAvg(timesB.value);
-		markAreaData.push([{ xAxis: avgB - 0.5 }, { xAxis: avgB + 0.5 }]);
+	if (props.settings.mark === 'avg') {
+		if (times.value?.length) allSeries.push(avgHighlight(times.value, `rgba(${BRAND_BLUE_RGB}, 0.15)`));
+		if (timesB.value?.length) allSeries.push(avgHighlight(timesB.value, 'rgba(204, 102, 0, 0.15)'));
 	}
 
 	const size = props.settings.placement === 'top' ? 150 : 350;
