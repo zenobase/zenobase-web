@@ -8,7 +8,7 @@ import { type DashboardApi, dashboardKey } from '../composables/useDashboard';
 import { useWidgetData } from '../composables/useWidgetData';
 import { BRAND_BLUE_RGB } from '../plugins/vuetify';
 import { esc } from '../utils/eventFormatter';
-import { downloadCsv, toFilename } from './csv';
+import { downloadCsv, toFilename, unwrapValue } from './csv';
 import EChartsChart from './EChartsChart.vue';
 
 const props = defineProps<{
@@ -142,7 +142,7 @@ function mergeIntervals(a: HistogramInterval[], b: HistogramInterval[]): Array<{
 	}
 	return Array.from(map.entries())
 		.map(([label, v]) => ({ label, from: v.from, to: v.to, a: v.a, b: v.b }))
-		.sort((x, y) => Number(x.from) - Number(y.from));
+		.sort((x, y) => Number(unwrapValue(x.from).value) - Number(unwrapValue(y.from).value));
 }
 
 const chartRef = ref<InstanceType<typeof EChartsChart> | null>(null);
