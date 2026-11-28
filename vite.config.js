@@ -30,6 +30,8 @@ export default defineConfig({
 			provider: 'v8',
 			reporter: ['text', 'lcov'],
 			include: ['src/**'],
+			// static pages, type declarations and entry points carry no testable logic
+			exclude: ['src/**/__tests__/**', 'src/types/**', 'src/**/main.ts', 'src/vue/pages/{ApiDocs,Terms,Privacy,NotFound}Page.vue'],
 		},
 	},
 	build: {

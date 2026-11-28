@@ -1,5 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { defineComponent, onMounted } from 'vue';
 import { Constraint } from '../../../utils/constraint';
 import TimelineWidget from '../TimelineWidget.vue';
 import { createEChartsStub, feedData, mountWidget } from './helpers';
@@ -95,5 +96,94 @@ describe('TimelineWidget', () => {
 		await flushPromises();
 
 		expect(capturedOptions.value).toMatchSnapshot();
+	});
+
+	describe('filters', () => {
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
+		type Filters = Record<string, (n?: number) => void>;
+
+		function filterValues(now: string, apply: (filters: Filters) => void) {
+			vi.useFakeTimers({ now: new Date(now), toFake: ['Date'] });
+			const { wrapper, dashboard } = mountWithStub();
+			apply((wrapper.vm as unknown as { filters: Filters }).filters);
+			return (dashboard.addConstraint as ReturnType<typeof vi.fn>).mock.calls.map(([field, value, replace]) => {
+				expect([field, replace]).toEqual(['timestamp', true]);
+				return value;
+			});
+		}
+
+		it('filters by calendar periods relative to today', () => {
+			const values = filterValues('2026-01-15T10:00:00', (f) => {
+				f.thisYear();
+				f.lastYear();
+				f.thisMonth();
+				f.lastMonth();
+				f.lastMonths(3);
+				f.thisWeek();
+				f.lastWeek();
+				f.today();
+				f.yesterday();
+				f.lastHours(24);
+			});
+
+			expect(values).toEqual(['2026', '2025', '2026-01', '2025-12', '[2025-10..2026-01)', '2026-W03', '2026-W02', '2026-01-15', '2026-01-14', '[-24h..*)']);
+		});
+
+		it('filters by the previous month at the end of a long month', () => {
+			const values = filterValues('2026-05-31T10:00:00', (f) => {
+				f.lastMonth();
+				f.lastMonths(3);
+			});
+
+			expect(values).toEqual(['2026-04', '[2026-02..2026-05)']);
+		});
+
+		it.each([
+			[0, [10, 8, 12], '[2024-01..2024-03]'],
+			[0, [10, 0, 12], '2024-01 OR 2024-03'],
+			[-1, [10, 8, 12], '[2024-01..2024-02]'],
+			[1, [10, 8, 0], '[2024-02..2024-03]'],
+			[0, [10, 8, 0], '[2024-01..2024-03)'],
+		])('selects the periods offset by %d with counts %j', async (offset, counts, expected) => {
+			const { wrapper, dashboard } = mountWithStub();
+			await feedData(
+				dashboard,
+				'w1',
+				mockData.map((d, i) => ({ ...d, count: counts[i] })),
+			);
+
+			(wrapper.vm as unknown as { filters: Filters }).filters.select(offset);
+
+			expect(dashboard.addConstraint).toHaveBeenCalledWith('timestamp', expected, true);
+		});
+	});
+
+	it('filters by the clicked and brushed periods', async () => {
+		const handlers: Record<string, (params?: unknown) => void> = {};
+		const instance = { on: (event: string, fn: (params?: unknown) => void) => (handlers[event] = fn), dispatchAction: vi.fn() };
+		const Stub = defineComponent({
+			emits: ['ready'],
+			setup(_, { emit }) {
+				onMounted(() => emit('ready', instance));
+			},
+			template: '<div />',
+		});
+		const { dashboard } = mountWidget(TimelineWidget, settings, { stubs: { EChartsChart: Stub } });
+		await feedData(dashboard, 'w1', mockData);
+
+		handlers['click']?.({ value: [mockData[1].time, 8] });
+		handlers['brushSelected']?.({ batch: [{ areas: [{ coordRange: [mockData[0].time, mockData[1].time + 1] }] }] });
+		handlers['brushEnd']?.();
+		handlers['brushSelected']?.({ batch: [] });
+		handlers['brushEnd']?.();
+
+		expect((dashboard.addConstraint as ReturnType<typeof vi.fn>).mock.calls).toEqual([
+			['timestamp', '2024-02', true],
+			['timestamp', '[2024-01..2024-02]', true],
+		]);
+		expect(instance.dispatchAction).toHaveBeenCalledWith(expect.objectContaining({ type: 'takeGlobalCursor', key: 'brush' }));
 	});
 });
